@@ -1,0 +1,8 @@
+:root{
+    --bg: hsl(12, 12%, 12%);
+    --text: hsl(12, 98%, 98%);
+}
+body{
+    background-color: var(--bg);
+    color: var(--text);
+}
