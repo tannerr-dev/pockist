@@ -2,6 +2,7 @@
     --bg: hsl(340,22%, 12%);
     --text: hsl(12, 98%, 88%);
     --accent: hsl(340,22%, 42%);
+    --accent-dark: hsl(340,22%, 28%);
 }
 html{
     background-color: var(--bg);
@@ -16,7 +17,7 @@ main {
     padding-top: 3rem;
     min-width: 412px;
     min-height: 894px;
-    border: 2px solid var(--accent);
+    border: 2px solid var(--accent-dark);
     border-radius: 8px;
 }
 h1{
@@ -33,11 +34,12 @@ h1{
     justify-content: center;
 }
 form{
-    padding:10px;
-    border:2px solid var(--accent);
+    border:2px solid var(--accent-dark);
     border-radius:8px;
-    margin:10px;
+    margin:20px;
+    padding:20px;
     font-size:1rem;
+    min-width: 324px;
 }
 input{
     padding:10px;
@@ -47,6 +49,12 @@ input{
     border-radius:5px;
     margin:10px;
     font-size:1rem;
+    min-width: 292px;
+    box-sizing: border-box;
+}
+input:focus{
+    outline:none;
+    box-shadow:0 0 0 2px var(--accent);
 }
 button{
     padding:10px;
@@ -56,4 +64,12 @@ button{
     color:var(--text);
     margin:10px;
     font-size:1rem;
+    min-width: 292px;
+    /* box-sizing: border-box; */
+}
+button:hover{
+    background-color:var(--accent);
+    color:var(--bg);
+    font-weight:bold;
+    cursor:pointer;
 }
