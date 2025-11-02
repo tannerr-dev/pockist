@@ -1,8 +1,59 @@
 :root{
-    --bg: hsl(12, 12%, 12%);
-    --text: hsl(12, 98%, 98%);
+    --bg: hsl(340,22%, 12%);
+    --text: hsl(12, 98%, 88%);
+    --accent: hsl(340,22%, 42%);
 }
-body{
+html{
+    background-color: var(--bg);
+}
+body {
     background-color: var(--bg);
     color: var(--text);
+    font-family: Arial, Helvetica, sans-serif;
+}
+main {
+    margin-top:6px;
+    padding-top: 3rem;
+    min-width: 412px;
+    min-height: 894px;
+    border: 2px solid var(--accent);
+    border-radius: 8px;
+}
+h1{
+    font-size:2.4rem;
+    color:var(--accent);
+    font-weight:bold;
+    /* border-left:2px solid var(--accent); */
+    /* border-right:2px solid var(--accent); */
+}
+.flex-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+form{
+    padding:10px;
+    border:2px solid var(--accent);
+    border-radius:8px;
+    margin:10px;
+    font-size:1rem;
+}
+input{
+    padding:10px;
+    border:2px solid var(--accent);
+    background-color:var(--bg);
+    color:var(--text);
+    border-radius:5px;
+    margin:10px;
+    font-size:1rem;
+}
+button{
+    padding:10px;
+    border:2px solid var(--accent);
+    border-radius:5px;
+    background-color:var(--bg);
+    color:var(--text);
+    margin:10px;
+    font-size:1rem;
 }
