@@ -48,7 +48,7 @@ func create_table(db *sql.DB) http.HandlerFunc {
         }
         // message_template, err := template.ParseFiles("templates/message.html")
         // err = message_template.Execute(w, nil)
-        http.Redirect(w, r, "/", http.StatusSeeOther)
+        http.Redirect(w, r, "/admin", http.StatusSeeOther)
     }
 }
 func contains (slice []string, item string) bool {
@@ -95,7 +95,7 @@ func delete_table(db *sql.DB) http.HandlerFunc {
         if err!=nil{
             w.Write([]byte("Error!!"))
         }
-        http.Redirect(w, r, "/", http.StatusSeeOther)
+        http.Redirect(w, r, "/admin", http.StatusSeeOther)
     }
 }
 func list_tables(db *sql.DB) http.HandlerFunc {
@@ -122,7 +122,7 @@ func list_tables(db *sql.DB) http.HandlerFunc {
             tables = append(tables, name)
         }
         fmt.Println(tables)
-        http.Redirect(w, r, "/", http.StatusSeeOther)
+        http.Redirect(w, r, "/admin", http.StatusSeeOther)
     }
 }
 func insert(db *sql.DB) http.HandlerFunc{
@@ -136,7 +136,7 @@ func insert(db *sql.DB) http.HandlerFunc{
             log.Panic(err)
             http.Error(w, "Failed to parse form", http.StatusInternalServerError)
         }
-        http.Redirect(w, r, "/", http.StatusSeeOther)
+        http.Redirect(w, r, "/admin", http.StatusSeeOther)
     }
 }
 func select_all_and_print(db *sql.DB) http.HandlerFunc {
@@ -166,7 +166,7 @@ func select_all_and_print(db *sql.DB) http.HandlerFunc {
             }
             fmt.Printf("ID: %d, Name: %s, Value: %v \n", id, name, value)
         }
-        http.Redirect(w, r, "/", http.StatusSeeOther)
+        http.Redirect(w, r, "/admin", http.StatusSeeOther)
     }
 }
 func admin_route(w http.ResponseWriter, r *http.Request){
@@ -190,7 +190,7 @@ func main(){
     server := http.NewServeMux()
     server.HandleFunc("/admin", admin_route)
     server.HandleFunc("/monies", monies_route)
-    server.HandleFunc("/admim/create", create_table(db))
+    server.HandleFunc("/admin/create", create_table(db))
     server.HandleFunc("/admin/delete", delete_table(db))
     server.HandleFunc("/admin/list_tables", list_tables(db))
     server.HandleFunc("/admin/all", select_all_and_print(db))

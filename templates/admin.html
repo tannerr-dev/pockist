@@ -17,31 +17,31 @@
         <!-- <button hx-post="/create" hx-swap="none"> -->
         <!--     create table -->
         <!-- </button> -->
-        <form action="/create" method="post" class="flex-col">
+        <form action="/admin/create" method="post" class="flex-col">
             <input type="text" name="table_name" placeholder="table name">
             <button type="submit">
                 create table
             </button>
         </form>
-        <form action="/all" method="get" class="flex-col">
+        <form action="/admin/all" method="get" class="flex-col">
             <input type="text" name="table_name" placeholder="table name">
             <button type="submit">
                     select all from table
             </button>
         </form>
-        <form action="/list_tables" method="get" class="flex-col">
+        <form action="/admin/list_tables" method="get" class="flex-col">
             <button type="submit">
                     list tables
             </button>
         </form>
-        <form action="/insert" method="get" class="flex-col">
+        <form action="/admin/insert" method="get" class="flex-col">
             <input type="text" name="table_name" placeholder="table name">
             <input type="text" name="value" placeholder="value">
             <button type="submit">
                     insert into table
             </button>
         </form>
-        <form action="/delete" method="post" class="flex-col">
+        <form action="/admin/delete" method="post" class="flex-col">
             <input type="text" name="table_name" placeholder="table name">
             <button type="submit">
                 delete table
