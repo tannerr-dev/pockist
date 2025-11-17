@@ -1,8 +1,9 @@
 :root{
-    --bg: hsl(340,22%, 12%);
-    --text: hsl(12, 98%, 88%);
-    --accent: hsl(340,22%, 42%);
-    --accent-dark: hsl(340,22%, 28%);
+    --hue: 2;
+    --bg: hsl(var(--hue),22%, 8%);
+    --text: hsl(var(--hue), 98%, 88%);
+    --accent: hsl(var(--hue),22%, 42%);
+    --accent-dark: hsl(var(--hue),22%, 28%);
 }
 html{
     background-color: var(--bg);
