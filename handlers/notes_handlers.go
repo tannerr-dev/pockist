@@ -20,10 +20,10 @@ func init() {
 }
 
 type Note struct {
-	ID           int    `json:"id"`
-	Note         string `json:"note"`
-	DateCreated  string `json:"date_created"`
-	DateModified string `json:"date_modified"`
+	ID           int
+	Note         string
+	DateCreated  string
+	DateModified string
 }
 
 type NotesStruct struct {
