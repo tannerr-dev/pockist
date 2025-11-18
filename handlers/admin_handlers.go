@@ -1,4 +1,4 @@
-package admin_handlers
+package handlers
 
 import (
 	"database/sql"
