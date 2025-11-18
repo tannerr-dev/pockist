@@ -1,15 +1,8 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <!-- <meta http-equiv="refresh" content="10" /> -->
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <link href="reset.css" rel="stylesheet">
-    <link href="styles.css" rel="stylesheet">
-    <meta name="darkreader-lock">
-    <title>Pockist</title>
-</head>
+{{define "title"}}
+<title>Notes</title>
+{{end}}
+
+{{define "body"}}
 <body class="flex-col">
     <main class="">
         <h1>Notes</h1>
@@ -28,12 +21,6 @@
             </div>
             {{end}}
         </div>
-        <!-- <form action="/api/notes/delete" method="post" class="flex-col"> -->
-        <!--     <input type="text" name="" placeholder=""> -->
-        <!--     <button type="submit"> -->
-        <!--         delete -->
-        <!--     </button> -->
-        <!-- </form> -->
     </main>
 </body>
-</html>
+{{end}}
