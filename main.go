@@ -13,7 +13,6 @@ import (
 
 var (
 	admin_template  *template.Template
-	// notes_template  *template.Template
 	monies_template *template.Template
 )
 
@@ -21,7 +20,6 @@ func init() {
 	var err error
 	admin_template, err = template.ParseFiles("templates/admin.html")
 	monies_template, err = template.ParseFiles("templates/monies.html")
-	// notes_template, err = template.ParseFiles("templates/notes.html")
 	if err != nil {
 		log.Panic(err)
 	}
@@ -52,15 +50,15 @@ func main() {
 	defer db.Close()
 	server := http.NewServeMux()
 	server.HandleFunc("/admin", admin_route)
-	server.HandleFunc("/api/admin/all", handlers.All_select(db))
-	server.HandleFunc("/api/admin/list_tables", handlers.List_tables(db))
+	server.HandleFunc("/api/admin/all", handlers.AllSelect(db))
+	server.HandleFunc("/api/admin/list_tables", handlers.ListTables(db))
 	server.HandleFunc("/api/admin/insert", handlers.Insert(db))
-	server.HandleFunc("/api/admin/delete", handlers.Delete_table(db))
-	server.HandleFunc("/api/admin/create", handlers.Create_table(db))
+	server.HandleFunc("/api/admin/delete", handlers.DeleteTable(db))
+	server.HandleFunc("/api/admin/create", handlers.CreateTable(db))
 
 	server.HandleFunc("/monies", monies_route)
-	// server.HandleFunc("/monies/select_all", select_all_and_print(db))
-	// server.HandleFunc("/monies/insert", insert(db))
+	// server.HandleFunc("/api/monies/all", select_all_and_print(db))
+	// server.HandleFunc("/api/monies/insert", insert(db))
 
 	server.HandleFunc("/notes", handlers.NotesRoute(db))
 	server.HandleFunc("/api/notes/insert", handlers.NotesInsert(db))
