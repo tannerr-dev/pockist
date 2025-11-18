@@ -75,3 +75,34 @@ button:hover{
     font-weight:bold;
     cursor:pointer;
 }
+
+/* Notes styling */
+.notes-container {
+    margin-top: 2rem;
+    gap: 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    /* justify-content:center; */
+    padding-bottom:20px;
+}
+
+.note-item {
+    background-color: var(--accent-dark);
+    border-radius: 8px;
+    padding: 1rem;
+    border-left: 3px solid var(--accent);
+    width: 80%;
+}
+
+.note-content {
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+    line-height: 1.4;
+}
+
+.note-meta {
+    color: var(--text);
+    opacity: 0.7;
+    font-size: 0.8rem;
+}

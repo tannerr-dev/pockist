@@ -17,11 +17,16 @@
             <input type="text" name="note" placeholder="note" autofocus>
             <input type="submit" value="submit">
         </form>
-        <ul>
-        {{range .NotesSlice}}
-            <li>{{.}}</li>
-        {{end}}
-        </ul>
+        <div class="notes-container">
+            {{range .NotesSlice}}
+            <div class="note-item">
+                <div class="note-content">{{.Note}}</div>
+                <div class="note-meta">
+                    <small>Created: {{.DateCreated}}</small>
+                </div>
+            </div>
+            {{end}}
+        </div>
         <!-- <form action="/api/notes/delete" method="post" class="flex-col"> -->
         <!--     <input type="text" name="" placeholder=""> -->
         <!--     <button type="submit"> -->
