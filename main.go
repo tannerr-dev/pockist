@@ -1,11 +1,12 @@
 package main
 
 import (
-	"database/sql"
 	"fmt"
-	"html/template"
+	"os"
 	"log"
 	"net/http"
+	"html/template"
+	"database/sql"
 
 	_ "github.com/mattn/go-sqlite3"
 	"tannerr/pockist/handlers"
