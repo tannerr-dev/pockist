@@ -14,15 +14,14 @@
     <main class="">
         <h1>Notes</h1>
         <form action="/api/notes/insert" method="post" class="flex-col">
-            <input type="text" name="note" placeholder="note">
+            <input type="text" name="note" placeholder="note" autofocus>
             <input type="submit" value="submit">
-            <!-- <button type="submit"> -->
-            <!--     insert -->
-            <!-- </button> -->
         </form>
-        {{range .}}
-        {{.}}
+        <ul>
+        {{range .NotesSlice}}
+            <li>{{.}}</li>
         {{end}}
+        </ul>
         <!-- <form action="/api/notes/delete" method="post" class="flex-col"> -->
         <!--     <input type="text" name="" placeholder=""> -->
         <!--     <button type="submit"> -->
