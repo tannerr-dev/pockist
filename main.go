@@ -45,10 +45,6 @@ func check(e error) {
 }
 func main() {
 	var err error
-	admin_template, err = template.ParseFiles("templates/admin.html")
-	check(err)
-	monies_template, err = template.ParseFiles("templates/monies.html")
-	check(err)
 	db, err := sql.Open("sqlite3", "./data/pockist.db")
 	if err != nil {
 		log.Fatalf("db connection failed: %v", err)
