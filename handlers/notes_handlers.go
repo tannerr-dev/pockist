@@ -1,0 +1,82 @@
+package handlers
+
+import (
+	"database/sql"
+	"html/template"
+	"log"
+	"net/http"
+
+	_ "github.com/mattn/go-sqlite3"
+)
+
+var notesTemplate *template.Template
+
+func init() {
+	var err error
+	notesTemplate, err = template.ParseFiles("templates/notes.html")
+	if err != nil {
+		log.Fatalf("error parsing notes template: %v", err)
+	}
+}
+
+type NotesStruct struct {
+	NotesSlice []string
+}
+
+func NotesRoute(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// Fetch actual notes from database
+		notes, err := fetchNotesFromDB(db)
+		if err != nil {
+			http.Error(w, "failed to fetch notes", http.StatusInternalServerError)
+			return
+		}
+
+		data := NotesStruct{NotesSlice: notes}
+		err = notesTemplate.Execute(w, data)
+		if err != nil {
+			http.Error(w, "failed to load template", http.StatusInternalServerError)
+		}
+	}
+}
+
+func fetchNotesFromDB(db *sql.DB) ([]string, error) {
+	query := `SELECT note FROM notes ORDER BY id DESC`
+	rows, err := db.Query(query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var notes []string
+	for rows.Next() {
+		var note string
+		if err := rows.Scan(&note); err != nil {
+			return nil, err
+		}
+		notes = append(notes, note)
+	}
+	return notes, nil
+}
+
+func NotesInsert(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		note := r.FormValue("note")
+
+		// Validate that note is not empty
+		if note == "" {
+			http.Error(w, "Note cannot be empty", http.StatusBadRequest)
+			return
+		}
+		query := `
+            INSERT INTO notes (note) VALUES (?)
+        `
+		_, err := db.Exec(query, note)
+		if err != nil {
+			log.Printf("Error inserting note: %v", err)
+			http.Error(w, "Failed to insert note", http.StatusInternalServerError)
+			return
+		}
+		http.Redirect(w, r, "/notes", http.StatusSeeOther)
+	}
+}
