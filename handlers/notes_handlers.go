@@ -19,8 +19,15 @@ func init() {
 	}
 }
 
+type Note struct {
+	ID           int    `json:"id"`
+	Note         string `json:"note"`
+	DateCreated  string `json:"date_created"`
+	DateModified string `json:"date_modified"`
+}
+
 type NotesStruct struct {
-	NotesSlice []string
+	NotesSlice []Note
 }
 
 func NotesRoute(db *sql.DB) http.HandlerFunc {
@@ -40,18 +47,18 @@ func NotesRoute(db *sql.DB) http.HandlerFunc {
 	}
 }
 
-func fetchNotesFromDB(db *sql.DB) ([]string, error) {
-	query := `SELECT note FROM notes ORDER BY id DESC`
+func fetchNotesFromDB(db *sql.DB) ([]Note, error) {
+	query := `SELECT id, note, date_created, date_modified FROM notes ORDER BY date_created DESC`
 	rows, err := db.Query(query)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	var notes []string
+	var notes []Note
 	for rows.Next() {
-		var note string
-		if err := rows.Scan(&note); err != nil {
+		var note Note
+		if err := rows.Scan(&note.ID, &note.Note, &note.DateCreated, &note.DateModified); err != nil {
 			return nil, err
 		}
 		notes = append(notes, note)
@@ -62,8 +69,6 @@ func fetchNotesFromDB(db *sql.DB) ([]string, error) {
 func NotesInsert(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		note := r.FormValue("note")
-
-		// Validate that note is not empty
 		if note == "" {
 			http.Error(w, "Note cannot be empty", http.StatusBadRequest)
 			return
