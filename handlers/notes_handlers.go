@@ -32,7 +32,6 @@ type NotesStruct struct {
 
 func NotesRoute(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// Fetch actual notes from database
 		notes, err := fetchNotesFromDB(db)
 		if err != nil {
 			http.Error(w, "failed to fetch notes", http.StatusInternalServerError)

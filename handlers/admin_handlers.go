@@ -9,7 +9,7 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-func Create_table(db *sql.DB) http.HandlerFunc {
+func CreateTable(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("create table")
 		err := r.ParseForm()
@@ -32,7 +32,6 @@ func Create_table(db *sql.DB) http.HandlerFunc {
 		_, err = db.Exec(query)
 		// _, err := db.Exec(query)
 		if err != nil {
-			log.Panic(err)
 			http.Error(w, "Failed to parse form", http.StatusInternalServerError)
 		}
 		// message_template, err := template.ParseFiles("templates/message.html")
@@ -40,7 +39,7 @@ func Create_table(db *sql.DB) http.HandlerFunc {
 		http.Redirect(w, r, "/admin", http.StatusSeeOther)
 	}
 }
-func Delete_table(db *sql.DB) http.HandlerFunc {
+func DeleteTable(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("delete table")
 		table_name := r.FormValue("table_name")
@@ -50,7 +49,6 @@ func Delete_table(db *sql.DB) http.HandlerFunc {
         `
 		rows, err := db.Query(query)
 		if err != nil {
-			log.Panic(err)
 			http.Error(w, "Failed to parse form", http.StatusInternalServerError)
 		}
 		defer rows.Close()
@@ -87,7 +85,7 @@ func Delete_table(db *sql.DB) http.HandlerFunc {
 		http.Redirect(w, r, "/admin", http.StatusSeeOther)
 	}
 }
-func List_tables(db *sql.DB) http.HandlerFunc {
+func ListTables(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("list tables")
 		query := `
@@ -128,7 +126,7 @@ func Insert(db *sql.DB) http.HandlerFunc {
 		http.Redirect(w, r, "/admin", http.StatusSeeOther)
 	}
 }
-func All_select(db *sql.DB) http.HandlerFunc {
+func AllSelect(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("select all and print")
 		query := `
