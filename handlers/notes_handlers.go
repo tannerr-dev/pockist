@@ -9,13 +9,14 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-var notesTemplate *template.Template
-
+var (
+	notesTemplate *template.Template
+)
 func init() {
 	var err error
-	notesTemplate, err = template.ParseFiles("templates/notes.html")
+	notesTemplate, err = template.ParseFiles("templates/layout.html","templates/notes.html")
 	if err != nil {
-		log.Fatalf("error parsing notes template: %v", err)
+		log.Fatalf("umm error parsing notes template: %v", err)
 	}
 }
 
@@ -41,7 +42,7 @@ func NotesRoute(db *sql.DB) http.HandlerFunc {
 		data := NotesStruct{NotesSlice: notes}
 		err = notesTemplate.Execute(w, data)
 		if err != nil {
-			http.Error(w, "failed to load template", http.StatusInternalServerError)
+			http.Error(w, "failed to exec template", http.StatusInternalServerError)
 		}
 	}
 }
