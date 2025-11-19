@@ -40,7 +40,14 @@ func admin_handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 }
-
+func monies_handler(w http.ResponseWriter, r *http.Request) {
+	t := template.Must(template.New("").ParseFiles("templates/layout.html", "templates/monies.html"))
+	err := t.ExecuteTemplate(w, "layout.html", nil)
+	if err != nil {
+		http.Error(w, "failed to load monies template", http.StatusInternalServerError)
+		return
+	}
+}
 func main() {
 	db, err := sql.Open("sqlite3", "./data/pockist.db")
 	if err != nil {
@@ -52,20 +59,14 @@ func main() {
 	server.HandleFunc("/api/login", login_handler)
 	server.HandleFunc("/dashboard", dashboard_handler)
 	server.HandleFunc("/admin", admin_handler)
+
 	server.HandleFunc("/api/admin/all", handlers.AllSelect(db))
 	server.HandleFunc("/api/admin/list_tables", handlers.ListTables(db))
 	server.HandleFunc("/api/admin/insert", handlers.Insert(db))
 	server.HandleFunc("/api/admin/delete", handlers.DeleteTable(db))
 	server.HandleFunc("/api/admin/create", handlers.CreateTable(db))
 
-	server.HandleFunc("/monies", func(w http.ResponseWriter, r *http.Request) {
-		t := template.Must(template.New("").ParseFiles("templates/layout.html", "templates/monies.html"))
-		err := t.ExecuteTemplate(w, "layout.html", nil)
-		if err != nil {
-			http.Error(w, "failed to load monies template", http.StatusInternalServerError)
-			return
-		}
-	})
+	server.HandleFunc("/monies", monies_handler)
 	// server.HandleFunc("/api/monies/all", select_all_and_print(db))
 	// server.HandleFunc("/api/monies/insert", insert(db))
 
