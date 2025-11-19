@@ -6,18 +6,22 @@
 <body class="flex-col">
     <main class="">
         <h1>Notes</h1>
-        <form action="/api/notes/insert" method="post" class="flex-col">
+        <form action="/api/notes/insert" method="post" class="flex-col form">
             <input type="text" name="note" placeholder="note" autofocus>
-            <input type="submit" value="submit">
+            <button type="submit" class="button">submit</button>
         </form>
         <div class="notes-container">
             {{range .NotesSlice}}
             <div class="note-item">
                 <div class="note-content">{{.Note}}</div>
-                <div class="note-meta">
-                    <small>ID: {{.ID}}</small>
-                    <small>Created: {{.DateCreated}}</small>
-                </div>
+                <form class="delete-form" action="/api/notes/delete" method="post">
+                    <input type="hidden" name="form_id" value="{{.ID}}">
+                    <button type="submit" class="delete-btn">delete</button>
+                </form>
+                <!-- <div class="note-meta"> -->
+                <!--     <small>ID: {{.ID}}</small> -->
+                <!--     <small>Created: {{.DateCreated}}</small> -->
+                <!-- </div> -->
             </div>
             {{end}}
         </div>
