@@ -72,6 +72,7 @@ func main() {
 
 	server.HandleFunc("/notes", handlers.NotesRoute(db))
 	server.HandleFunc("/api/notes/insert", handlers.NotesInsert(db))
+	server.HandleFunc("/api/notes/delete", handlers.NotesDelete(db))
 
 	server.Handle("/", http.FileServer(http.Dir("public")))
 	const addr = ":8080"

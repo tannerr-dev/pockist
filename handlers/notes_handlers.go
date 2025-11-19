@@ -1,10 +1,10 @@
 package handlers
 
 import (
-	"database/sql"
-	"html/template"
 	"log"
 	"net/http"
+	"html/template"
+	"database/sql"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -80,6 +80,23 @@ func NotesInsert(db *sql.DB) http.HandlerFunc {
 		if err != nil {
 			log.Printf("Error inserting note: %v", err)
 			http.Error(w, "Failed to insert note", http.StatusInternalServerError)
+			return
+		}
+		http.Redirect(w, r, "/notes", http.StatusSeeOther)
+	}
+}
+func NotesDelete(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id := r.FormValue("form_id")
+		if id == "" {
+			http.Error(w, "ID cannot be empty", http.StatusBadRequest)
+			return
+		}
+		query := `DELETE FROM notes WHERE id = ?`
+		_, err := db.Exec(query, id)
+		if err != nil {
+			log.Printf("Error deleting note: %v", err)
+			http.Error(w, "Failed to delete note", http.StatusInternalServerError)
 			return
 		}
 		http.Redirect(w, r, "/notes", http.StatusSeeOther)
