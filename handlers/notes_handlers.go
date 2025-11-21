@@ -14,7 +14,7 @@ var (
 )
 func init() {
 	var err error
-	notesTemplate, err = template.ParseFiles("templates/layout.html","templates/notes.html")
+	notesTemplate, err = template.ParseFiles("templates/layout.tmpl","templates/notes.tmpl")
 	if err != nil {
 		log.Fatalf("umm error parsing notes template: %v", err)
 	}

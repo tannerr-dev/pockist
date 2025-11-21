@@ -20,8 +20,8 @@ func login_handler(w http.ResponseWriter, r *http.Request) {
 }
 func dashboard_handler(w http.ResponseWriter, r *http.Request) {
 	// Create a new template set with layout and dashboard
-	t := template.Must(template.New("").ParseFiles("templates/layout.html", "templates/dashboard.html"))
-	err := t.ExecuteTemplate(w, "layout.html", nil)
+	t := template.Must(template.New("").ParseFiles("templates/layout.tmpl", "templates/dashboard.tmpl"))
+	err := t.ExecuteTemplate(w, "layout.tmpl", nil)
 	if err != nil {
 		fmt.Printf("Dashboard template error: %v\n", err)
 		http.Error(w, "failed to exec dashboard template", http.StatusInternalServerError)
@@ -32,8 +32,8 @@ func dashboard_handler(w http.ResponseWriter, r *http.Request) {
 func admin_handler(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("admin hit")
 	// Create a new template set with layout and admin
-	t := template.Must(template.New("").ParseFiles("templates/layout.html", "templates/admin.html"))
-	err := t.ExecuteTemplate(w, "layout.html", nil)
+	t := template.Must(template.New("").ParseFiles("templates/layout.tmpl", "templates/admin.tmpl"))
+	err := t.ExecuteTemplate(w, "layout.tmpl", nil)
 	if err != nil {
 		fmt.Printf("Admin template error: %v\n", err)
 		http.Error(w, "failed to load admin template", http.StatusInternalServerError)
@@ -41,8 +41,8 @@ func admin_handler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 func monies_handler(w http.ResponseWriter, r *http.Request) {
-	t := template.Must(template.New("").ParseFiles("templates/layout.html", "templates/monies.html"))
-	err := t.ExecuteTemplate(w, "layout.html", nil)
+	t := template.Must(template.New("").ParseFiles("templates/layout.tmpl", "templates/monies.tmpl"))
+	err := t.ExecuteTemplate(w, "layout.tmpl", nil)
 	if err != nil {
 		http.Error(w, "failed to load monies template", http.StatusInternalServerError)
 		return
