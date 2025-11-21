@@ -1,7 +1,8 @@
 :root{
-    --hue: 2;
+    --hue: 10;
     --bg: hsl(var(--hue),22%, 8%);
-    --text: hsl(var(--hue), 98%, 88%);
+    --bg-light: hsl(var(--hue),22%, 16%);
+    --text: hsl(var(--hue), 98%, 84%);
     --accent: hsl(var(--hue),22%, 42%);
     --accent-dark: hsl(var(--hue),22%, 28%);
 }
@@ -14,7 +15,7 @@ body {
     font-family: Arial, Helvetica, sans-serif;
 }
 main {
-    margin-top:6px;
+    box-sizing:border-box;
     padding-top: 3rem;
     min-width: 412px;
     min-height: 894px;
@@ -84,7 +85,7 @@ button:hover{
     padding-bottom:20px;
 }
 .note-item {
-    background-color: var(--accent-dark);
+    background-color: var(--bg-light);
     border-radius: 8px;
     padding: 1rem;
     border-left: 3px solid var(--accent);
@@ -105,7 +106,7 @@ button:hover{
     opacity: 0.7;
     font-size: 0.8rem;
 }
-.delete-btn {
+.btn{
     padding:10px;
     border:2px solid var(--accent);
     border-radius:5px;
@@ -113,4 +114,5 @@ button:hover{
     color:var(--text);
     margin:10px;
     font-size:0.8rem;
+    min-width:60px;
 }
