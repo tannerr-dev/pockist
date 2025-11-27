@@ -18,12 +18,17 @@ but I am using this as a learning experience and because its fun.
 
 ---
 
-applets:
+in progress:
+- notes
+
+next up:
+- local first notes
+
+
+todo:
 - monies, make my finance spreadsheet into an app
 - fridge & pantry
 - workout tracker
 - habit tracker
 - tasks
 - events
-- notes
-
