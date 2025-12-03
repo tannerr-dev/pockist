@@ -15,10 +15,10 @@ async function createVisualization() {
   console.log("Traffic data loaded:", traffic.length, "rows");
 
   const plot = Plot.plot({
-    marginLeft: 120,
     padding: 0,
-    y: {label: null},
-    color: {legend: true, zero: true},
+    x: {label: null, tickFormat: "", axis: null},
+    y: {label: null, tickFormat: "", axis: null},
+    color: {legend: false, zero: true},
     marks: [
       Plot.cell(
         traffic,
@@ -31,11 +31,7 @@ async function createVisualization() {
   });
 
   const div = document.querySelector("#myplot");
-  if (div) {
-    div.append(plot);
-  } else {
-    console.error("Could not find element with id 'myplot'");
-  }
+  div.append(plot);
 }
 
 createVisualization().catch(error => {
