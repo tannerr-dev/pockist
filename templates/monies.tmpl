@@ -8,7 +8,7 @@
         <h1>Monies</h1>
         <form action="/api/monies/all" method="get" class="flex-col form">
             <input type="text" name="table_name" placeholder="table name">
-            <button type="submit">
+            <button class="button" type="submit">
                     select all from table
             </button>
         </form>
@@ -19,6 +19,8 @@
                     insert into table
             </button>
         </form>
+        <div id="myplot"></div>
     </main>
+<script type="module" src="monies.js"></script>
 </body>
 {{end}}
