@@ -6,36 +6,33 @@
 <body class="flex-col">
     <main class="flex-col">
         <h1>Admin</h1>
-        <!-- <button hx-post="/create" hx-swap="none"> -->
-        <!--     create table -->
-        <!-- </button> -->
-        <form action="/api/admin/create" method="post" class="flex-col">
+        <form action="/api/admin/create" method="post" class="flex-col form">
             <input type="text" name="table_name" placeholder="table name">
-            <button type="submit">
+            <button type="submit" class="button">
                 create table
             </button>
         </form>
-        <form action="/api/admin/all" method="get" class="flex-col">
+        <form action="/api/admin/all" method="get" class="flex-col form">
             <input type="text" name="table_name" placeholder="table name">
-            <button type="submit">
+            <button type="submit" class="button">
                     select all from table
             </button>
         </form>
-        <form action="/api/admin/list_tables" method="get" class="flex-col">
-            <button type="submit">
+        <form action="/api/admin/list_tables" method="get" class="flex-col form">
+            <button type="submit" class="button">
                     list tables
             </button>
         </form>
-        <form action="/api/admin/insert" method="get" class="flex-col">
+        <form action="/api/admin/insert" method="get" class="flex-col form">
             <input type="text" name="table_name" placeholder="table name">
             <input type="text" name="value" placeholder="value">
-            <button type="submit">
+            <button type="submit" class="button">
                     insert into table
             </button>
         </form>
-        <form action="/api/admin/delete" method="post" class="flex-col">
+        <form action="/api/admin/delete" method="post" class="flex-col form">
             <input type="text" name="table_name" placeholder="table name">
-            <button type="submit">
+            <button type="submit" class="button">
                 delete table
             </button>
         </form>
