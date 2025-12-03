@@ -1,5 +1,3 @@
-//<script src="d3.js"></script>
-//<script src="plot.js"></script>
 import "/d3.js"
 import "/plot.js"
 
@@ -13,7 +11,7 @@ async function createVisualization() {
     vehicles: +d.vehicles // Convert to number
   }));
 
-  console.log("Parsed traffic data:", traffic.slice(0, 5)); // Log first 5 rows
+  console.log("Parsed traffic data:", traffic.slice(0, 5));
   console.log("Traffic data loaded:", traffic.length, "rows");
 
   const plot = Plot.plot({
@@ -40,7 +38,6 @@ async function createVisualization() {
   }
 }
 
-// Execute the visualization
 createVisualization().catch(error => {
   console.error("Error creating visualization:", error);
 });

@@ -11,43 +11,26 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 	"tannerr/pockist/handlers"
 )
-func login_handler(w http.ResponseWriter, r *http.Request) {
+func loginHandler(w http.ResponseWriter, r *http.Request) {
+	//TODO simple auth flow with jwt
 	if r.FormValue("username") == os.Getenv("POCKIST_USERNAME")&& r.FormValue("password") ==  os.Getenv("POCKIST_PASSWORD"){
 		http.Redirect(w, r, "/dashboard", http.StatusSeeOther)
 	} else {
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 	}
 }
-func dashboard_handler(w http.ResponseWriter, r *http.Request) {
-	// Create a new template set with layout and dashboard
-	t := template.Must(template.New("").ParseFiles("templates/layout.tmpl", "templates/dashboard.tmpl"))
-	err := t.ExecuteTemplate(w, "layout.tmpl", nil)
-	if err != nil {
-		fmt.Printf("Dashboard template error: %v\n", err)
-		http.Error(w, "failed to exec dashboard template", http.StatusInternalServerError)
-		return
+func default_handler(filename string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		t := template.Must(template.New("").ParseFiles("templates/layout.tmpl", fmt.Sprintf("templates/%s.tmpl", filename)))
+		err := t.ExecuteTemplate(w, "layout.tmpl", nil)
+		if err != nil {
+			fmt.Printf("template error: %v\n", err)
+			http.Error(w, "failed to exec dashboard template", http.StatusInternalServerError)
+			return
+		}
 	}
 }
 
-func admin_handler(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("admin hit")
-	// Create a new template set with layout and admin
-	t := template.Must(template.New("").ParseFiles("templates/layout.tmpl", "templates/admin.tmpl"))
-	err := t.ExecuteTemplate(w, "layout.tmpl", nil)
-	if err != nil {
-		fmt.Printf("Admin template error: %v\n", err)
-		http.Error(w, "failed to load admin template", http.StatusInternalServerError)
-		return
-	}
-}
-func monies_handler(w http.ResponseWriter, r *http.Request) {
-	t := template.Must(template.New("").ParseFiles("templates/layout.tmpl", "templates/monies.tmpl"))
-	err := t.ExecuteTemplate(w, "layout.tmpl", nil)
-	if err != nil {
-		http.Error(w, "failed to load monies template", http.StatusInternalServerError)
-		return
-	}
-}
 func main() {
 	db, err := sql.Open("sqlite3", "./data/pockist.db")
 	if err != nil {
@@ -56,9 +39,10 @@ func main() {
 	defer db.Close()
 
 	server := http.NewServeMux()
-	server.HandleFunc("/api/login", login_handler)
-	server.HandleFunc("/dashboard", dashboard_handler)
-	server.HandleFunc("/admin", admin_handler)
+	server.HandleFunc("/api/login", loginHandler)
+	server.HandleFunc("/dashboard", default_handler("dashboard"))
+	server.HandleFunc("/admin", default_handler("admin"))
+	server.HandleFunc("/heatmap", default_handler("heatmap"))
 
 	server.HandleFunc("/api/admin/all", handlers.AllSelect(db))
 	server.HandleFunc("/api/admin/list_tables", handlers.ListTables(db))
@@ -66,7 +50,7 @@ func main() {
 	server.HandleFunc("/api/admin/delete", handlers.DeleteTable(db))
 	server.HandleFunc("/api/admin/create", handlers.CreateTable(db))
 
-	server.HandleFunc("/monies", monies_handler)
+	server.HandleFunc("/monies", default_handler("monies"))
 	// server.HandleFunc("/api/monies/all", select_all_and_print(db))
 	// server.HandleFunc("/api/monies/insert", insert(db))
 
