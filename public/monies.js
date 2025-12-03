@@ -3,49 +3,44 @@
 import "/d3.js"
 import "/plot.js"
 
-// const plot = Plot.rectY(
-//   {length: 100}, 
-//   Plot.binX(
-//     {y: "count"}, 
-//     {x: Math.random}
-//   )
-// ).plot();
-//
-
-
-
-// traffic = FileAttachment("traffic.csv").csv({typed: true})
-async function retrieve(){
+async function createVisualization() {
   let res = await fetch("./traffic.csv")
   let csv = await res.text()
-  // console.log(csv)
-  console.log(typeof(csv))
-  return csv
-}
-const csv = retrieve()
 
-const traffic = d3.csvParse(csv);
+  const traffic = d3.csvParse(csv, d => ({
+    location: d.location,
+    date: new Date(d.date), // Convert to proper Date object
+    vehicles: +d.vehicles // Convert to number
+  }));
 
-console.log(traffic)
+  console.log("Parsed traffic data:", traffic.slice(0, 5)); // Log first 5 rows
+  console.log("Traffic data loaded:", traffic.length, "rows");
 
-
-
-
-const plot = Plot.plot({
-  marginLeft: 120,
-  padding: 0,
-  y: {label: null},
-  color: {legend: true, zero: true},
-  marks: [
-    Plot.cell(
-      traffic,
-      Plot.group(
-        {fill: "median"},
-        {x: (d) => d.date.getUTCHours(), y: "location", fill: "vehicles", inset: 0.5, sort: {y: "fill"}}
+  const plot = Plot.plot({
+    marginLeft: 120,
+    padding: 0,
+    y: {label: null},
+    color: {legend: true, zero: true},
+    marks: [
+      Plot.cell(
+        traffic,
+        Plot.group(
+          {fill: "median"},
+          {x: (d) => d.date.getUTCHours(), y: "location", fill: "vehicles", inset: 0.5, sort: {y: "fill"}}
+        )
       )
-    )
-  ]
-})
+    ]
+  });
 
-const div = document.querySelector("#myplot");
-div.append(plot);
+  const div = document.querySelector("#myplot");
+  if (div) {
+    div.append(plot);
+  } else {
+    console.error("Could not find element with id 'myplot'");
+  }
+}
+
+// Execute the visualization
+createVisualization().catch(error => {
+  console.error("Error creating visualization:", error);
+});
