@@ -18,8 +18,11 @@ but I am using this as a learning experience and because its fun.
 
 ---
 Dependencies not checked into git:
+
 [Observable Plot & D3](https://observablehq.com/plot/getting-started)
+
 d3.min.js
+
 plot.min.js
 
 or
