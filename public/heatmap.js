@@ -10,6 +10,7 @@ async function createVisualization() {
     date: new Date(d.date), // Convert to proper Date object
     vehicles: +d.vehicles // Convert to number
   }));
+  console.log(typeof(traffic))
 
   console.log("Parsed traffic data:", traffic.slice(0, 5));
   console.log("Traffic data loaded:", traffic.length, "rows");
