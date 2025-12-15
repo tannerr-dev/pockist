@@ -1,3 +1,5 @@
 tmp
 .env
 data/pockist.db
+public/d3.min.js
+public/plot.min.js
