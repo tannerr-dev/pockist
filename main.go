@@ -31,12 +31,16 @@ func default_handler(filename string) http.HandlerFunc {
 	}
 }
 
+
 func main() {
 	db, err := sql.Open("sqlite3", "./data/pockist.db")
 	if err != nil {
 		log.Fatalf("db connection failed: %v", err)
 	}
 	defer db.Close()
+
+	notesHandler := handlers.CreateNotesHandler(db)
+
 
 	server := http.NewServeMux()
 	server.HandleFunc("/api/login", loginHandler)
@@ -54,9 +58,9 @@ func main() {
 	// server.HandleFunc("/api/monies/all", select_all_and_print(db))
 	// server.HandleFunc("/api/monies/insert", insert(db))
 
-	server.HandleFunc("/notes", handlers.NotesRoute(db))
-	server.HandleFunc("/api/notes/insert", handlers.NotesInsert(db))
-	server.HandleFunc("/api/notes/delete", handlers.NotesDelete(db))
+	server.HandleFunc("/notes", notesHandler.NotesRoute)
+	server.HandleFunc("/api/notes/insert", notesHandler.NotesInsert)
+	server.HandleFunc("/api/notes/delete", notesHandler.NotesDelete)
 
 	server.Handle("/", http.FileServer(http.Dir("public")))
 	const addr = ":8080"

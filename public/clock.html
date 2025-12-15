@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="./logo_white.svg" />
+    <!-- <link rel="stylesheet" href="./index.css" /> -->
+    <meta name="darkreader-lock">
+    <title>tannerr.dev</title>
+    <style>
+        :root{
+            --bg: hsl(12, 12%, 12%)
+        }
+        html{
+            background-color: var(--bg);
+        }
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        main{
+            width:100%;
+            height:100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .stopwatch-container {
+            width:50%;
+            text-align: center;
+            color:black;
+            background-color: beige;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        #display {
+            font-size: 48px;
+            font-weight: bold;
+            margin: 20px 0;
+            font-family: monospace;
+        }
+
+        .buttons {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        button {
+            width:20%;
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        #startBtn {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        #stopBtn {
+            background-color: #f44336;
+            color: white;
+        }
+
+        #resetBtn {
+            background-color: #2196F3;
+            color: white;
+        }
+
+        #lapBtn {
+            background-color: #FF9800;
+            color: white;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        #laps {
+            margin-top: 20px;
+            max-height: 200px;
+            overflow-y: auto;
+            text-align: left;
+        }
+
+        .lap-item {
+            padding: 5px 10px;
+            border-bottom: 1px solid #eee;
+        }
+    </style>
+</head>
+<body class="flex-col">
+    <main>
+    <div class="stopwatch-container">
+        <h1>Stopwatch</h1>
+        <!-- <div id="display">00:00:00.000</div> -->
+        <div id="display">00:00:00</div>
+        <div class="buttons">
+            <button id="startBtn">Start</button>
+            <button id="stopBtn">Stop</button>
+            <button id="resetBtn">Reset</button>
+            <button id="lapBtn">Lap</button>
+        </div>
+    </div>
+    <div id="laps"></div>
+    </main>
+
+<script>
+    // Stopwatch functionality
+    const display = document.getElementById('display');
+    const startBtn = document.getElementById('startBtn');
+    const stopBtn = document.getElementById('stopBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const lapBtn = document.getElementById('lapBtn');
+    const lapsContainer = document.getElementById('laps');
+    const stopwatchContainer = document.querySelector('.stopwatch-container');
+
+    let startTime;
+    let elapsedTime = 0;
+    let timerInterval;
+    let running = false;
+    let lapCount = 0;
+
+    // Format time as HH:MM:SS.mmm
+    function formatTime(timeInMilliseconds) {
+        let date = new Date(timeInMilliseconds);
+        let hours = date.getUTCHours().toString().padStart(2, '0');
+        let minutes = date.getUTCMinutes().toString().padStart(2, '0');
+        let seconds = date.getUTCSeconds().toString().padStart(2, '0');
+        // let milliseconds = date.getUTCMilliseconds().toString().padStart(3, '0');
+
+        // return `${hours}:${minutes}:${seconds}.${milliseconds}`;
+        return `${hours}:${minutes}:${seconds}`;
+    }
+
+    // Update the display
+    function updateDisplay() {
+        const currentTime = Date.now() - startTime + elapsedTime;
+        display.textContent = formatTime(currentTime);
+    }
+
+    // Start the stopwatch
+    startBtn.addEventListener('click', function() {
+        if (!running) {
+            startTime = Date.now();
+            timerInterval = setInterval(updateDisplay, 1000);
+            running = true;
+            startBtn.textContent = 'Resume';
+        }
+        stopwatchContainer.style.backgroundColor = "hsl(120, 80%, 90%)";
+    });
+
+    // Stop the stopwatch
+    stopBtn.addEventListener('click', function() {
+        if (running) {
+            clearInterval(timerInterval);
+            elapsedTime += Date.now() - startTime;
+            running = false;
+        }
+        stopwatchContainer.style.backgroundColor = "hsl(15, 80%, 80%)";
+    });
+
+    // Reset the stopwatch
+    resetBtn.addEventListener('click', function() {
+        clearInterval(timerInterval);
+        running = false;
+        elapsedTime = 0;
+        lapCount = 0;
+        startBtn.textContent = 'Start';
+        // display.textContent = '00:00:00.000';
+        display.textContent = '00:00:00';
+        lapsContainer.innerHTML = '';
+        stopwatchContainer.style.backgroundColor = "beige";
+    });
+
+    // Record lap time
+    lapBtn.addEventListener('click', function() {
+        if (running) {
+            lapCount++;
+            const currentTime = Date.now() - startTime + elapsedTime;
+            const lapItem = document.createElement('div');
+            lapItem.classList.add('lap-item');
+            lapItem.textContent = `Lap ${lapCount}: ${formatTime(currentTime)}`;
+            lapsContainer.prepend(lapItem);
+        }
+    });
+</script>
+</body>
+</html>
