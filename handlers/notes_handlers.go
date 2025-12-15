@@ -12,6 +12,7 @@ import (
 var (
 	notesTemplate *template.Template
 )
+
 func init() {
 	var err error
 	notesTemplate, err = template.ParseFiles("templates/layout.tmpl","templates/notes.tmpl")

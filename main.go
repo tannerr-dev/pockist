@@ -11,6 +11,7 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 	"tannerr/pockist/handlers"
 )
+
 func loginHandler(w http.ResponseWriter, r *http.Request) {
 	//TODO simple auth flow with jwt
 	if r.FormValue("username") == os.Getenv("POCKIST_USERNAME")&& r.FormValue("password") ==  os.Getenv("POCKIST_PASSWORD"){
@@ -19,6 +20,7 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 	}
 }
+
 func default_handler(filename string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		t := template.Must(template.New("").ParseFiles("templates/layout.tmpl", fmt.Sprintf("templates/%s.tmpl", filename)))
@@ -31,7 +33,6 @@ func default_handler(filename string) http.HandlerFunc {
 	}
 }
 
-
 func main() {
 	db, err := sql.Open("sqlite3", "./data/pockist.db")
 	if err != nil {
@@ -40,6 +41,7 @@ func main() {
 	defer db.Close()
 
 	notesHandler := handlers.CreateNotesHandler(db)
+	adminHandler := handlers.CreateAdminHandler(db)
 
 
 	server := http.NewServeMux()
@@ -48,11 +50,11 @@ func main() {
 	server.HandleFunc("/admin", default_handler("admin"))
 	server.HandleFunc("/heatmap", default_handler("heatmap"))
 
-	server.HandleFunc("/api/admin/all", handlers.AllSelect(db))
-	server.HandleFunc("/api/admin/list_tables", handlers.ListTables(db))
-	server.HandleFunc("/api/admin/insert", handlers.Insert(db))
-	server.HandleFunc("/api/admin/delete", handlers.DeleteTable(db))
-	server.HandleFunc("/api/admin/create", handlers.CreateTable(db))
+	server.HandleFunc("/api/admin/all", adminHandler.AllSelect)
+	server.HandleFunc("/api/admin/list_tables", adminHandler.ListTables)
+	server.HandleFunc("/api/admin/insert", adminHandler.Insert)
+	server.HandleFunc("/api/admin/delete", adminHandler.DeleteTable)
+	server.HandleFunc("/api/admin/create", adminHandler.CreateTable)
 
 	server.HandleFunc("/monies", default_handler("monies"))
 	// server.HandleFunc("/api/monies/all", select_all_and_print(db))
