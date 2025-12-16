@@ -1,0 +1,44 @@
+{{define "head"}}
+<title>Notes</title>
+<!-- <script src="notes.js" type="module"></script> -->
+{{end}} 
+{{define "body"}}
+<body class="flex-col">
+	<main>
+		<h1>Notes</h1>
+	<div id="new-remote-note">
+		<form action="/api/notes/insert" method="post" class="flex-col form">
+			<input type="text" name="note" placeholder="note" autofocus>
+			<button type="submit" class="button">submit</button>
+		</form>
+	</div>
+	<div class="notes-container">
+	    {{range .NotesSlice}}
+	    <div class="note-item">
+	        <div class="note-content">{{.Note}}</div>
+	        <div class="options">
+	            <button onclick="editNote()" class="btn">edit</button>
+	            <form class="delete-form" action="/api/notes/delete" method="post">
+	                <input type="hidden" name="form_id" value="{{.ID}}">
+	                <button type="submit" class="btn">delete</button>
+	            </form>
+	        </div>
+			<!-- <div class="note-meta"> -->
+			<!--     <small>ID: {{.ID}}</small> -->
+			<!--     <small>Created: {{.DateCreated}}</small> -->
+			<!-- </div> -->
+	    </div>
+	    {{end}}
+	</div>
+	</main>
+	<script>
+		// Utility functions for other parts of the app
+		let i = 1;
+
+		function editNote() {
+			console.log("well then", i);
+			i++;
+		}
+	</script>
+</body>
+{{end}}

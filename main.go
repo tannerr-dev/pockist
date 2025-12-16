@@ -21,10 +21,10 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func default_handler(filename string) http.HandlerFunc {
+func my_handler(filename string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		t := template.Must(template.New("").ParseFiles("templates/layout.tmpl", fmt.Sprintf("templates/%s.tmpl", filename)))
-		err := t.ExecuteTemplate(w, "layout.tmpl", nil)
+		t := template.Must(template.New("").ParseFiles("templates/layout.html", fmt.Sprintf("templates/%s.html", filename)))
+		err := t.ExecuteTemplate(w, "layout.html", nil)
 		if err != nil {
 			fmt.Printf("template error: %v\n", err)
 			http.Error(w, "failed to exec dashboard template", http.StatusInternalServerError)
@@ -43,26 +43,28 @@ func main() {
 	notesHandler := handlers.CreateNotesHandler(db)
 	adminHandler := handlers.CreateAdminHandler(db)
 
-
 	server := http.NewServeMux()
-	server.HandleFunc("/api/login", loginHandler)
-	server.HandleFunc("/dashboard", default_handler("dashboard"))
-	server.HandleFunc("/admin", default_handler("admin"))
-	server.HandleFunc("/heatmap", default_handler("heatmap"))
 
+	server.HandleFunc("/api/login", loginHandler)
+	server.HandleFunc("/dashboard", my_handler("dashboard"))
+
+	server.HandleFunc("/notes", notesHandler.NotesRoute)
+	server.HandleFunc("/ssrnotes", notesHandler.SsrNotesRoute)
+	server.HandleFunc("/api/notes/insert", notesHandler.NotesInsert)
+	server.HandleFunc("/api/notes/delete", notesHandler.NotesDelete)
+
+	server.HandleFunc("/heatmap", my_handler("heatmap"))
+
+	server.HandleFunc("/admin", my_handler("admin"))
 	server.HandleFunc("/api/admin/all", adminHandler.AllSelect)
 	server.HandleFunc("/api/admin/list_tables", adminHandler.ListTables)
 	server.HandleFunc("/api/admin/insert", adminHandler.Insert)
 	server.HandleFunc("/api/admin/delete", adminHandler.DeleteTable)
 	server.HandleFunc("/api/admin/create", adminHandler.CreateTable)
 
-	server.HandleFunc("/monies", default_handler("monies"))
+	server.HandleFunc("/monies", my_handler("monies"))
 	// server.HandleFunc("/api/monies/all", select_all_and_print(db))
 	// server.HandleFunc("/api/monies/insert", insert(db))
-
-	server.HandleFunc("/notes", notesHandler.NotesRoute)
-	server.HandleFunc("/api/notes/insert", notesHandler.NotesInsert)
-	server.HandleFunc("/api/notes/delete", notesHandler.NotesDelete)
 
 	server.Handle("/", http.FileServer(http.Dir("public")))
 	const addr = ":8080"
