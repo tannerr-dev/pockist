@@ -1,6 +1,6 @@
 :root{
-    --hue: 10;
-    --bg: hsl(var(--hue),22%, 8%);
+    --hue: 30;
+    --bg: hsl(var(--hue),22%, 12%);
     --bg-light: hsl(var(--hue),22%, 16%);
     --text: hsl(var(--hue), 98%, 84%);
     --accent: hsl(var(--hue),22%, 42%);
