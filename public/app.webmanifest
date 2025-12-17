@@ -1,11 +1,11 @@
 {
     "name": "Pockist",
     "short_name": "Pockist",
-    "theme_color": "#43281C",
     "display": "standalone",
     "scope": "/",
     "start_url": "/",
-    "background_color": "#333333",
+    "theme_color": "#222222",
+    "background_color": "#222222",
     "description": "Pocket Assistant",
     "icons": [
         {
