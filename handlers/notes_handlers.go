@@ -1,10 +1,13 @@
 package handlers
 
 import (
+	"database/sql"
+	"fmt"
+	// "fmt"
+	"encoding/json"
+	"html/template"
 	"log"
 	"net/http"
-	"html/template"
-	"database/sql"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -25,26 +28,43 @@ type NotesHandler struct {
 }
 
 var (
-	notesTemplate *template.Template
+	notesTemplate    *template.Template
 	ssrNotesTemplate *template.Template
 )
 
 func init() {
 	var err error
-	notesTemplate, err = template.ParseFiles("templates/layout.html","templates/notes.html")
-	ssrNotesTemplate, err = template.ParseFiles("templates/layout.html","templates/ssrnotes.html")
+	notesTemplate, err = template.ParseFiles(
+		"templates/layout.html", "templates/nav.html", "templates/notes.html")
+	ssrNotesTemplate, err = template.ParseFiles(
+		"templates/layout.html", "templates/ssrnotes.html")
 	if err != nil {
 		log.Fatalf("umm error parsing notes template: %v", err)
 	}
 }
-
-func CreateNotesHandler (db *sql.DB) *NotesHandler { //TODO create my handler
+func CreateNotesHandler(db *sql.DB) *NotesHandler {
 	return &NotesHandler{
-		db : db,
+		db: db,
 	}
 }
 
-func (h *NotesHandler) NotesRoute(w http.ResponseWriter, r *http.Request) {
+func (h *NotesHandler) Notes(w http.ResponseWriter, r *http.Request) {
+	err := notesTemplate.Execute(w, nil)
+	if err != nil {
+		http.Error(w, "failed to exec template", http.StatusInternalServerError)
+	}
+}
+
+func writeJSONResponse(w http.ResponseWriter, data interface{}) error {
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(data); err != nil {
+		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+		return err
+	}
+	return nil
+}
+
+func (h *NotesHandler) NotesJson(w http.ResponseWriter, r *http.Request) {
 	notes, err := fetchNotesFromDB(h.db)
 	if err != nil {
 		http.Error(w, "failed to fetch notes", http.StatusInternalServerError)
@@ -52,15 +72,15 @@ func (h *NotesHandler) NotesRoute(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := NotesStruct{NotesSlice: notes}
-	err = notesTemplate.Execute(w, data)
-	if err != nil {
-		http.Error(w, "failed to exec template", http.StatusInternalServerError)
+	if err := writeJSONResponse(w, data); err!= nil {
+		http.Error(w, "failed to fetch notes", http.StatusInternalServerError)
 	}
 }
+
 func (h *NotesHandler) SsrNotesRoute(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("INFO served notes ssr route")
 	notes, err := fetchNotesFromDB(h.db)
 	if err != nil {
-		http.Error(w, "failed to fetch notes", http.StatusInternalServerError)
 		return
 	}
 
@@ -90,7 +110,7 @@ func fetchNotesFromDB(db *sql.DB) ([]Note, error) {
 	return notes, nil
 }
 
-func (h *NotesHandler) NotesInsert (w http.ResponseWriter, r *http.Request) {
+func (h *NotesHandler) NotesInsert(w http.ResponseWriter, r *http.Request) {
 	note := r.FormValue("note")
 	if note == "" {
 		http.Error(w, "Note cannot be empty", http.StatusBadRequest)
@@ -108,8 +128,7 @@ func (h *NotesHandler) NotesInsert (w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/ssrnotes", http.StatusSeeOther)
 }
 
-
-func (h *NotesHandler) NotesDelete (w http.ResponseWriter, r *http.Request) {
+func (h *NotesHandler) NotesDelete(w http.ResponseWriter, r *http.Request) {
 	id := r.FormValue("form_id")
 	if id == "" {
 		http.Error(w, "ID cannot be empty", http.StatusBadRequest)

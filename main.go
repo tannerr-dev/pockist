@@ -4,17 +4,18 @@ import (
 	"fmt"
 	"os"
 	"log"
-	"net/http"
 	"html/template"
+	"net/http"
 	"database/sql"
 
-	_ "github.com/mattn/go-sqlite3"
 	"tannerr/pockist/handlers"
+
+	_ "github.com/mattn/go-sqlite3"
 )
 
 func loginHandler(w http.ResponseWriter, r *http.Request) {
 	//TODO simple auth flow with jwt
-	if r.FormValue("username") == os.Getenv("POCKIST_USERNAME")&& r.FormValue("password") ==  os.Getenv("POCKIST_PASSWORD"){
+	if r.FormValue("username") == os.Getenv("POCKIST_USERNAME") && r.FormValue("password") == os.Getenv("POCKIST_PASSWORD") {
 		http.Redirect(w, r, "/dashboard", http.StatusSeeOther)
 	} else {
 		http.Redirect(w, r, "/", http.StatusSeeOther)
@@ -25,6 +26,7 @@ func my_handler(filename string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		t := template.Must(template.New("").ParseFiles("templates/layout.html", fmt.Sprintf("templates/%s.html", filename)))
 		err := t.ExecuteTemplate(w, "layout.html", nil)
+		fmt.Printf("INFO served route %s", filename)
 		if err != nil {
 			fmt.Printf("template error: %v\n", err)
 			http.Error(w, "failed to exec dashboard template", http.StatusInternalServerError)
@@ -48,7 +50,10 @@ func main() {
 	server.HandleFunc("/api/login", loginHandler)
 	server.HandleFunc("/dashboard", my_handler("dashboard"))
 
-	server.HandleFunc("/notes", notesHandler.NotesRoute)
+	server.HandleFunc("/notes", notesHandler.Notes)
+	// server.HandleFunc("/notes", my_handler("notes"))
+	server.HandleFunc("/api/notes/json", notesHandler.NotesJson)
+
 	server.HandleFunc("/ssrnotes", notesHandler.SsrNotesRoute)
 	server.HandleFunc("/api/notes/insert", notesHandler.NotesInsert)
 	server.HandleFunc("/api/notes/delete", notesHandler.NotesDelete)
