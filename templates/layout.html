@@ -15,15 +15,12 @@
     {{block "head" .}}
     <title>Pockist</title>
     {{end}}
-    <style>
-
-    </style>
 </head>
-    <body class="flex-col">
+    <body>
+        {{block "nav" .}}
+        {{end}}
         {{block "body" .}}
         <h1>hello</h1>
-        {{end}}
-        {{block "nav" .}}
         {{end}}
     </body>
 </html>

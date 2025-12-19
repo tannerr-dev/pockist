@@ -1,105 +1,93 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" href="./logo_white.svg" />
-    <!-- <link rel="stylesheet" href="./index.css" /> -->
-    <meta name="darkreader-lock">
-    <title>tannerr.dev</title>
-    <style>
-        :root{
-            --bg: hsl(12, 12%, 12%)
-        }
-        html{
-            background-color: var(--bg);
-        }
-        body {
-            font-family: Arial, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-        }
+{{define "head"}}
+<title>tannerr.dev</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+    }
 
-        main{
-            width:100%;
-            height:100%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-        .stopwatch-container {
-            width:50%;
-            text-align: center;
-            color:black;
-            background-color: beige;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        }
+    main{
+        width:100%;
+        height:100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    .stopwatch-container {
+        width:50%;
+        text-align: center;
+        color:black;
+        background-color: beige;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
 
-        #display {
-            font-size: 48px;
-            font-weight: bold;
-            margin: 20px 0;
-            font-family: monospace;
-        }
+    #display {
+        font-size: 48px;
+        font-weight: bold;
+        margin: 20px 0;
+        font-family: monospace;
+    }
 
-        .buttons {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-        }
+    .buttons {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+    }
 
-        button {
-            width:20%;
-            padding: 10px 20px;
-            font-size: 16px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
+    button {
+        width:20%;
+        padding: 10px 20px;
+        font-size: 16px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+    }
 
-        #startBtn {
-            background-color: #4CAF50;
-            color: white;
-        }
+    #startBtn {
+        background-color: #4CAF50;
+        color: white;
+    }
 
-        #stopBtn {
-            background-color: #f44336;
-            color: white;
-        }
+    #stopBtn {
+        background-color: #f44336;
+        color: white;
+    }
 
-        #resetBtn {
-            background-color: #2196F3;
-            color: white;
-        }
+    #resetBtn {
+        background-color: #2196F3;
+        color: white;
+    }
 
-        #lapBtn {
-            background-color: #FF9800;
-            color: white;
-        }
+    #lapBtn {
+        background-color: #FF9800;
+        color: white;
+    }
 
-        button:hover {
-            opacity: 0.9;
-        }
+    button:hover {
+        opacity: 0.9;
+    }
 
-        #laps {
-            margin-top: 20px;
-            max-height: 200px;
-            overflow-y: auto;
-            text-align: left;
-        }
+    #laps {
+        margin-top: 20px;
+        max-height: 200px;
+        overflow-y: auto;
+        text-align: left;
+    }
 
-        .lap-item {
-            padding: 5px 10px;
-            border-bottom: 1px solid #eee;
-        }
-    </style>
-</head>
+    .lap-item {
+        padding: 5px 10px;
+        border-bottom: 1px solid #eee;
+    }
+</style>
+{{end}}
+{{define "body"}}
 <body class="flex-col">
     <main>
     <div class="stopwatch-container">
@@ -196,5 +184,4 @@
         }
     });
 </script>
-</body>
-</html>
+{{end}}

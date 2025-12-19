@@ -7,13 +7,13 @@
     <main class="flex-col">
         <h1>Admin</h1>
         <form action="/api/admin/create" method="post" class="flex-col form">
-            <input type="text" name="table_name" placeholder="table name">
+            <input class="myinput" type="text" name="table_name" placeholder="table name">
             <button type="submit" class="button">
                 create table
             </button>
         </form>
         <form action="/api/admin/all" method="get" class="flex-col form">
-            <input type="text" name="table_name" placeholder="table name">
+            <input class="myinput" type="text" name="table_name" placeholder="table name">
             <button type="submit" class="button">
                     select all from table
             </button>
@@ -24,14 +24,14 @@
             </button>
         </form>
         <form action="/api/admin/insert" method="get" class="flex-col form">
-            <input type="text" name="table_name" placeholder="table name">
-            <input type="text" name="value" placeholder="value">
+            <input class="myinput" type="text" name="table_name" placeholder="table name">
+            <input class="myinput" type="text" name="value" placeholder="value">
             <button type="submit" class="button">
                     insert into table
             </button>
         </form>
         <form action="/api/admin/delete" method="post" class="flex-col form">
-            <input type="text" name="table_name" placeholder="table name">
+            <input class="myinput" type="text" name="table_name" placeholder="table name">
             <button type="submit" class="button">
                 delete table
             </button>

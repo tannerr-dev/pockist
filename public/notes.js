@@ -17,9 +17,9 @@ class LocalNotes extends HTMLElement {
 		this.appendChild(content);
 
 		// Get reference to the textarea
-		this.textArea = this.querySelector('#box');
+		this.textArea = this.querySelector('#note');
 		if (!this.textArea) {
-			console.error("Textarea with id 'box' not found in LocalNotes template");
+			console.error("Textarea with id 'note' not found in LocalNotes template");
 			return;
 		}
 

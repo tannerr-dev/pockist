@@ -35,9 +35,18 @@ var (
 func init() {
 	var err error
 	notesTemplate, err = template.ParseFiles(
-		"templates/layout.html", "templates/nav.html", "templates/notes.html")
+		"templates/layout.html", 
+		"templates/nav.html", 
+		"templates/notes.html",
+	)
+	if err != nil {
+		log.Fatalf("umm error parsing notes template: %v", err)
+	}
 	ssrNotesTemplate, err = template.ParseFiles(
-		"templates/layout.html", "templates/ssrnotes.html")
+		"templates/layout.html", 
+		"templates/nav.html",
+		"templates/ssrnotes.html",
+	)
 	if err != nil {
 		log.Fatalf("umm error parsing notes template: %v", err)
 	}

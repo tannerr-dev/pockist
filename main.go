@@ -24,9 +24,12 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 
 func my_handler(filename string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		t := template.Must(template.New("").ParseFiles("templates/layout.html", fmt.Sprintf("templates/%s.html", filename)))
+		t := template.Must(template.New("").ParseFiles(
+			"templates/layout.html",
+			"templates/nav.html",
+			fmt.Sprintf("templates/%s.html", filename)))
 		err := t.ExecuteTemplate(w, "layout.html", nil)
-		fmt.Printf("INFO served route %s", filename)
+		fmt.Printf("INFO served route %s\n", filename)
 		if err != nil {
 			fmt.Printf("template error: %v\n", err)
 			http.Error(w, "failed to exec dashboard template", http.StatusInternalServerError)
@@ -59,6 +62,7 @@ func main() {
 	server.HandleFunc("/api/notes/delete", notesHandler.NotesDelete)
 
 	server.HandleFunc("/heatmap", my_handler("heatmap"))
+	server.HandleFunc("/clock", my_handler("clock"))
 
 	server.HandleFunc("/admin", my_handler("admin"))
 	server.HandleFunc("/api/admin/all", adminHandler.AllSelect)

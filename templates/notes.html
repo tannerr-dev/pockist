@@ -1,33 +1,47 @@
-{{define "head"}}
-<title>Notes</title>
-<style>
-    main {
-        height: 100vh;
-    }
-    section {
-        height: 100%;
-    }
-    textarea {
-        flex-grow: 1;
-        width: 100%;
-        box-sizing: border-box;
-        color: var(--text);
-        background-color: var(--bg-light);
-        border: solid var(--bg-light) 2px;
-        border-radius: 2px;
-        outline: none;
-    }
-</style>
-<script src="notes.js" type="module"></script>
-{{end}} 
 {{define "body"}}
     <main></main>
     <!-- templates -->
     <template id="local-notes">
-        
-        <section class="flex-col">
-            <h1>Local Notes</h1>
-            <textarea id="box"></textarea>
-        </section>
+        <h1>Local Notes</h1>
+        <textarea id="note"></textarea>
     </template>
 {{end}}
+{{define "head"}}
+<title>Notes</title>
+<style>
+    body {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    main {
+        width:100%;
+        height:100%;
+
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    local-notes {
+        height:100%;
+        width:100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    #note{
+        flex-grow:1;
+        width:100%;
+        box-sizing: border-box;
+        border:none;
+        outline: none;
+        padding:1rem;
+        resize: none;
+
+        background-color: var(--bg-2);
+        color: var(--text);
+        font-size: 1.1rem;
+    }
+</style>
+<script src="notes.js" type="module"></script>
+{{end}} 

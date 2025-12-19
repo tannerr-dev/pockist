@@ -1,17 +1,27 @@
 {{define "head"}}
     <title>Dashboard</title>
+<style>
+    body {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+    main {
+        width:90%;
+        max-width:320px;
+    }
+</style>
 {{end}}
 
 {{define "body"}}
-<body class="flex-col">
-    <main class="flex-col">
+    <main>
         <h1>Dashboard</h1>
             <a href="/notes"><button class="button">local note</button></a>
             <a href="/ssrnotes"><button class="button">server note</button></a>
-            <a href="/clock.html"><button class="button">clock</button></a>
+            <a href="/clock"><button class="button">clock</button></a>
             <a href="/monies"><button class="button">monies</button></a>
             <a href="/admin"><button class="button">admin</button></a>
             <a href="/heatmap"><button class="button">heatmap</button></a>
     </main>
-</body>
 {{end}}
