@@ -1,68 +1,4 @@
 {{define "nav"}}
-<nav>
-  <div id="home">
-    <a href="/dashboard">
-      <svg
-        id="home_icon"
-        height="40"
-        width="40"
-        viewBox="0 0 120 120"
-        version="1.1"
-        id="svg1"
-        xmlns="http://www.w3.org/2000/svg"
-        xmlns:svg="http://www.w3.org/2000/svg"
-      >
-        <path
-          style="fill: var(--accent); stroke-width: 0.269266"
-          d="M 60.287664,20.342465 C 46.938961,31.483974 30.186168,39.221394 12.945203,46.470643 c 3.587601,23.896643 0.469016,32.555213 -0.739725,48.214283 l 31.44146,0.0151 c 2.774679,-29.33074 40.441426,-43.698337 23.297696,-0.4563 l 40.315636,-0.32494 C 104.33812,78.085126 101.49834,64.470646 106.15068,46.417805 83.130204,36.378064 73.644864,32.24763 60.287664,20.342465 Z"
-          id="path1"
-        />
-      </svg>
-    </a>
-  </div>
-  <div id="options">
-    <div class="slidecontainer">
-      <input
-        class="slider"
-        id="color-slider"
-        type="range"
-        min="0"
-        max="360"
-        value="0"
-      >
-    </div>
-    <svg
-      id="theme-switch"
-      class="theme-switch"
-      xmlns="http://www.w3.org/2000/svg"
-      width="42"
-      height="42"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-      class="lucide lucide-sun-moon" 
-    >
-      <path d="M12 8a2.83 2.83 0 0 0 4 4 4 4 0 1 1-4-4"></path>
-      <path d="M12 2v2"></path>
-      <path d="M12 20v2"></path>
-      <path d="m4.9 4.9 1.4 1.4"></path>
-      <path d="m17.7 17.7 1.4 1.4"></path>
-      <path d="M2 12h2"></path>
-      <path d="M20 12h2"></path>
-      <path d="m6.3 17.7-1.4 1.4"></path>
-      <path d="m19.1 4.9-1.4 1.4"></path>
-    </svg>
-    <div class="menu-wrapper">
-      <div class="menu">
-        <div class="bar1"></div>
-        <div class="bar2"></div>
-        <div class="bar3"></div>
-      </div>
-    </div>
-  <div>
-</nav>
-<script src="./nav.js"></script>
-
 <style>
   nav {
     --height:60px;
@@ -78,35 +14,48 @@
     flex-direction:row;
     justify-content:space-between;
 
-    svg path {
-      fill: var(--accent);
-    }
-    a {
+    background-color:var(--bg);
+
+    #home {
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
+      height:var(--height);
+      width:var(--height);
+
+      path {
+        fill: var(--accent);
+        /* stroke:var(--accent); */
+      }
     }
     input {
+      --br: 4px;
+      --h: 30px;
+      --w: 20px;
+
       width: 100px;
       height:10px;
-      background-color: var(--accent-dark);
-      -webkit-appearance: none; /* Override default CSS styles */
+      background-color: var(--accent-2);
+      border-radius:var(--br);
+      -webkit-appearance: none;
       appearance: none;
     }
     input::-webkit-slider-thumb {
-      -webkit-appearance: none; /* Override default look */
+      -webkit-appearance: none;
       appearance: none;
-      width: 25px; /* Set a specific slider handle width */
-      height: 25px; /* Slider handle height */
-      background: hsl(var(--hue), 50%, 50%); /* Green background */
-      cursor: pointer; /* Cursor on hover */
+      width: var(--w);
+      height: var(--h);
+      background-color: hsl(var(--hue), 50%, 50%);
+      cursor: pointer;
+      border-radius:4px;
     }
     input::-moz-range-thumb {
-      width: 25px; /* Set a specific slider handle width */
-      height: 25px; /* Slider handle height */
-      background: hsl(var(--hue), 50%, 50%); /* Green background */
-      cursor: pointer; /* Cursor on hover */
+      width: var(--w);
+      height: var(--h);
+      background-color: hsl(var(--hue), 50%, 50%);
+      cursor: pointer;
+      border-radius:4px;
     }
   }
   #options{
@@ -115,11 +64,24 @@
     align-items:center;
     gap:10px;
   }
+  #theme-switch {
+    /* height: var(--height); */
+    --d:40px;
+    height:var(--d);
+    width:var(--d);
+    color: var(--text);
+    /* margin-right: 14px; */
+    /* fill: var(--accent); */
+    fill:none;
+    stroke:var(--accent);
+  }
   .menu-wrapper{
     height:var(--height);
+    width:var(--height);
     display: flex;
     flex-direction:row;
     align-items:center;
+    justify-content:center;
   }
   .menu {
     display: inline-block;
@@ -196,11 +158,65 @@
     color: var(nav-btn-act);
     background-color: var(nav-btn-act-bg);
   }
-  .theme-switch {
-    height: var(--height);
-    color: var(--text);
-    /* margin-right: 14px; */
-    margin-top: 6px;
-  }
 </style>
+<nav>
+  <div id="home">
+    <a href="/dashboard">
+      <svg
+        id="home_icon"
+        height="40"
+        width="40"
+        viewBox="0 0 120 120"
+        version="1.1"
+        id="svg1"
+        xmlns="http://www.w3.org/2000/svg"
+        xmlns:svg="http://www.w3.org/2000/svg"
+      >
+        <path
+          style="fill: var(--accent); stroke-width: 0.269266"
+          d="M 60.287664,20.342465 C 46.938961,31.483974 30.186168,39.221394 12.945203,46.470643 c 3.587601,23.896643 0.469016,32.555213 -0.739725,48.214283 l 31.44146,0.0151 c 2.774679,-29.33074 40.441426,-43.698337 23.297696,-0.4563 l 40.315636,-0.32494 C 104.33812,78.085126 101.49834,64.470646 106.15068,46.417805 83.130204,36.378064 73.644864,32.24763 60.287664,20.342465 Z"
+          id="path1"
+        />
+      </svg>
+    </a>
+  </div>
+  <div id="options">
+    <div class="slidecontainer">
+      <input
+        class="slider"
+        id="color-slider"
+        type="range"
+        min="0"
+        max="360"
+        value="0"
+      >
+    </div>
+    <svg
+      id="theme-switch"
+      class="theme-switch"
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+      class="lucide lucide-sun-moon" 
+    >
+      <path d="M12 8a2.83 2.83 0 0 0 4 4 4 4 0 1 1-4-4"></path>
+      <path d="M12 2v2"></path>
+      <path d="M12 20v2"></path>
+      <path d="m4.9 4.9 1.4 1.4"></path>
+      <path d="m17.7 17.7 1.4 1.4"></path>
+      <path d="M2 12h2"></path>
+      <path d="M20 12h2"></path>
+      <path d="m6.3 17.7-1.4 1.4"></path>
+      <path d="m19.1 4.9-1.4 1.4"></path>
+    </svg>
+    <div class="menu-wrapper">
+      <div class="menu">
+        <div class="bar1"></div>
+        <div class="bar2"></div>
+        <div class="bar3"></div>
+      </div>
+    </div>
+  <div>
+</nav>
+<script src="./nav.js"></script>
 {{end}}

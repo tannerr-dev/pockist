@@ -1,13 +1,13 @@
 :root{
-    --hue: 0;
+    --hue: 180;
 
     --bg: hsl(var(--hue), 20%, 8%);
     --bg-2: hsl(var(--hue), 22%, 10%);
     --bg-dark: hsl(var(--hue), 8%, 6%);
     --bg-light: hsl(var(--hue), 22%, 12%);
 
-    --text: hsl(var(--hue), 78%, 84%, 0.7);
-    --accent: hsl(var(--hue), 32%, 46%, 0.8);
+    --text: hsl(var(--hue), 78%, 84%);
+    --accent: hsl(var(--hue), 32%, 46%);
     --accent-2: hsl(var(--hue), 22%, 28%);
     --accent-dark: hsl(var(--hue), 22%, 28%);
 }
@@ -17,8 +17,9 @@
     --bg-dark: hsl(var(--hue), 8%, 60%);
     --bg-light: hsl(var(--hue), 22%, 72%);
 
-    --text: hsl(var(--hue), 78%, 8%, 0.7);
-    --accent: hsl(var(--hue), 32%, 16%, 0.8);
+    --text: hsl(var(--hue), 78%, 8%);
+    --accent: hsl(var(--hue), 40%, 40%);
+    --accent-2: hsl(var(--hue), 32%, 32%);
     --accent-dark: hsl(var(--hue), 22%, 8%);
 }
 html{
@@ -36,10 +37,14 @@ main {
     max-width:500px;
 }
 h1{
-    margin:10px 0 10px 0;
+    margin:60px 0 10px 0;
     font-size:2.4rem;
     color:var(--accent);
     font-weight:bold;
+    position: sticky;
+    top: 60px;
+    height: 50px;
+    background-color:var(--bg);
 }
 .flex-col {
     display: flex;
@@ -75,7 +80,7 @@ button:hover{
     color:var(--text);
 }
 .form{
-    border:2px solid var(--accent-dark);
+    border:2px solid var(--accent);
     border-radius:8px;
     padding:20px;
     font-size:1rem;

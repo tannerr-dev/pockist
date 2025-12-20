@@ -8,8 +8,60 @@
     <link href="styles.css" rel="stylesheet">
     <meta name="darkreader-lock">
     <!-- <meta http-equiv="refresh" content="10" /> -->
+    <meta http-equiv="cache-control" content="no-cache" />
     <link rel="icon" href="./logo.svg" />
     <title>Pockist</title>
+    <script>
+        const root = document.querySelector(":root");
+
+        function detectColorScheme() {
+          var theme = "dark";
+
+          if (localStorage.getItem("theme")) {
+            if (localStorage.getItem("theme") == "light") {
+              var theme = "light";
+            }
+          } else if (!window.matchMedia) {
+            //matchMedia method not supported
+            return false;
+          } else if (window.matchMedia("(prefers-color-scheme: light)").matches) {
+            var theme = "light";
+            console.log("Preferred Theme",theme)
+          } else {
+            console.log("Preferred Theme",theme)
+          }
+
+          if (theme == "light") {
+            document.documentElement.setAttribute("data-theme", "light");
+            console.log("Setting theme to light");
+          } else {
+            document.documentElement.setAttribute("data-theme", "dark");
+            console.log("Setthing theme to dark");
+          }
+
+          const themeColor =  localStorage.getItem("hue");
+          console.log("Setting hue to ", themeColor);
+          root.style.setProperty("--hue", themeColor);
+        }
+        detectColorScheme();
+
+        window
+          .matchMedia("(prefers-color-scheme: light)")
+          .addEventListener("change", (event) => {
+            if (!window.matchMedia) {
+              //matchMedia method not supported
+              return false;
+            } else if (window.matchMedia("(prefers-color-scheme: light)").matches) {
+              localStorage.setItem("theme", "light");
+              document.documentElement.setAttribute("data-theme", "light");
+            } else {
+              localStorage.setItem("theme", "dark");
+              document.documentElement.setAttribute("data-theme", "dark");
+            }
+            detectColorScheme();
+          }
+        );
+    </script>
 <body class="flex-center">
     <main class="flex-col">
         <h1>Pockist</h1>

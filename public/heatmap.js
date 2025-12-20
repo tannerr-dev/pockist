@@ -1,5 +1,5 @@
-import "/d3.js"
-import "/plot.js"
+import "/d3.min.js"
+import "/plot.min.js"
 
 async function createVisualization() {
   let res = await fetch("./traffic.csv")
