@@ -1,5 +1,6 @@
 tmp
 .env
-data/pockist.db
+*/*.db
+*/*.csv
 public/d3.min.js
 public/plot.min.js
