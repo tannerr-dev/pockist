@@ -2,7 +2,8 @@
     --hue: 180;
 
     --bg: hsl(var(--hue), 20%, 8%);
-    --bg-2: hsl(var(--hue), 22%, 10%);
+    --bg-2: hsl(var(--hue), 22%, 18%);
+    --bg-3: hsl(var(--hue), 42%, 28%);
     --bg-dark: hsl(var(--hue), 8%, 6%);
     --bg-light: hsl(var(--hue), 22%, 12%);
 
@@ -57,9 +58,6 @@ h1{
     align-items: center;
     justify-content: center;
 }
-button:hover{
-    cursor:pointer;
-}
 .button{
     box-sizing: border-box;
     margin:10px 0 10px 0;
@@ -76,15 +74,17 @@ button:hover{
     font-weight:bold;
 }
 .button:hover{
-    background-color:var(--bg);
+    background-color:var(--bg-3);
     color:var(--text);
 }
 .form{
-    border:2px solid var(--accent);
+    border:2px solid var(--accent-2);
     border-radius:8px;
     padding:20px;
     font-size:1rem;
     min-width: 324px;
+    /* width:100%; */
+    margin-bottom:10px;
 }
 .myinput{
     padding:10px;

@@ -1,6 +1,6 @@
 -- notes table schema (SQLite compatible)
 
-CREATE TABLE IF NOT EXISTS notes(
+CREATE TABLE IF NOT EXISTS ssrnotes(
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     date_created DATETIME DEFAULT CURRENT_TIMESTAMP,
     date_modified DATETIME DEFAULT CURRENT_TIMESTAMP,

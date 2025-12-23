@@ -1,8 +1,8 @@
-import "/d3.min.js"
-import "/plot.min.js"
+import "../modules/d3.min.js"
+import "../modules/plot.min.js"
 
 async function createVisualization() {
-  let res = await fetch("./traffic.csv")
+  let res = await fetch("../../assets/traffic.csv")
   let csv = await res.text()
 
   const traffic = d3.csvParse(csv, d => ({

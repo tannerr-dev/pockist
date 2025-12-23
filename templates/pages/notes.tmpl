@@ -1,0 +1,26 @@
+{{define "head"}}
+<title>local first notes</title>
+<style>
+    body {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+</style>
+<script src="notes/index.js"></script>
+{{end}}
+{{define "body"}}
+<main class="flex-col">
+    <h1>local first notes</h1>
+    <button class="button">create new note</button>
+    <ul>
+        <li>list first line of notes here</li>
+    </ul>
+
+    <template id="local-note">
+        <h1>Local Note</h1>
+        <textarea id="note"></textarea>
+    </template>
+
+</main>
+{{end}}

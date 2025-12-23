@@ -1,13 +1,5 @@
-{{define "body"}}
-    <main></main>
-    <!-- templates -->
-    <template id="local-notes">
-        <h1>Local Notes</h1>
-        <textarea id="note"></textarea>
-    </template>
-{{end}}
 {{define "head"}}
-<title>Notes</title>
+<title>Local Note</title>
 <style>
     body {
         display: flex;
@@ -43,5 +35,24 @@
         font-size: 1.1rem;
     }
 </style>
-<script src="notes.js" type="module"></script>
 {{end}} 
+{{define "body"}}
+<main>
+<h2>hello there :)</h2>
+</main>
+<!-- <div id="content"></div> -->
+
+<!-- templates -->
+<template id="local-note">
+    <h1>Local Note</h1>
+    <textarea id="note"></textarea>
+</template>
+
+<script src="scripts/note.js" ></script>
+<script>
+    //const currentValue = document.getElementById("note");
+    //console.log(currentValue);
+    //document.getElementById('content').innerHTML = marked.parse(currentValue);
+    //document.getElementById('content').innerHTML = marked.parse('# Marked in browser\n\nRendered by **marked**.');
+</script>
+{{end}}

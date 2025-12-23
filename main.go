@@ -1,12 +1,12 @@
 package main
 
 import (
-	"fmt"
-	"os"
-	"log"
-	"html/template"
-	"net/http"
 	"database/sql"
+	"fmt"
+	"html/template"
+	"log"
+	"net/http"
+	"os"
 
 	"tannerr/pockist/handlers"
 
@@ -22,14 +22,23 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func my_handler(filename string) http.HandlerFunc {
+func templater(s string) *template.Template {
+	prefix := "templates/"
+	tmp, err := template.ParseFiles(
+		prefix + "layouts/base.tmpl",
+		prefix + "partials/nav.tmpl",
+		prefix + "pages/" + s + ".tmpl",
+	)
+	if err != nil {
+		log.Fatalf("Templater error parsing notes template: %v", err)
+	}
+	return tmp
+}
+func my_handler(s string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		t := template.Must(template.New("").ParseFiles(
-			"templates/layout.html",
-			"templates/nav.html",
-			fmt.Sprintf("templates/%s.html", filename)))
-		err := t.ExecuteTemplate(w, "layout.html", nil)
-		fmt.Printf("INFO served route %s\n", filename)
+		tmpl := templater(s)
+		fmt.Printf("INFO served route %s\n", s)
+		err := tmpl.Execute(w, nil)
 		if err != nil {
 			fmt.Printf("template error: %v\n", err)
 			http.Error(w, "failed to exec dashboard template", http.StatusInternalServerError)
@@ -53,9 +62,9 @@ func main() {
 	server.HandleFunc("/api/login", loginHandler)
 	server.HandleFunc("/dashboard", my_handler("dashboard"))
 
+	server.HandleFunc("/note", notesHandler.Note)
 	server.HandleFunc("/notes", notesHandler.Notes)
-	// server.HandleFunc("/notes", my_handler("notes"))
-	server.HandleFunc("/api/notes/json", notesHandler.NotesJson)
+	// server.HandleFunc("/api/notes/json", notesHandler.NotesJson)
 
 	server.HandleFunc("/ssrnotes", notesHandler.SsrNotesRoute)
 	server.HandleFunc("/api/notes/insert", notesHandler.NotesInsert)
