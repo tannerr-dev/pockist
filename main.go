@@ -34,6 +34,7 @@ func templater(s string) *template.Template {
 	}
 	return tmp
 }
+
 func my_handler(s string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		tmpl := templater(s)

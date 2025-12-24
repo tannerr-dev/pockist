@@ -1,14 +1,15 @@
 let menu = document.querySelector(".menu");
-let drawer = document.querySelector("#drawer");
+// let drawer = document.querySelector("#drawer");
 menu.addEventListener("click", () => {
   menu.classList.toggle("change");
-  if (drawer.style.width == "100%") {
-    drawer.style.width = "0px";
-    drawer.style.opacity = "0";
-  } else {
-    drawer.style.width = "100%";
-    drawer.style.opacity = "1";
-  }
+    console.log("todo: add drawer lol")
+  // if (drawer.style.width == "100%") {
+  //   drawer.style.width = "0px";
+  //   drawer.style.opacity = "0";
+  // } else {
+  //   drawer.style.width = "100%";
+  //   drawer.style.opacity = "1";
+  // }
 });
 
 const colorSlider = document.getElementById("color-slider");
