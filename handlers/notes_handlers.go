@@ -25,16 +25,19 @@ type NotesStruct struct {
 type NotesHandler struct {
 	db *sql.DB
 }
+
 var (
 	noteTemplate     *template.Template
 	notesTemplate    *template.Template
 	ssrNotesTemplate *template.Template
 )
+
 func init() {
 	noteTemplate = templater("note")
 	notesTemplate = templater("notes")
 	ssrNotesTemplate = templater("ssrnotes")
 }
+
 func templater(s string) *template.Template {
 	prefix := "templates/"
 	tmp, err := template.ParseFiles(
@@ -47,23 +50,27 @@ func templater(s string) *template.Template {
 	}
 	return tmp
 }
+
 func CreateNotesHandler(db *sql.DB) *NotesHandler {
 	return &NotesHandler{
 		db: db,
 	}
 }
+
 func (h *NotesHandler) Notes(w http.ResponseWriter, r *http.Request) {
 	err := notesTemplate.Execute(w, nil)
 	if err != nil {
 		http.Error(w, "failed to exec template", http.StatusInternalServerError)
 	}
 }
+
 func (h *NotesHandler) Note(w http.ResponseWriter, r *http.Request) {
 	err := noteTemplate.Execute(w, nil)
 	if err != nil {
 		http.Error(w, "failed to exec template", http.StatusInternalServerError)
 	}
 }
+
 func (h *NotesHandler) SaveNote(w http.ResponseWriter, r *http.Request) {
 	note := r.FormValue("note")
 	if note == "" {
