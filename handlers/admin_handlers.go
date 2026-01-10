@@ -20,34 +20,34 @@ func CreateAdminHandler (db *sql.DB) *AdminHandler {
 	}
 }
 
-func (h *AdminHandler) CreateTable (w http.ResponseWriter, r *http.Request) {
-	fmt.Println("create table")
-	err := r.ParseForm()
-	if err != nil {
-		log.Panic(err)
-		http.Error(w, "Failed to parse form", http.StatusInternalServerError)
-	}
-
-	table_name := r.Form.Get("table_name")
-	// table_name := r.FormValue("table_name")
-	fmt.Println(table_name)
-	query := `
-		CREATE TABLE IF NOT EXISTS %s (
-			id INTEGER PRIMARY KEY,
-			name TEXT,
-			amount REAL
-		)
-	`
-	query = fmt.Sprintf(query, table_name)
-	_, err = h.db.Exec(query)
-	// _, err := db.Exec(query)
-	if err != nil {
-		http.Error(w, "Failed to parse form", http.StatusInternalServerError)
-	}
-	// message_template, err := template.ParseFiles("templates/message.html")
-	// err = message_template.Execute(w, nil)
-	http.Redirect(w, r, "/admin", http.StatusSeeOther)
-}
+// func (h *AdminHandler) CreateTable (w http.ResponseWriter, r *http.Request) {
+// 	fmt.Println("create table")
+// 	err := r.ParseForm()
+// 	if err != nil {
+// 		log.Panic(err)
+// 		http.Error(w, "Failed to parse form", http.StatusInternalServerError)
+// 	}
+//
+// 	table_name := r.Form.Get("table_name")
+// 	// table_name := r.FormValue("table_name")
+// 	fmt.Println(table_name)
+// 	query := `
+// 		CREATE TABLE IF NOT EXISTS %s (
+// 			id INTEGER PRIMARY KEY,
+// 			name TEXT,
+// 			amount REAL
+// 		)
+// 	`
+// 	query = fmt.Sprintf(query, table_name)
+// 	_, err = h.db.Exec(query)
+// 	// _, err := db.Exec(query)
+// 	if err != nil {
+// 		http.Error(w, "Failed to parse form", http.StatusInternalServerError)
+// 	}
+// 	// message_template, err := template.ParseFiles("templates/message.html")
+// 	// err = message_template.Execute(w, nil)
+// 	http.Redirect(w, r, "/admin", http.StatusSeeOther)
+// }
 
 func (h *AdminHandler) DeleteTable (w http.ResponseWriter, r *http.Request) {
 	fmt.Println("delete table")

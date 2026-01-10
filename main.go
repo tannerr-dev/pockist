@@ -80,7 +80,7 @@ func main() {
 	server.HandleFunc("/api/admin/list_tables", adminHandler.ListTables)
 	server.HandleFunc("/api/admin/insert", adminHandler.Insert)
 	server.HandleFunc("/api/admin/delete", adminHandler.DeleteTable)
-	server.HandleFunc("/api/admin/create", adminHandler.CreateTable)
+	// server.HandleFunc("/api/admin/create", adminHandler.CreateTable)
 
 	server.HandleFunc("/monies", my_handler("monies"))
 	// server.HandleFunc("/api/monies/all", select_all_and_print(db))
