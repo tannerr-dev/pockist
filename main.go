@@ -57,6 +57,7 @@ func main() {
 
 	notesHandler := handlers.CreateNotesHandler(db)
 	adminHandler := handlers.CreateAdminHandler(db)
+	accountHandler := handlers.CreateAccountHandler(db)
 
 	server := http.NewServeMux()
 
