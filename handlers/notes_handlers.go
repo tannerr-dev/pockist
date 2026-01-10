@@ -8,6 +8,8 @@ import (
 	"log"
 	"net/http"
 
+	"tannerr/pockist/pkg/templates"
+
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -33,22 +35,9 @@ var (
 )
 
 func init() {
-	noteTemplate = templater("note")
-	notesTemplate = templater("notes")
-	ssrNotesTemplate = templater("ssrnotes")
-}
-
-func templater(s string) *template.Template {
-	prefix := "templates/"
-	tmp, err := template.ParseFiles(
-		prefix + "layouts/base.tmpl",
-		prefix + "partials/nav.tmpl",
-		prefix + "pages/" + s + ".tmpl",
-	)
-	if err != nil {
-		log.Fatalf("Templater error parsing notes template: %v", err)
-	}
-	return tmp
+	noteTemplate = templates.Templater("note")
+	notesTemplate = templates.Templater("notes")
+	ssrNotesTemplate = templates.Templater("ssrnotes")
 }
 
 func CreateNotesHandler(db *sql.DB) *NotesHandler {

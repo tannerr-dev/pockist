@@ -3,12 +3,12 @@ package main
 import (
 	"database/sql"
 	"fmt"
-	"html/template"
 	"log"
 	"net/http"
 	"os"
 
 	"tannerr/pockist/handlers"
+	"tannerr/pockist/pkg/templates"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -22,22 +22,9 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func templater(s string) *template.Template {
-	prefix := "templates/"
-	tmp, err := template.ParseFiles(
-		prefix + "layouts/base.tmpl",
-		prefix + "partials/nav.tmpl",
-		prefix + "pages/" + s + ".tmpl",
-	)
-	if err != nil {
-		log.Fatalf("Templater error parsing notes template: %v", err)
-	}
-	return tmp
-}
-
 func my_handler(s string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		tmpl := templater(s)
+		tmpl := templates.Templater(s)
 		fmt.Printf("INFO served route %s\n", s)
 		err := tmpl.Execute(w, nil)
 		if err != nil {
@@ -57,7 +44,7 @@ func main() {
 
 	notesHandler := handlers.CreateNotesHandler(db)
 	adminHandler := handlers.CreateAdminHandler(db)
-	accountHandler := handlers.CreateAccountHandler(db)
+	_ = handlers.CreateAccountHandler(db)
 
 	server := http.NewServeMux()
 
