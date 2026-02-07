@@ -14,8 +14,8 @@ import (
 )
 
 func loginHandler(w http.ResponseWriter, r *http.Request) {
-	//TODO simple auth flow with jwt
 	if r.FormValue("username") == os.Getenv("POCKIST_USERNAME") && r.FormValue("password") == os.Getenv("POCKIST_PASSWORD") {
+		//TODO simple auth flow with jwt
 		http.Redirect(w, r, "/dashboard", http.StatusSeeOther)
 	} else {
 		http.Redirect(w, r, "/", http.StatusSeeOther)

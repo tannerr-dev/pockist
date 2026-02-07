@@ -1,4 +1,16 @@
-{{define "head"}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- <meta http-equiv="refresh" content="4"/> -->
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta http-equiv="X-UA-Compatible" content="ie=edge"/>
+
+    <meta name="darkreader-lock"/>
+
+    <link rel="icon" href="./assets/logo.svg" />
+    <link href="/styles/reset.css" rel="stylesheet"/>
+    <link href="/styles/global.css" rel="stylesheet"/>
 <title>Local Note</title>
 <style>
     body {
@@ -41,10 +53,9 @@
         font-size: 1.1rem;
     }
 </style>
-{{end}} 
-{{define "body"}}
-<main>
-</main>
+</head>
+<body>
+<main></main>
 
 <template id="local-note">
     <h1>Local Note</h1>
@@ -54,11 +65,12 @@
     <button id="import_data_btn" >Import Data</button>
 </template>
 
-<script src="components/note.js" ></script>
+<script src="/components/note.js" ></script>
 <!-- <script> -->
 <!--     //const currentValue = document.getElementById("note"); -->
 <!--     //console.log(currentValue); -->
 <!--     //document.getElementById('content').innerHTML = marked.parse(currentValue); -->
 <!--     //document.getElementById('content').innerHTML = marked.parse('# Marked in browser\n\nRendered by **marked**.'); -->
 <!-- </script> -->
-{{end}}
+</body>
+</html>
