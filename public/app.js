@@ -1,16 +1,15 @@
 import {API} from "./services/API.js";
 import Store from "./services/Store.js";
 // import { Nav } from "./components/Nav.js";
-// import { Router } from "./services/Router.js";
-// import { HomePage } from "./components/HomePage.js";
+import { Router } from "./services/Router.js";
 
 
 window.addEventListener("DOMContentLoaded", event => {
-    // app.Router.init()
+    app.Router.init()
     // we do not need to inject the homepage or details page anymore since
     // the Router does that now
     // document.querySelector("main").appendChild(new HomePage())
-    // document.querySelector("main").appendChild(new MovieDetailsPage())
+    // document.querySelector("main").appendChild(new LocalNotes())
  
     // Load the navigation component
     // const body = document.querySelector("body");
@@ -19,7 +18,7 @@ window.addEventListener("DOMContentLoaded", event => {
 });
 
 window.app = {
-    // Router, // same as Router: Router; // js shortcut
+    Router, // same as Router: Router; // js shortcut
     API,
     Store,
     showError: (message="There was an error.", goToHome=true)=>{

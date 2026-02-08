@@ -12,26 +12,27 @@
     <link href="styles/reset.css" rel="stylesheet">
     <link href="styles/global.css" rel="stylesheet">
     <link href="styles/nav.css" rel="stylesheet">
+    <link href="styles/local-notes.css" rel="stylesheet">
     <link rel="icon" href="./assets/logo.svg" />
     <script src="app.js" type="module"></script>
 
-    <style>
-        body {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            /* justify-content: center; */
-        }
-        main {
-            width:90%;
-            max-width:320px;
-        }
-    </style>
+    <!-- <style> -->
+    <!--     body { -->
+    <!--         display: flex; -->
+    <!--         flex-direction: column; -->
+    <!--         align-items: center; -->
+    <!--         /* justify-content: center; */ -->
+    <!--     } -->
+    <!--     main { -->
+    <!--         width:90%; -->
+    <!--         max-width:320px; -->
+    <!--     } -->
+    <!-- </style> -->
 </head>
 <body>
     <nav>
       <div id="home">
-        <a href="/dashboard">
+        <a href="/">
           <svg
             id="home_icon"
             height="40"
@@ -98,6 +99,8 @@
     </nav>
     <script src="scripts/nav.js"></script>
     <main>
+    </main>
+    <template id="home-page">
         <h1>Pockist</h1>
         <a href="/note"><button class="button">local note</button></a>
         <a href="/notes"><button class="button">local notes</button></a>
@@ -111,6 +114,14 @@
         <!--     <input class="myinput" type="password" name="password" placeholder="password"> -->
         <!--     <button class="button" type="submit">login</button> -->
         <!-- </form> -->
-    </main>
+    </template>
+    <template id="local-note">
+        <h1>Local Note</h1>
+        <textarea id="note"></textarea>
+        <label for="data">Choose a profile picture:</label>
+        <input type="file" id="data" name="data" accept=".json" />
+        <button id="import_data_btn" >Import Data</button>
+    </template>
+
 </body>
 </html>

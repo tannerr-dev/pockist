@@ -1,11 +1,11 @@
 package main
 
 import (
-	// "database/sql"
 	"fmt"
 	"log"
 	"net/http"
 	// "os"
+	// "database/sql"
 
 	// "tannerr/pockist/handlers"
 	// "tannerr/pockist/pkg/templates"
@@ -73,6 +73,10 @@ func main() {
 	// server.HandleFunc("/api/monies/all", select_all_and_print(db))
 	// server.HandleFunc("/api/monies/insert", insert(db))
 
+	catchAllClientRoutesHandler := func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w,r, "./public/index.html")
+	}
+	server.HandleFunc("/note", catchAllClientRoutesHandler)
 	server.Handle("/", http.FileServer(http.Dir("public")))
 	const addr = ":8080"
 	fmt.Println("Server listening on", addr)

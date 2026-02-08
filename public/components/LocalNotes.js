@@ -1,4 +1,4 @@
-class LocalNotes extends HTMLElement {
+export class LocalNotes extends HTMLElement {
 	constructor() {
 		super();
 		this.db = null;
@@ -108,9 +108,9 @@ class LocalNotes extends HTMLElement {
 
 customElements.define("local-notes", LocalNotes);
 
-document.addEventListener("DOMContentLoaded", function () {
-	const mainElement = document.querySelector("main");
-	if (mainElement) {
-		mainElement.appendChild(new LocalNotes());
-	}
-});
+// document.addEventListener("DOMContentLoaded", function () {
+// 	const mainElement = document.querySelector("main");
+// 	if (mainElement) {
+// 		mainElement.appendChild(new LocalNotes());
+// 	}
+// });
