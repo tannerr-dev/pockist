@@ -1,25 +1,29 @@
+const root = document.querySelector(":root");
 let menu = document.querySelector(".menu");
+if (menu) {
+    menu.addEventListener("click", () => {
+      menu.classList.toggle("change");
+        console.log("todo: add drawer lol")
+      // if (drawer.style.width == "100%") {
+      //   drawer.style.width = "0px";
+      //   drawer.style.opacity = "0";
+      // } else {
+      //   drawer.style.width = "100%";
+      //   drawer.style.opacity = "1";
+      // }
+    });
+}
+
 // let drawer = document.querySelector("#drawer");
-menu.addEventListener("click", () => {
-  menu.classList.toggle("change");
-    console.log("todo: add drawer lol")
-  // if (drawer.style.width == "100%") {
-  //   drawer.style.width = "0px";
-  //   drawer.style.opacity = "0";
-  // } else {
-  //   drawer.style.width = "100%";
-  //   drawer.style.opacity = "1";
-  // }
-});
 
 const colorSlider = document.getElementById("color-slider");
-colorSlider.addEventListener("input", () => {
-  root.style.setProperty("--hue", colorSlider.value);
-  localStorage.setItem("hue", colorSlider.value);
-  themeColor = colorSlider.value;
-});
-
-const root = document.querySelector(":root");
+if (colorSlider) {
+    colorSlider.addEventListener("input", () => {
+      root.style.setProperty("--hue", colorSlider.value);
+      localStorage.setItem("hue", colorSlider.value);
+      themeColor = colorSlider.value;
+    });
+}
 
 function detectColorScheme() {
   var theme = "dark";
@@ -48,7 +52,9 @@ function detectColorScheme() {
 
   const themeColor =  localStorage.getItem("hue");
   console.log("Setting hue to ", themeColor);
-  colorSlider.value = themeColor;
+  if (colorSlider) {
+    colorSlider.value = themeColor;
+  }
   root.style.setProperty("--hue", themeColor);
 }
 detectColorScheme();
@@ -82,7 +88,43 @@ function switchTheme() {
     document.documentElement.setAttribute("data-theme", "light");
   }
 }
-document.getElementById("theme-switch").addEventListener("click", ()=>{
-  switchTheme();
-  detectColorScheme();
-});
+const themeSwitch = document.getElementById("theme-switch");
+if (themeSwitch) {
+    themeSwitch.addEventListener("click", ()=>{
+      switchTheme();
+      detectColorScheme();
+    });
+}
+
+
+
+window
+  .matchMedia("(prefers-color-scheme: light)")
+  .addEventListener("change", (event) => {
+    if (!window.matchMedia) {
+      //matchMedia method not supported
+      return false;
+    } else if (window.matchMedia("(prefers-color-scheme: light)").matches) {
+      localStorage.setItem("theme", "light");
+      document.documentElement.setAttribute("data-theme", "light");
+    } else {
+      localStorage.setItem("theme", "dark");
+      document.documentElement.setAttribute("data-theme", "dark");
+    }
+    detectColorScheme();
+  }
+);
+
+function switchTheme() {
+  if (!localStorage.getItem("theme")) {
+      localStorage.setItem("theme", "dark");
+  }
+  if (localStorage.getItem("theme") == "light"){
+    localStorage.setItem("theme", "dark");
+    document.documentElement.setAttribute("data-theme", "dark");
+  } else {
+    localStorage.setItem("theme", "light");
+    document.documentElement.setAttribute("data-theme", "light");
+  }
+}
+

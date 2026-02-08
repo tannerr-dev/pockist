@@ -1,15 +1,21 @@
 import {API} from "./services/API.js";
-import { HomePage } from "./components/HomePage.js";
-// import { Router } from "./services/Router.js";
 import Store from "./services/Store.js";
+// import { Nav } from "./components/Nav.js";
+// import { Router } from "./services/Router.js";
+// import { HomePage } from "./components/HomePage.js";
 
 
 window.addEventListener("DOMContentLoaded", event => {
-//     app.Router.init()
+    // app.Router.init()
     // we do not need to inject the homepage or details page anymore since
     // the Router does that now
-    document.querySelector("main").appendChild(new HomePage())
+    // document.querySelector("main").appendChild(new HomePage())
     // document.querySelector("main").appendChild(new MovieDetailsPage())
+ 
+    // Load the navigation component
+    // const body = document.querySelector("body");
+    // const navComponent = new Nav();
+    // body.insertBefore(navComponent, body.firstChild);
 });
 
 window.app = {
@@ -23,6 +29,30 @@ window.app = {
     },
     closeError: ()=>{
         document.getElementById("alert-modal").close()
+    },
+    login: async (event) => {
+        event.preventDefault();
+        let errors = [];
+        const email = document.getElementById("login-email").value;
+        const password = document.getElementById("login-password").value;
+ 
+        if (email.length < 8) errors.push("Enter your complete email");
+        if (password.length < 6) errors.push("Enter a password with 6 characters");
+        if (errors.length==0) {
+            const response = await API.authenticate(email, password);
+            if (response.success) {
+                app.Store.jwt = response.jwt;
+                app.Router.go("/account/")
+            } else {
+                app.showError(response.message, false);
+            }
+        } else {
+            app.showError(errors.join(". "), false);
+        }
+    },
+    logout: () => {
+        Store.jwt = null;
+        app.Router.go("/");
     },
     // register: async (event) => {
     //     event.preventDefault();
@@ -48,30 +78,6 @@ window.app = {
     //         app.showError(errors.join(". "), false);
     //     }
     // },
-    login: async (event) => {
-        event.preventDefault();
-        let errors = [];
-        const email = document.getElementById("login-email").value;
-        const password = document.getElementById("login-password").value;
- 
-        if (email.length < 8) errors.push("Enter your complete email");
-        if (password.length < 6) errors.push("Enter a password with 6 characters");
-        if (errors.length==0) {
-            const response = await API.authenticate(email, password);
-            if (response.success) {
-                app.Store.jwt = response.jwt;
-                app.Router.go("/account/")
-            } else {
-                app.showError(response.message, false);
-            }
-        } else {
-            app.showError(errors.join(". "), false);
-        }
-    },
-    logout: () => {
-        Store.jwt = null;
-        app.Router.go("/");
-    },
     // saveToCollection: async (movie_id, collection) => {
     //     if (app.Store.loggedIn) {
     //         try {
