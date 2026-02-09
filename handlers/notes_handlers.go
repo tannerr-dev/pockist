@@ -30,26 +30,17 @@ type NotesHandler struct {
 
 var (
 	noteTemplate     *template.Template
-	notesTemplate    *template.Template
 	ssrNotesTemplate *template.Template
 )
 
 func init() {
 	noteTemplate = templates.Templater("note")
-	notesTemplate = templates.Templater("notes")
 	ssrNotesTemplate = templates.Templater("ssrnotes")
 }
 
 func CreateNotesHandler(db *sql.DB) *NotesHandler {
 	return &NotesHandler{
 		db: db,
-	}
-}
-
-func (h *NotesHandler) Notes(w http.ResponseWriter, r *http.Request) {
-	err := notesTemplate.Execute(w, nil)
-	if err != nil {
-		http.Error(w, "failed to exec template", http.StatusInternalServerError)
 	}
 }
 

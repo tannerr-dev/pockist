@@ -6,7 +6,7 @@ export class HomePage extends HTMLElement {  // <home-page>
         const template = document.getElementById("home-page");
         const content = template.content.cloneNode(true);
         this.appendChild(content);
-        document.querySelectorAll("a").forEach(a=>{
+        document.querySelectorAll("a.pwa").forEach(a=>{
             a.addEventListener("click", event => {
                 event.preventDefault();
                 const href = a.getAttribute("href");
