@@ -15,12 +15,12 @@ if [ ! -f "${ARCHIVE_FILE}" ]; then
     exit 1
 fi
 
-echo "Loading Docker image from ${ARCHIVE_FILE}..."
-docker load < "${ARCHIVE_FILE}"
-
 echo "Stopping existing container '${CONTAINER_NAME}'..."
 docker stop "${CONTAINER_NAME}" 2>/dev/null || true
 docker rm "${CONTAINER_NAME}" 2>/dev/null || true
+
+echo "Loading Docker image from ${ARCHIVE_FILE}..."
+docker load < "${ARCHIVE_FILE}"
 
 echo "Starting new container..."
 docker run -d \

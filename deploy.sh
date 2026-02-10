@@ -36,12 +36,12 @@ IMAGE_TAG="$3"
 CONTAINER_NAME="$4"
 CONTAINER_PORT="$5"
 
-echo "Loading Docker image..."
-docker load < "${ARCHIVE_NAME}"
-
 echo "Stopping existing container..."
 docker stop "${CONTAINER_NAME}" 2>/dev/null || true
 docker rm "${CONTAINER_NAME}" 2>/dev/null || true
+
+echo "Loading Docker image..."
+docker load < "${ARCHIVE_NAME}"
 
 echo "Starting new container..."
 docker run -d \
