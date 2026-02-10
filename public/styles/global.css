@@ -1,35 +1,37 @@
 :root{
     --hue: 180;
+    --mod:1;
 
-    --bg: hsl(var(--hue), 20%, 8%);
-    --bg-2: hsl(var(--hue), 22%, 18%);
-    --bg-3: hsl(var(--hue), 42%, 28%);
-    --bg-dark: hsl(var(--hue), 8%, 6%);
-    --bg-light: hsl(var(--hue), 22%, 12%);
+	--color: hsl(var(--hue), calc(50% * var(--mod)), 50%);
+    --bg: hsl(var(--hue), calc(20% * var(--mod)), 8%);
+    --bg-2: hsl(var(--hue), calc(22% * var(--mod)), 18%);
+    --bg-3: hsl(var(--hue), calc(42% * var(--mod)), 28%);
+    --bg-dark: hsl(var(--hue), calc(8% * var(--mod)), 6%);
+    --bg-light: hsl(var(--hue), calc(22% * var(--mod)), 12%);
 
-    --text: hsl(var(--hue), 78%, 84%);
-    --accent: hsl(var(--hue), 32%, 46%);
-    --accent-2: hsl(var(--hue), 22%, 28%);
-    --accent-dark: hsl(var(--hue), 22%, 28%);
+    --text: hsl(var(--hue), calc(78% * var(--mod)), 84%);
+    --accent: hsl(var(--hue), calc(32% * var(--mod)), 46%);
+    --accent-2: hsl(var(--hue), calc(22% * var(--mod)), 28%);
+    --accent-dark: hsl(var(--hue), calc(22% * var(--mod)), 28%);
 }
 [data-theme="light"] {
-    --bg: hsl(var(--hue), 20%, 88%);
-    --bg-2: hsl(var(--hue), 22%, 78%);
-    --bg-dark: hsl(var(--hue), 8%, 60%);
-    --bg-light: hsl(var(--hue), 22%, 72%);
+    --bg: hsl(var(--hue), calc(20% * var(--mod)), 88%);
+    --bg-2: hsl(var(--hue), calc(22% * var(--mod)), 78%);
+    --bg-dark: hsl(var(--hue), calc(8% * var(--mod)), 60%);
+    --bg-light: hsl(var(--hue), calc(22% * var(--mod)), 72%);
 
-    --text: hsl(var(--hue), 78%, 8%);
-    --accent: hsl(var(--hue), 40%, 40%);
-    --accent-2: hsl(var(--hue), 32%, 32%);
-    --accent-dark: hsl(var(--hue), 22%, 8%);
+    --text: hsl(var(--hue), calc(78% * var(--mod)), 8%);
+    --accent: hsl(var(--hue), calc(40% * var(--mod)), 40%);
+    --accent-2: hsl(var(--hue), calc(32% * var(--mod)), 32%);
+    --accent-dark: hsl(var(--hue), calc(22% * var(--mod)), 8%);
 }
 html{
-    background-color: var(--bg);
+    background: var(--bg);
     height: 100svh;
 }
 body {
     height:100%;
-    background-color: var(--bg);
+    background: var(--bg);
     color: var(--text);
     font-family: Arial, Helvetica, sans-serif;
 }

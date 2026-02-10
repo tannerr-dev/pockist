@@ -44,14 +44,14 @@ nav {
 		appearance: none;
 		width: var(--w);
 		height: var(--h);
-		background-color: hsl(var(--hue), 50%, 50%);
+		background-color: var(--color);
 		cursor: pointer;
 		border-radius: 4px;
 	}
 	input::-moz-range-thumb {
 		width: var(--w);
 		height: var(--h);
-		background-color: hsl(var(--hue), 50%, 50%);
+		background-color: var(--color);
 		cursor: pointer;
 		border-radius: 4px;
 	}
