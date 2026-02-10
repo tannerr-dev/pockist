@@ -51,3 +51,24 @@ todo:
 - habit tracker
 - tasks
 - events
+
+
+## Deploy notes
+
+Created two scripts:
+deploy.sh - One-command deployment from local:
+### Set your server details
+export SERVER_HOST="your-server.com"
+export SERVER_USER="root"
+./deploy.sh
+deploy-server.sh - Server-side script (if you prefer manual steps):
+### On server
+./deploy-server.sh pockist_latest.tar.gz pockist pockist 8080
+Manual approach (if you want full control):
+### Local: Build and package
+docker build -t pockist:latest .
+docker save pockist:latest | gzip > pockist.tar.gz
+scp pockist.tar.gz user@server:/opt/pockist/
+### Server: Deploy
+ssh user@server "cd /opt/pockist && docker load < pockist.tar.gz && docker stop pockist && docker rm pockist && docker run -d --name pockist -p 8080:8080 pockist:latest"
+Note: The scripts assume you have SSH access to your server and Docker is installed there. Update SERVER_HOST, SERVER_USER, and other variables as needed.
