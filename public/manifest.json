@@ -1,0 +1,17 @@
+{
+  "name": "Pockist: Pocket Assistant",
+  "short_name": "Pockist",
+  "icons": [
+    {
+      "src": "assets/logo.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "maskable"
+    }
+  ],
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#151411",
+  "background_color": "#151411"
+}
+

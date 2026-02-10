@@ -1,30 +1,30 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <svg
-   width="100mm"
-   height="100mm"
+   width="102mm"
+   height="102mm"
    version="1.1"
-   viewBox="0 0 100 99.999998"
+   viewBox="0 0 102 102"
    id="svg3"
    xmlns="http://www.w3.org/2000/svg"
    xmlns:svg="http://www.w3.org/2000/svg">
   <defs
      id="defs3" />
   <rect
-     style="fill:#151411;fill-opacity:1;stroke-width:0.264583"
+     style="fill:#ffffff;fill-opacity:1;stroke-width:0.264583"
      id="rect3"
      width="102"
      height="102"
-     x="-1.0827395"
-     y="-0.81205469"
+     x="-2.0246684e-09"
+     y="-1.5185009e-09"
      ry="0" />
   <text
      xml:space="preserve"
      style="font-weight:bold;font-size:96.4043px;line-height:0;font-family:'Liberation Mono';-inkscape-font-specification:'Liberation Mono Bold';writing-mode:lr-tb;direction:ltr;fill:#4d4d4d;stroke-width:0.180758"
-     x="22.274742"
-     y="67.74543"
+     x="23.357481"
+     y="68.557487"
      id="text1"><tspan
        id="tspan1"
        style="font-style:normal;font-variant:normal;font-weight:800;font-stretch:normal;line-height:0;font-family:Ubuntu;-inkscape-font-specification:'Ubuntu Ultra-Bold';fill:#4d4d4d;stroke-width:0.180758"
-       x="22.274742"
-       y="67.74543">p</tspan></text>
+       x="23.357481"
+       y="68.557487">p</tspan></text>
 </svg>
