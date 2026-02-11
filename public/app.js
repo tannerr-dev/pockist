@@ -6,6 +6,7 @@ import { Router } from "./services/Router.js";
 
 window.addEventListener("DOMContentLoaded", event => {
     app.Router.init()
+    navigator.serviceWorker.register("/sw.js")
     // we do not need to inject the homepage or details page anymore since
     // the Router does that now
     // document.querySelector("main").appendChild(new HomePage())
