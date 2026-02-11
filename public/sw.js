@@ -6,6 +6,7 @@ self.addEventListener("install", function (event) {
 			return cache.addAll([
 				"/",
 				"/app.js",
+                "/note",
                 "/styles/global.css",
                 "/styles/reset.css",
                 "/services/API.js",
