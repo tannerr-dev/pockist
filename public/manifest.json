@@ -1,7 +1,13 @@
 {
   "name": "Pockist: Pocket Assistant",
   "short_name": "Pockist",
+  "description": "Your personal pocket assistant for everyday tasks",
   "icons": [
+    {
+      "src": "assets/logo.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
     {
       "src": "assets/logo.png",
       "type": "image/png",
@@ -10,6 +16,7 @@
     }
   ],
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "theme_color": "#151411",
   "background_color": "#151411"
