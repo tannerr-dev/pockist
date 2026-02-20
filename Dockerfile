@@ -35,6 +35,6 @@ COPY --from=builder /app/data ./data
 # Create a directory for the SQLite database
 RUN mkdir -p /app/data
 
-EXPOSE 8080
+EXPOSE 4242
 
 CMD ["./pockist"]

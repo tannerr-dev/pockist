@@ -79,5 +79,5 @@ Note: The scripts assume you have SSH access to your server and Docker is instal
 ### Local: Build and package
 docker build -t pockist:latest . && docker save pockist:latest | gzip > pockist.tar.gz && scp pockist.tar.gz user@server:/opt/pockist/
 ### Server: Deploy
-cd /opt/pockist && docker stop pockist && docker rm pockist && docker load < pockist.tar.gz && docker run -d --name pockist -p 8081:8080 pockist:latest
+cd /opt/pockist && docker stop pockist && docker rm pockist && docker load < pockist.tar.gz && docker run -d --name pockist -p 8081:8081 pockist:latest
 

@@ -78,7 +78,7 @@ func main() {
 	}
 	server.HandleFunc("/note", catchAllClientRoutesHandler)
 	server.Handle("/", http.FileServer(http.Dir("public")))
-	const addr = ":8080"
+	const addr = ":4242"
 	fmt.Println("Server listening on", addr)
 	err = http.ListenAndServe(addr, server)
 	if err != nil {
