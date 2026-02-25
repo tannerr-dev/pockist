@@ -29,12 +29,12 @@ type NotesHandler struct {
 }
 
 var (
-	noteTemplate     *template.Template
+	// noteTemplate     *template.Template
 	ssrNotesTemplate *template.Template
 )
 
 func init() {
-	noteTemplate = templates.Templater("note")
+	// noteTemplate = templates.Templater("note")
 	ssrNotesTemplate = templates.Templater("ssrnotes")
 }
 
@@ -44,12 +44,12 @@ func CreateNotesHandler(db *sql.DB) *NotesHandler {
 	}
 }
 
-func (h *NotesHandler) Note(w http.ResponseWriter, r *http.Request) {
-	err := noteTemplate.Execute(w, nil)
-	if err != nil {
-		http.Error(w, "failed to exec template", http.StatusInternalServerError)
-	}
-}
+// func (h *NotesHandler) Note(w http.ResponseWriter, r *http.Request) {
+// 	err := noteTemplate.Execute(w, nil)
+// 	if err != nil {
+// 		http.Error(w, "failed to exec template", http.StatusInternalServerError)
+// 	}
+// }
 
 func (h *NotesHandler) SaveNote(w http.ResponseWriter, r *http.Request) {
 	note := r.FormValue("note")
