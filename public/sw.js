@@ -1,4 +1,3 @@
-// sw.js
 console.log("Service Worker loaded.")
 self.addEventListener("install", function (event) {
 	event.waitUntil(
