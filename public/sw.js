@@ -1,7 +1,8 @@
 console.log("Service Worker loaded.")
+const CACHE_NAME = 'pockist-v1';
 self.addEventListener("install", function (event) {
 	event.waitUntil(
-		caches.open("cache-v1").then(function (cache) {
+		caches.open(CACHE_NAME).then(function (cache) {
 			return cache.addAll([
 				"/",
 				"/app.js",
@@ -37,7 +38,7 @@ self.addEventListener("activate", function (event) {
 		caches.keys().then(function (cacheNames) {
 			return Promise.all(
 				cacheNames.map(function (cacheName) {
-					if (cacheName !== "cache-v1") {
+					if (cacheName !== CACHENAME {
 						return caches.delete(cacheName);
 					}
 				}),
