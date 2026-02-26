@@ -1,5 +1,7 @@
 console.log("Service Worker loaded.")
-const CACHE_NAME = 'pockist-v1';
+
+const CACHE_NAME = 'pockist-v2';
+
 self.addEventListener("install", function (event) {
 	event.waitUntil(
 		caches.open(CACHE_NAME).then(function (cache) {
@@ -21,6 +23,8 @@ self.addEventListener("install", function (event) {
                 "/components/HomePage.js",
                 "/components/LocalNotes.js",
 			]);
+		}).then(function() {
+			self.skipWaiting();
 		}),
 	);
 });
@@ -38,11 +42,13 @@ self.addEventListener("activate", function (event) {
 		caches.keys().then(function (cacheNames) {
 			return Promise.all(
 				cacheNames.map(function (cacheName) {
-					if (cacheName !== CACHENAME {
+					if (cacheName !== CACHE_NAME) {
 						return caches.delete(cacheName);
 					}
 				}),
 			);
+		}).then(function() {
+			return self.clients.claim();
 		}),
 	);
 });

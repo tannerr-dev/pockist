@@ -7,6 +7,24 @@ import { Router } from "./services/Router.js";
 window.addEventListener("DOMContentLoaded", event => {
     app.Router.init()
     navigator.serviceWorker.register("/sw.js")
+    .then(registration => {
+        if (registration.installing) {
+            registration.installing.addEventListener("statechange", () => {
+                if (registration.installing.state === "installed" && navigator.serviceWorker.controller) {
+                    window.location.reload();
+                }
+            });
+        }
+
+        registration.addEventListener("updatefound", () => {
+            const newWorker = registration.installing;
+            newWorker.addEventListener("statechange", () => {
+                if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
+                    window.location.reload();
+                }
+            });
+        });
+    });
     // we do not need to inject the homepage or details page anymore since
     // the Router does that now
     // document.querySelector("main").appendChild(new HomePage())
