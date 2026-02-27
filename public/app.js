@@ -8,10 +8,23 @@ window.addEventListener("DOMContentLoaded", event => {
     app.Router.init()
     navigator.serviceWorker.register("/sw.js")
     .then(registration => {
+        const showUpdatePrompt = () => {
+            const banner = document.createElement("div");
+            banner.id = "update-banner";
+            banner.innerHTML = `
+                <span>A new version is available.</span>
+                <button id="update-btn">Reload</button>
+            `;
+            document.body.appendChild(banner);
+            document.getElementById("update-btn").addEventListener("click", () => {
+                window.location.reload();
+            });
+        };
+
         if (registration.installing) {
             registration.installing.addEventListener("statechange", () => {
                 if (registration.installing.state === "installed" && navigator.serviceWorker.controller) {
-                    window.location.reload();
+                    showUpdatePrompt();
                 }
             });
         }
@@ -20,7 +33,7 @@ window.addEventListener("DOMContentLoaded", event => {
             const newWorker = registration.installing;
             newWorker.addEventListener("statechange", () => {
                 if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
-                    window.location.reload();
+                    showUpdatePrompt();
                 }
             });
         });
