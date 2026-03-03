@@ -32,6 +32,7 @@ local-notes {
     outline: none;
     padding:1rem;
     resize: none;
+    /* overflow: hidden; */
 
     background-color: var(--bg-2);
     color: var(--text);

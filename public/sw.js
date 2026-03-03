@@ -1,5 +1,15 @@
 console.log("Service Worker loaded.")
 const CACHE_NAME = 'pockist-v1';
+// // Install event - precache any initial resources if needed
+// self.addEventListener('install', (event) => {
+//   event.waitUntil(
+//     caches.open(CACHE_NAME)
+//       .then(() => {
+//         // Skip waiting to activate immediately
+//         self.skipWaiting();
+//       })
+//   );
+// });
 self.addEventListener("install", function (event) {
 	event.waitUntil(
 		caches.open(CACHE_NAME).then(function (cache) {
@@ -25,14 +35,6 @@ self.addEventListener("install", function (event) {
 	);
 });
 
-self.addEventListener("fetch", function (event) {
-	event.respondWith(
-		caches.match(event.request).then(function (response) {
-			return response || fetch(event.request);
-		}),
-	);
-});
-
 self.addEventListener("activate", function (event) {
 	event.waitUntil(
 		caches.keys().then(function (cacheNames) {
@@ -47,21 +49,14 @@ self.addEventListener("activate", function (event) {
 	);
 });
 
+self.addEventListener("fetch", function (event) {
+	event.respondWith(
+		caches.match(event.request).then(function (response) {
+			return response || fetch(event.request);
+		}),
+	);
+});
 
-
-// copy pasta
-// const CACHE_NAME = 'reeling-t';
-//
-// // Install event - precache any initial resources if needed
-// self.addEventListener('install', (event) => {
-//   event.waitUntil(
-//     caches.open(CACHE_NAME)
-//       .then(() => {
-//         // Skip waiting to activate immediately
-//         self.skipWaiting();
-//       })
-//   );
-// });
 //
 // // Activate event - clean up old caches
 // self.addEventListener('activate', (event) => {
