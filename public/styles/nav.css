@@ -63,6 +63,9 @@ nav {
 	align-items: center;
 	gap: 10px;
 }
+.flex-row.hide {
+	display: none !important;
+}
 #theme-switch {
 	/* height: var(--height); */
 	--d: 40px;

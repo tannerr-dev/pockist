@@ -39,4 +39,7 @@ local-notes {
     background-color: var(--bg-2);
     color: var(--text);
     font-size: 1.1rem;
+	scrollbar-color: hsl(0 0% 100% /0.2) hsl(0 0% 0% /0);
+	/* scrollbar-width: thin; */
+	scrollbar-gutter: stable both-edges;
 }
