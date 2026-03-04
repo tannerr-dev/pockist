@@ -1,9 +1,11 @@
 const root = document.querySelector(":root");
+const options = document.querySelector("#optionals");
 let menu = document.querySelector(".menu");
 if (menu) {
 	menu.addEventListener("click", () => {
 		menu.classList.toggle("change");
-		console.log("todo: add drawer lol");
+        options.classList.toggle("hide");
+		// console.log("todo: add drawer lol");
 		// if (drawer.style.width == "100%") {
 		//   drawer.style.width = "0px";
 		//   drawer.style.opacity = "0";

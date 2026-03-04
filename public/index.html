@@ -1,6 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
+  <head>
+    <title>Pockist</title>
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" href="./assets/logo_white.svg" />
+    <link href="/styles/reset.css" rel="stylesheet">
+    <link href="/styles/global.css" rel="stylesheet">
+    <link href="/styles/nav.css" rel="stylesheet">
+    <link href="/styles/local-notes.css" rel="stylesheet">
+    <script src="/app.js" type="module"></script>
+
     <!-- <meta http-equiv="refresh" content="10" /> -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,35 +18,33 @@
     <meta name="darkreader-lock">
 
     <!-- SEO Meta Tags -->
-    <meta name="description" content="Your simple pocket assistant progressive web app. Save notes locally, offline and install the web app to your home screen. More features coming soon...">
+    <meta
+      name="description"
+      content="Your simple pocket assistant progressive web app. Save notes locally, offline and install the web app to your home screen. More features coming soon..."
+    >
     <!-- <meta name="theme-color" content="#6366f1"> -->
 
     <!-- Open Graph / Facebook / LinkedIn / Discord -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://pockist.com">
     <meta property="og:title" content="Pockist">
-    <meta property="og:description" content="Your simple pocket assistant progressive web app. Save notes locally, offline and install the web app to your home screen. More features coming soon...">
+    <meta
+      property="og:description"
+      content="Your simple pocket assistant progressive web app. Save notes locally, offline and install the web app to your home screen. More features coming soon..."
+    >
     <meta property="og:image" content="https://pockist.com/assets/preview.png">
 
     <!-- Twitter / X / Bluesky -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:url" content="https://pockist.com">
     <meta name="twitter:title" content="Pockist">
-    <meta name="twitter:description" content="Your simple pocket assistant progressive web app. Save notes locally, offline and install the web app to your home screen. More features coming soon...">
+    <meta
+      name="twitter:description"
+      content="Your simple pocket assistant progressive web app. Save notes locally, offline and install the web app to your home screen. More features coming soon..."
+    >
     <meta name="twitter:image" content="https://pockist.com/assets/preview.png">
-
-    <title>Pockist</title>
-    <link rel="manifest" href="/manifest.json">
-    <link href="/styles/reset.css" rel="stylesheet">
-    <link href="/styles/global.css" rel="stylesheet">
-    <link href="/styles/nav.css" rel="stylesheet">
-    <link href="/styles/local-notes.css" rel="stylesheet">
-    <link rel="icon" href="./assets/logo_white.svg" />
-    <script src="/app.js" type="module"></script>
-    <script src="/app.js" type="module"></script>
-
-</head>
-<body>
+  </head>
+  <body>
     <nav>
       <div id="home">
         <a class="pwa" href="/">
@@ -51,24 +58,30 @@
             version="1.1"
             id="svg1"
             xmlns="http://www.w3.org/2000/svg"
-            xmlns:svg="http://www.w3.org/2000/svg">
-              <defs
-                 id="defs1" />
-              <g
-                 id="layer1">
-                <path
-                  style="fill: var(--accent); stroke-width: 0.269266"
-                   d="M 60.287664,20.342465 C 46.938961,31.483974 30.186168,39.221394 12.945203,46.470643 c 3.587601,23.896643 0.469016,32.555213 -0.739725,48.214283 l 31.44146,0.0151 c 2.774679,-29.33074 40.441426,-43.698337 23.297696,-0.4563 l 40.315636,-0.32494 C 104.33812,78.085126 101.49834,64.470646 106.15068,46.417805 83.130204,36.378064 73.644864,32.24763 60.287664,20.342465 Z"
-                   id="path1" />
-                <path
-                  style="fill: var(--accent); stroke-width: 0.269266"
-                   d="M 60.287664,20.342465 C 46.938961,31.483974 30.186168,39.221394 12.945203,46.470643 c 3.587601,23.896643 7.866276,19.240145 2.589042,47.474557 28.109588,0.237771 70.9514,0.783107 87.657535,0.713312 -4.401605,-20.641879 -1.69344,-30.187866 2.9589,-48.240707 C 83.130204,36.378064 73.644864,32.24763 60.287664,20.342465 Z"
-                   id="path2" />
-              </g>
-        </svg>
+            xmlns:svg="http://www.w3.org/2000/svg"
+          >
+            <defs
+              id="defs1"
+            />
+            <g
+              id="layer1"
+            >
+              <path
+                style="fill: var(--accent); stroke-width: 0.269266"
+                d="M 60.287664,20.342465 C 46.938961,31.483974 30.186168,39.221394 12.945203,46.470643 c 3.587601,23.896643 0.469016,32.555213 -0.739725,48.214283 l 31.44146,0.0151 c 2.774679,-29.33074 40.441426,-43.698337 23.297696,-0.4563 l 40.315636,-0.32494 C 104.33812,78.085126 101.49834,64.470646 106.15068,46.417805 83.130204,36.378064 73.644864,32.24763 60.287664,20.342465 Z"
+                id="path1"
+              />
+              <path
+                style="fill: var(--accent); stroke-width: 0.269266"
+                d="M 60.287664,20.342465 C 46.938961,31.483974 30.186168,39.221394 12.945203,46.470643 c 3.587601,23.896643 7.866276,19.240145 2.589042,47.474557 28.109588,0.237771 70.9514,0.783107 87.657535,0.713312 -4.401605,-20.641879 -1.69344,-30.187866 2.9589,-48.240707 C 83.130204,36.378064 73.644864,32.24763 60.287664,20.342465 Z"
+                id="path2"
+              />
+            </g>
+          </svg>
         </a>
       </div>
-      <div id="options">
+      <div id="options" class="flex-row">
+          <div id="optionals" class="hide flex-row">
         <div class="slidecontainer">
           <input
             class="slider"
@@ -84,8 +97,11 @@
           class="theme-switch"
           xmlns="http://www.w3.org/2000/svg"
           viewBox="0 0 24 24"
-          stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-          class="lucide lucide-sun-moon" >
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          class="lucide lucide-sun-moon"
+        >
           <path d="M12 8a2.83 2.83 0 0 0 4 4 4 4 0 1 1-4-4"></path>
           <path d="M12 2v2"></path>
           <path d="M12 20v2"></path>
@@ -96,6 +112,7 @@
           <path d="m6.3 17.7-1.4 1.4"></path>
           <path d="m19.1 4.9-1.4 1.4"></path>
         </svg>
+        </div>
         <div class="menu-wrapper">
           <div class="menu">
             <div class="bar1"></div>
@@ -103,28 +120,27 @@
             <div class="bar3"></div>
           </div>
         </div>
-      <div>
+      </div>
     </nav>
     <script src="scripts/nav.js"></script>
-    <main>
-    </main>
+    <main></main>
     <template id="home-page">
-        <h1>Pockist</h1>
-        <a class="pwa" href="/note"><button class="button">local note</button></a>
-        <!-- <a href="/ssrnotes"><button class="button">server notes</button></a> -->
-        <!-- <a href="/clock"><button class="button">clock</button></a> -->
-        <!-- <a href="/monies"><button class="button">monies</button></a> -->
-        <!-- <a href="/admin"><button class="button">admin</button></a> -->
-        <!-- <a href="/heatmap"><button class="button">heatmap</button></a> -->
-        <!-- <form action="/api/login" method="post" class="flex-col"> -->
-        <!--     <input class="myinput" type="text" name="username" placeholder="username"> -->
-        <!--     <input class="myinput" type="password" name="password" placeholder="password"> -->
-        <!--     <button class="button" type="submit">login</button> -->
-        <!-- </form> -->
+      <h1>Pockist</h1>
+      <a class="pwa" href="/note"><button class="button">local note</button></a>
+      <!-- <a href="/ssrnotes"><button class="button">server notes</button></a> -->
+      <!-- <a href="/clock"><button class="button">clock</button></a> -->
+      <!-- <a href="/monies"><button class="button">monies</button></a> -->
+      <!-- <a href="/admin"><button class="button">admin</button></a> -->
+      <!-- <a href="/heatmap"><button class="button">heatmap</button></a> -->
+      <!-- <form action="/api/login" method="post" class="flex-col"> -->
+      <!--     <input class="myinput" type="text" name="username" placeholder="username"> -->
+      <!--     <input class="myinput" type="password" name="password" placeholder="password"> -->
+      <!--     <button class="button" type="submit">login</button> -->
+      <!-- </form> -->
     </template>
     <template id="local-note">
-        <h1>Local Note</h1>
-        <textarea id="note"></textarea>
+      <h1>Local Note</h1>
+      <textarea id="note"></textarea>
     </template>
-</body>
+  </body>
 </html>
