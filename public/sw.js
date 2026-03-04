@@ -1,6 +1,6 @@
-console.log("Service Worker loaded.")
+console.log("Service Worker loaded.");
 
-const CACHE_NAME = 'pockist-v5';
+const CACHE_NAME = "pockist-v6";
 // // Install event - precache any initial resources if needed
 // self.addEventListener('install', (event) => {
 //   event.waitUntil(
@@ -32,6 +32,9 @@ self.addEventListener("install", function (event) {
 				"/components/HomePage.js",
 				"/components/LocalNotes.js",
 			]);
+		}).then(function () {
+			// Skip waiting to activate immediately
+			return self.skipWaiting();
 		}),
 	);
 });
@@ -46,21 +49,21 @@ self.addEventListener("activate", function (event) {
 					}
 				}),
 			);
-		}).then(function() {
+		}).then(function () {
 			return self.clients.claim();
 		}),
 	);
 });
 
 self.addEventListener("fetch", (event) => {
-    // 	event.respondWith(
-    // 		caches.match(event.request).then(function (response) {
-    // 			return response || fetch(event.request);
-    // 		}),
-    // 	);
-    // });
+	// 	event.respondWith(
+	// 		caches.match(event.request).then(function (response) {
+	// 			return response || fetch(event.request);
+	// 		}),
+	// 	);
+	// });
 
-    // Fetch event - handle caching strategies
+	// Fetch event - handle caching strategies
 	// const requestUrl = new URL(event.request.url);
 	// Handle /api/ requests (network first, cache fallback)
 	// if (requestUrl.pathname.startsWith('/api/')) {
@@ -103,5 +106,5 @@ self.addEventListener("fetch", (event) => {
 			});
 		}),
 	);
-// } 
+	// }
 });
