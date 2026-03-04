@@ -1,43 +1,43 @@
 console.log("Service Worker loaded.");
 
-const CACHE_NAME = "pockist-v6";
-// // Install event - precache any initial resources if needed
-// self.addEventListener('install', (event) => {
-//   event.waitUntil(
-//     caches.open(CACHE_NAME)
-//       .then(() => {
-//         // Skip waiting to activate immediately
-//         self.skipWaiting();
-//       })
-//   );
-// });
-self.addEventListener("install", function (event) {
-	event.waitUntil(
-		caches.open(CACHE_NAME).then(function (cache) {
-			return cache.addAll([
-				"/",
-				"/app.js",
-				"/note",
-				"/styles/global.css",
-				"/styles/reset.css",
-				"/styles/nav.css",
-				"/services/API.js",
-				"/services/Router.js",
-				"/services/Routes.js",
-				"/services/Store.js",
-				"/scripts/nav.js",
-				"/assets/logo.png",
-				"/assets/logo.svg",
-				"/assets/logo_white.svg",
-				"/components/HomePage.js",
-				"/components/LocalNotes.js",
-			]);
-		}).then(function () {
-			// Skip waiting to activate immediately
-			return self.skipWaiting();
-		}),
-	);
+const CACHE_NAME = "pockist-v7";
+// Install event - precache any initial resources if needed
+self.addEventListener('install', (event) => {
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then(() => {
+        // Skip waiting to activate immediately
+        self.skipWaiting();
+      })
+  );
 });
+// self.addEventListener("install", function (event) {
+// 	event.waitUntil(
+// 		caches.open(CACHE_NAME).then(function (cache) {
+// 			return cache.addAll([
+// 				"/",
+// 				"/app.js",
+// 				"/note",
+// 				"/styles/global.css",
+// 				"/styles/reset.css",
+// 				"/styles/nav.css",
+// 				"/services/API.js",
+// 				"/services/Router.js",
+// 				"/services/Routes.js",
+// 				"/services/Store.js",
+// 				"/scripts/nav.js",
+// 				"/assets/logo.png",
+// 				"/assets/logo.svg",
+// 				"/assets/logo_white.svg",
+// 				"/components/HomePage.js",
+// 				"/components/LocalNotes.js",
+// 			]);
+// 		}).then(function () {
+// 			// Skip waiting to activate immediately
+// 			return self.skipWaiting();
+// 		}),
+// 	);
+// });
 
 self.addEventListener("activate", function (event) {
 	event.waitUntil(
