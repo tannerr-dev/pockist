@@ -126,7 +126,9 @@
     <main></main>
     <template id="home-page">
       <h1>Pockist</h1>
-      <a class="pwa" href="/note"><button class="button">local note</button></a>
+      <a class="pwa" href="/note"><button class="button">offline note</button></a>
+      <a class="pwa" href="/list"><button class="button">offline list</button></a>
+      <a href="/weather.html">weather<a/>
       <!-- <a href="/ssrnotes"><button class="button">server notes</button></a> -->
       <!-- <a href="/clock"><button class="button">clock</button></a> -->
       <!-- <a href="/monies"><button class="button">monies</button></a> -->
@@ -139,8 +141,12 @@
       <!-- </form> -->
     </template>
     <template id="local-note">
-      <h1>Local Note</h1>
+      <h1>Offline Note</h1>
       <textarea id="note"></textarea>
+    </template>
+    <template id="offline-list">
+      <h1>Offline List</h1>
+      <textarea id="list"></textarea>
     </template>
   </body>
 </html>

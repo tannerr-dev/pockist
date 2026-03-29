@@ -64,7 +64,7 @@ nav {
 	gap: 10px;
 }
 .flex-row.hide {
-	display: none !important;
+	display: none;
 }
 #theme-switch {
 	/* height: var(--height); */
@@ -160,6 +160,9 @@ nav {
 	color: var(nav-btn-act);
 	background-color: var(nav-btn-act-bg);
 }
+
+nav #optionals.hide,
+#optionals.flex-row.hide,
 #optionals.hide {
-	display: none !important;
+	display: none;
 }
