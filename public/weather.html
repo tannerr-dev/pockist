@@ -3,522 +3,242 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Weather Data Visualization</title>
-    <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@observablehq/plot@0.6"></script>
+    <title>Weather Data</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: #1a1a1a;
-            min-height: 100vh;
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: system-ui, sans-serif; 
+            background: #1a1a1a; 
+            color: #fff; 
             padding: 20px;
         }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background: #1a1a1a;
-            border-radius: 8px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-            padding: 24px;
-        }
-
-        h1 {
+        .controls { margin-bottom: 20px; display: flex; gap: 10px; }
+        input { 
+            padding: 10px; 
+            border: 1px solid #333; 
+            border-radius: 4px; 
+            background: #2a2a2a; 
             color: #fff;
-            margin-bottom: 8px;
-            font-size: 24px;
+            flex: 1;
         }
-
-        .subtitle {
-            color: #888;
+        button { 
+            padding: 10px 20px; 
+            background: #444; 
+            border: none; 
+            border-radius: 4px; 
+            color: #fff; 
+            cursor: pointer;
+        }
+        button:hover { background: #555; }
+        #error { color: #ff6b6b; margin-bottom: 10px; }
+        #loading { color: #888; margin-bottom: 10px; }
+        .meta {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
             margin-bottom: 20px;
-            font-size: 14px;
         }
-
-        .controls {
-            display: flex;
-            gap: 12px;
+        .meta-item {
+            background: #2a2a2a;
+            padding: 12px;
+            border-radius: 4px;
+        }
+        .meta-label { font-size: 11px; color: #888; text-transform: uppercase; }
+        .meta-value { font-size: 18px; margin-top: 4px; }
+        .current {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 15px;
             margin-bottom: 20px;
-            flex-wrap: wrap;
-            align-items: flex-end;
         }
-
-        .control-group {
+        .current-main {
+            background: #2a2a2a;
+            padding: 24px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .current-temp { font-size: 64px; font-weight: 300; }
+        .current-condition { font-size: 18px; color: #888; margin-top: 8px; }
+        .current-stats {
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 10px;
         }
-
-        label {
-            font-weight: 600;
-            color: #ccc;
-            font-size: 13px;
-        }
-
-        input, select {
-            padding: 8px 10px;
-            border: 2px solid #4a4a4a;
-            border-radius: 4px;
-            font-size: 14px;
-            transition: border-color 0.3s;
+        .current-stat {
             background: #2a2a2a;
-            color: #fff;
+            padding: 16px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
-
-        input:focus, select:focus {
-            outline: none;
-            border-color: #888;
-        }
-
-        button {
-            padding: 8px 20px;
-            background: #4a4a4a;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background 0.3s;
-            font-size: 14px;
-        }
-
-        button:hover {
-            background: #666;
-        }
-
-        button:active {
-            transform: scale(0.98);
-        }
-
-        .loading {
-            text-align: center;
-            padding: 30px;
-            color: #888;
-            font-size: 14px;
-        }
-
-        .error {
-            background: #2a1a1a;
-            border: 2px solid #4a4a4a;
-            color: #fff;
-            padding: 12px;
-            border-radius: 4px;
-            margin-bottom: 16px;
-            font-size: 14px;
-        }
-
-        .chart-container {
-            margin-bottom: 24px;
-            overflow-x: auto;
-        }
-
-        .metadata {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 12px;
-            margin-top: 20px;
-            padding-top: 20px;
-            border-top: 2px solid #333;
-        }
-
-        .metadata-item {
-            background: #2a2a2a;
-            padding: 12px;
-            border-radius: 4px;
-            border-left: 4px solid #4a4a4a;
-        }
-
-        .metadata-label {
-            font-size: 11px;
-            color: #666;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 4px;
-            font-weight: 600;
-        }
-
-        .metadata-value {
-            font-size: 16px;
-            color: #fff;
-            font-weight: 600;
-        }
-
-        .metadata-unit {
-            font-size: 12px;
-            color: #666;
-            margin-left: 4px;
-        }
-
-        .chart-container figure {
-            background: #1a1a1a;
-        }
-
-        .chart-container figure text,
-        .chart-container svg text,
-        .chart-container svg [aria-label="title"],
-        .chart-container svg .title,
-        .chart-container svg text[aria-label="title"],
-        .chart-container svg title {
-            fill: #fff !important;
-            color: #fff !important;
-        }
-
-        @media (max-width: 768px) {
-            .container {
-                padding: 16px;
-            }
-
-            h1 {
-                font-size: 20px;
-            }
-
-            .controls {
-                flex-direction: column;
-            }
-
-            .control-group {
-                width: 100%;
-            }
-
-            input, select, button {
-                width: 100%;
-            }
-        }
+        .current-stat-label { color: #888; font-size: 12px; }
+        .current-stat-value { font-size: 18px; font-weight: 600; }
+        #data { color: #888; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>🌤️ Weather Data Visualization</h1>
-        <p class="subtitle">Real-time weather data from Open-Meteo API</p>
-
-        <div class="controls">
-            <div class="control-group" style="flex: 1;">
-                <label for="cityInput">City</label>
-                <input type="text" id="cityInput" placeholder="e.g., Saint Paul, MN">
-            </div>
-            <div class="control-group">
-                <label for="variable">Variable</label>
-                <select id="variable">
-                    <option value="temperature_2m">Temperature (2m)</option>
-                    <option value="relative_humidity_2m">Humidity</option>
-                    <option value="precipitation">Precipitation</option>
-                    <option value="wind_speed_10m">Wind Speed</option>
-                </select>
-            </div>
-            <button onclick="saveAndFetch()">Fetch Data</button>
-        </div>
-
-        <div id="error" class="error" style="display: none;"></div>
-        <div id="loading" class="loading" style="display: none;">Loading data...</div>
-        <div id="chart" class="chart-container"></div>
-        <div id="metadata" class="metadata"></div>
+    <h1>Weather Data</h1>
+    
+    <div class="controls">
+        <input type="text" id="cityInput" placeholder="Enter city">
+        <button onclick="saveAndFetch()">Fetch</button>
+        <button onclick="toggleUnit()" id="unitBtn">°C</button>
     </div>
+    
+    <div id="error"></div>
+    <div id="loading"></div>
+    <div id="current" class="current"></div>
+    <div id="meta" class="meta"></div>
+    <pre id="data"></pre>
+    
     <script>
-        // Configuration
-        const API_BASE = 'https://archive-api.open-meteo.com/v1/archive';
         const FORECAST_API = 'https://api.open-meteo.com/v1/forecast';
         const GEOCODE_API = 'https://nominatim.openstreetmap.org/search';
 
-        // Variable configuration
-        const VARIABLES = {
-            temperature_2m: { name: 'Temperature', unit: '°C', color: '#ff6b6b' },
-            relative_humidity_2m: { name: 'Humidity', unit: '%', color: '#4ecdc4' },
-            precipitation: { name: 'Precipitation', unit: 'mm', color: '#45b7d1' },
-            wind_speed_10m: { name: 'Wind Speed', unit: 'm/s', color: '#96ceb4' }
-        };
-
-        // Save city to localStorage
-        function saveCity(cityName, latitude, longitude) {
-            const savedCity = { name: cityName, latitude, longitude };
-            localStorage.setItem('weatherCity', JSON.stringify(savedCity));
+        function saveCity(name, lat, lon) {
+            localStorage.setItem('weatherCity', JSON.stringify({ name, lat, lon }));
         }
 
-        // Load saved city from localStorage
         function loadSavedCity() {
             const saved = localStorage.getItem('weatherCity');
-            if (saved) {
-                try {
-                    const city = JSON.parse(saved);
-                    document.getElementById('cityInput').value = city.name;
-                    return city;
-                } catch (e) {
-                    return null;
-                }
-            }
-            return null;
+            return saved ? JSON.parse(saved) : null;
         }
 
-        // Geocode city name to coordinates
+        let tempUnit = localStorage.getItem('tempUnit') || 'C';
+        document.getElementById('unitBtn').textContent = `°${tempUnit}`;
+
+        function toggleUnit() {
+            tempUnit = tempUnit === 'C' ? 'F' : 'C';
+            localStorage.setItem('tempUnit', tempUnit);
+            document.getElementById('unitBtn').textContent = `°${tempUnit}`;
+            if (window.currentData) displayCurrent(window.currentData);
+        }
+
+        function toF(c) {
+            return (c * 9/5 + 32).toFixed(1);
+        }
+
+        function formatTemp(c) {
+            const val = tempUnit === 'F' ? toF(c) : c.toFixed(1);
+            return `${val}°${tempUnit}`;
+        }
+
         async function geocodeCity(cityName) {
-            const errorDiv = document.getElementById('error');
-            const loadingDiv = document.getElementById('loading');
-            
-            loadingDiv.textContent = 'Looking up city...';
-            loadingDiv.style.display = 'block';
-            
-            try {
-                const params = new URLSearchParams({
-                    q: cityName,
-                    format: 'json',
-                    limit: '1'
-                });
-
-                const response = await fetch(`${GEOCODE_API}?${params}`, {
-                    headers: { 'User-Agent': 'WeatherApp/1.0' }
-                });
-                
-                if (!response.ok) {
-                    throw new Error(`Geocoding error: ${response.status}`);
-                }
-
-                const results = await response.json();
-                
-                if (results.length === 0) {
-                    throw new Error(`City not found: ${cityName}`);
-                }
-
-                return {
-                    latitude: parseFloat(results[0].lat),
-                    longitude: parseFloat(results[0].lon),
-                    displayName: results[0].display_name
-                };
-            } catch (error) {
-                loadingDiv.style.display = 'none';
-                errorDiv.textContent = error.message;
-                errorDiv.style.display = 'block';
-                throw error;
-            }
+            const params = new URLSearchParams({ q: cityName, format: 'json', limit: '1' });
+            const res = await fetch(`${GEOCODE_API}?${params}`, { headers: { 'User-Agent': 'WeatherApp/1.0' } });
+            const results = await res.json();
+            if (!results.length) throw new Error('City not found');
+            return { lat: parseFloat(results[0].lat), lon: parseFloat(results[0].lon) };
         }
 
-        // Save and fetch weather data
         async function saveAndFetch() {
             const cityName = document.getElementById('cityInput').value.trim();
-            const variable = document.getElementById('variable').value;
-            const errorDiv = document.getElementById('error');
-            const loadingDiv = document.getElementById('loading');
-            const chartDiv = document.getElementById('chart');
-            const metadataDiv = document.getElementById('metadata');
-
+            
             if (!cityName) {
-                errorDiv.textContent = 'Please enter a city name';
-                errorDiv.style.display = 'block';
+                document.getElementById('error').textContent = 'Enter a city';
                 return;
             }
-
+            
             try {
+                document.getElementById('loading').textContent = 'Looking up city...';
                 const coords = await geocodeCity(cityName);
-                saveCity(cityName, coords.latitude, coords.longitude);
-                await fetchWeatherData(coords.latitude, coords.longitude, variable);
-            } catch (error) {
-                console.error(error);
+                saveCity(cityName, coords.lat, coords.lon);
+                await fetchWeatherData(coords.lat, coords.lon);
+            } catch (e) {
+                document.getElementById('error').textContent = e.message;
+                document.getElementById('loading').textContent = '';
             }
         }
 
-        // Fetch weather data from Open-Meteo
-        async function fetchWeatherData(latitude, longitude, variable) {
-            const errorDiv = document.getElementById('error');
-            const loadingDiv = document.getElementById('loading');
-            const chartDiv = document.getElementById('chart');
-            const metadataDiv = document.getElementById('metadata');
+        const WMO_CODES = {
+            0: 'Clear sky', 1: 'Mainly clear', 2: 'Partly cloudy', 3: 'Overcast',
+            45: 'Fog', 48: 'Depositing rime fog',
+            51: 'Light drizzle', 53: 'Moderate drizzle', 55: 'Dense drizzle',
+            56: 'Light freezing drizzle', 57: 'Dense freezing drizzle',
+            61: 'Slight rain', 63: 'Moderate rain', 65: 'Heavy rain',
+            66: 'Light freezing rain', 67: 'Heavy freezing rain',
+            71: 'Slight snow', 73: 'Moderate snow', 75: 'Heavy snow',
+            77: 'Snow grains',
+            80: 'Slight rain showers', 81: 'Moderate rain showers', 82: 'Violent rain showers',
+            85: 'Slight snow showers', 86: 'Heavy snow showers',
+            95: 'Thunderstorm', 96: 'Thunderstorm with slight hail', 99: 'Thunderstorm with heavy hail'
+        };
 
-            errorDiv.style.display = 'none';
-            loadingDiv.textContent = 'Loading data...';
-            loadingDiv.style.display = 'block';
-            chartDiv.innerHTML = '';
-            metadataDiv.innerHTML = '';
-
-            try {
-                const params = new URLSearchParams({
-                    latitude: latitude,
-                    longitude: longitude,
-                    hourly: variable,
-                    timezone: 'auto'
-                });
-
-                const response = await fetch(`${FORECAST_API}?${params}`);
-                
-                if (!response.ok) {
-                    throw new Error(`API error: ${response.status}`);
-                }
-
-                const data = await response.json();
-                loadingDiv.style.display = 'none';
-
-                displayChart(data, variable);
-                displayMetadata(data, variable);
-
-            } catch (error) {
-                loadingDiv.style.display = 'none';
-                errorDiv.textContent = `Error: ${error.message}`;
-                errorDiv.style.display = 'block';
-                console.error(error);
-            }
-        }
-
-        // Display chart using Observable Plot
-        function displayChart(data, variable) {
-            const chartDiv = document.getElementById('chart');
-            const errorDiv = document.getElementById('error');
+        async function fetchWeatherData(lat, lon) {
+            const url = `${FORECAST_API}?latitude=${lat}&longitude=${lon}&hourly=temperature_2m&current=temperature_2m,relative_humidity_2m,precipitation,weather_code,wind_speed_10m&timezone=auto`;
+            document.getElementById('loading').textContent = 'Fetching data...';
             
-            try {
-                const hourly = data.hourly;
-                const times = hourly.time;
-                const values = hourly[variable];
-
-                // Validate data exists
-                if (!times || !values || times.length === 0) {
-                    throw new Error('No data available from API');
-                }
-
-                // Transform data for plotting and filter out null/undefined/NaN values
-                const chartData = times
-                    .map((time, index) => ({
-                        time: new Date(time),
-                        value: values[index],
-                        hour: new Date(time).toLocaleString('en-US', { 
-                            month: 'short', 
-                            day: 'numeric', 
-                            hour: '2-digit',
-                            minute: '2-digit'
-                        })
-                    }))
-                    .filter(d => d.value !== null && d.value !== undefined && !isNaN(d.value));
-
-                // Check if we have any valid data points after filtering
-                if (chartData.length === 0) {
-                    chartDiv.innerHTML = '<p style="text-align: center; padding: 30px; color: #666;">No valid data points available for this variable and location.</p>';
-                    return;
-                }
-
-                const variableConfig = VARIABLES[variable];
-
-                // Use fallback width if container has no width yet
-                const chartWidth = Math.max(chartDiv.offsetWidth || 800, 600);
-
-                // Create Observable Plot
-                const plot = Plot.plot({
-                    title: `${variableConfig.name} - 7 Day Forecast`,
-                    width: chartWidth,
-                    height: 400,
-                    margin: { left: 60, right: 20, top: 40, bottom: 50 },
-                    x: {
-                        type: 'time',
-                        label: 'Time',
-                        labelAnchor: 'center',
-                        tickFormat: '%b %d %H:%M',
-                        labelFill: '#fff'
-                    },
-                    y: {
-                        label: `${variableConfig.name} (${variableConfig.unit})`,
-                        labelFill: '#fff'
-                    },
-                    marks: [
-                        Plot.line(chartData, {
-                            x: 'time',
-                            y: 'value',
-                            stroke: variableConfig.color,
-                            strokeWidth: 2
-                        }),
-                        Plot.dot(chartData, {
-                            x: 'time',
-                            y: 'value',
-                            fill: variableConfig.color,
-                            r: 3,
-                            opacity: 0.6
-                        })
-                    ],
-                    style: {
-                        fontSize: '12px',
-                        fontFamily: 'system-ui',
-                        background: '#1a1a1a',
-                        color: '#fff'
-                    }
-                });
-
-                chartDiv.appendChild(plot);
-                
-            } catch (error) {
-                console.error('Chart rendering error:', error);
-                errorDiv.textContent = `Chart Error: ${error.message}`;
-                errorDiv.style.display = 'block';
-                chartDiv.innerHTML = '<p style="text-align: center; padding: 30px; color: #fff;">Failed to render chart. Check console for details.</p>';
+            const res = await fetch(url);
+            if (!res.ok) {
+                const err = await res.json();
+                throw new Error(err.error || res.status);
             }
+            const data = await res.json();
+            
+            document.getElementById('loading').textContent = '';
+            displayCurrent(data);
+            displayMeta(data);
+            document.getElementById('data').textContent = JSON.stringify(data, null, 2);
         }
 
-        // Display metadata
-        function displayMetadata(data, variable) {
-            const metadataDiv = document.getElementById('metadata');
-            const errorDiv = document.getElementById('error');
-            
-            try {
-                const hourly = data.hourly;
-                const allValues = hourly[variable];
-                
-                // Filter out null, undefined, and NaN values
-                const values = allValues.filter(v => v !== null && v !== undefined && !isNaN(v));
+        function displayCurrent(data) {
+            window.currentData = data;
+            const current = data.current;
+            const temp = current.temperature_2m;
+            const condition = WMO_CODES[current.weather_code] || 'Unknown';
+            const humidity = current.relative_humidity_2m;
+            const rain = current.precipitation;
+            const wind = current.wind_speed_10m;
 
-                // Check if we have valid data
-                if (values.length === 0) {
-                    metadataDiv.innerHTML = '<p style="text-align: center; padding: 16px; color: #666;">No valid data for statistics.</p>';
-                    return;
-                }
-
-                // Calculate statistics
-                const min = Math.min(...values);
-                const max = Math.max(...values);
-                const avg = (values.reduce((a, b) => a + b, 0) / values.length).toFixed(2);
-                const variableConfig = VARIABLES[variable];
-
-                // Get location info
-                const location = `${data.latitude.toFixed(2)}°, ${data.longitude.toFixed(2)}°`;
-                const timezone = data.timezone;
-                const lastUpdate = new Date().toLocaleString();
-                
-                // Calculate data quality info
-                const dataPoints = values.length;
-                const totalPoints = allValues.length;
-                const dataQuality = ((dataPoints / totalPoints) * 100).toFixed(0);
-
-                const metadata = [
-                    { label: 'Location', value: location },
-                    { label: 'Timezone', value: timezone },
-                    { label: 'Data Points', value: `${dataPoints} / ${totalPoints} (${dataQuality}%)` },
-                    { label: 'Minimum', value: min.toFixed(2), unit: variableConfig.unit },
-                    { label: 'Maximum', value: max.toFixed(2), unit: variableConfig.unit },
-                    { label: 'Average', value: avg, unit: variableConfig.unit },
-                    { label: 'Last Updated', value: lastUpdate }
-                ];
-
-                metadataDiv.innerHTML = metadata.map(item => `
-                    <div class="metadata-item">
-                        <div class="metadata-label">${item.label}</div>
-                        <div class="metadata-value">
-                            ${item.value}
-                            ${item.unit ? `<span class="metadata-unit">${item.unit}</span>` : ''}
-                        </div>
+            document.getElementById('current').innerHTML = `
+                <div class="current-main">
+                    <div class="current-temp">${formatTemp(temp)}</div>
+                    <div class="current-condition">${condition}</div>
+                </div>
+                <div class="current-stats">
+                    <div class="current-stat">
+                        <span class="current-stat-label">Humidity</span>
+                        <span class="current-stat-value">${humidity}%</span>
                     </div>
-                `).join('');
-                
-            } catch (error) {
-                console.error('Metadata display error:', error);
-                metadataDiv.innerHTML = '<p style="text-align: center; padding: 16px; color: #fff;">Failed to display metadata.</p>';
-            }
+                    <div class="current-stat">
+                        <span class="current-stat-label">Rain</span>
+                        <span class="current-stat-value">${rain} mm</span>
+                    </div>
+                    <div class="current-stat">
+                        <span class="current-stat-label">Wind</span>
+                        <span class="current-stat-value">${wind} m/s</span>
+                    </div>
+                </div>
+            `;
         }
 
-        // Fetch data on page load with saved city
-        window.addEventListener('load', () => {
-            const savedCity = loadSavedCity();
-            if (savedCity) {
-                fetchWeatherData(savedCity.latitude, savedCity.longitude, document.getElementById('variable').value);
-            }
-        });
+        function displayMeta(data) {
+            const meta = document.getElementById('meta');
+            const items = [
+                { label: 'Latitude', value: data.latitude },
+                { label: 'Longitude', value: data.longitude },
+                { label: 'Timezone', value: data.timezone },
+                { label: 'Elevation', value: data.elevation + ' m' },
+                { label: 'UTC Offset', value: data.utc_offset_seconds / 3600 + ' hrs' },
+                { label: 'Generation Time', value: (data.generationtime_ms / 1000).toFixed(2) + ' s' }
+            ];
+            
+            meta.innerHTML = items.map(item => `
+                <div class="meta-item">
+                    <div class="meta-label">${item.label}</div>
+                    <div class="meta-value">${item.value}</div>
+                </div>
+            `).join('');
+        }
 
+        window.onload = () => {
+            const saved = loadSavedCity();
+            if (saved) {
+                document.getElementById('cityInput').value = saved.name;
+                fetchWeatherData(saved.lat, saved.lon);
+            }
+        };
     </script>
 </body>
 </html>
