@@ -11,6 +11,12 @@
             background: #1a1a1a; 
             color: #fff; 
             padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items:center;
+        }
+        main {
+            max-width:400px;
         }
         .controls { margin-bottom: 20px; display: flex; gap: 10px; }
         input { 
@@ -75,23 +81,32 @@
         .current-stat-label { color: #888; font-size: 12px; }
         .current-stat-value { font-size: 18px; font-weight: 600; }
         #data { color: #888; }
+        a {
+            color:hsl(194 57% 66%);
+        }
+        
     </style>
 </head>
 <body>
-    <h1>Weather Data</h1>
-    
-    <div class="controls">
-        <input type="text" id="cityInput" placeholder="Enter city">
-        <button onclick="saveAndFetch()">Fetch</button>
-        <button onclick="toggleUnit()" id="unitBtn">°C</button>
-    </div>
-    
-    <div id="error"></div>
-    <div id="loading"></div>
-    <div id="current" class="current"></div>
-    <div id="meta" class="meta"></div>
-    <pre id="data"></pre>
-    
+    <main>
+        <h1 style="display:none;">Simple Weather</h1>
+
+        <div class="controls">
+            <input type="text" id="cityInput" placeholder="Enter city">
+            <button onclick="saveAndFetch()">Fetch</button>
+            <button onclick="toggleUnit()" id="unitBtn">°C</button>
+        </div>
+        
+        <div id="error"></div>
+        <div id="loading"></div>
+        <div id="current" class="current"></div>
+        <div id="meta" class="meta"></div>
+        <p>Data obtained from <a href="https://open-meteo.com/">Open-Meteo</a></p>
+        <pre id="data"></pre>
+        
+    </main>
+
+
     <script>
         const FORECAST_API = 'https://api.open-meteo.com/v1/forecast';
         const GEOCODE_API = 'https://nominatim.openstreetmap.org/search';
@@ -99,10 +114,15 @@
         function saveCity(name, lat, lon) {
             localStorage.setItem('weatherCity', JSON.stringify({ name, lat, lon }));
         }
-
+        
         function loadSavedCity() {
-            const saved = localStorage.getItem('weatherCity');
-            return saved ? JSON.parse(saved) : null;
+            try {
+                const saved = localStorage.getItem('weatherCity');
+                return saved ? JSON.parse(saved) : null;
+            } catch {
+                localStorage.removeItem('weatherCity');
+                return null;
+            }
         }
 
         let tempUnit = localStorage.getItem('tempUnit') || 'C';
@@ -127,8 +147,13 @@
         async function geocodeCity(cityName) {
             const params = new URLSearchParams({ q: cityName, format: 'json', limit: '1' });
             const res = await fetch(`${GEOCODE_API}?${params}`, { headers: { 'User-Agent': 'WeatherApp/1.0' } });
-            const results = await res.json();
-            if (!results.length) throw new Error('City not found');
+            let results;
+            try {
+                results = await res.json();
+            } catch {
+                throw new Error('Invalid response from geocoding service');
+            }
+            if (!results || !Array.isArray(results) || !results.length) throw new Error('City not found');
             return { lat: parseFloat(results[0].lat), lon: parseFloat(results[0].lon) };
         }
 
@@ -141,6 +166,7 @@
             }
             
             try {
+                document.getElementById('error').textContent = '';
                 document.getElementById('loading').textContent = 'Looking up city...';
                 const coords = await geocodeCity(cityName);
                 saveCity(cityName, coords.lat, coords.lon);
@@ -167,6 +193,7 @@
 
         async function fetchWeatherData(lat, lon) {
             const url = `${FORECAST_API}?latitude=${lat}&longitude=${lon}&hourly=temperature_2m&current=temperature_2m,relative_humidity_2m,precipitation,weather_code,wind_speed_10m&timezone=auto`;
+            document.getElementById('error').textContent = '';
             document.getElementById('loading').textContent = 'Fetching data...';
             
             const res = await fetch(url);
@@ -220,8 +247,8 @@
                 { label: 'Longitude', value: data.longitude },
                 { label: 'Timezone', value: data.timezone },
                 { label: 'Elevation', value: data.elevation + ' m' },
-                { label: 'UTC Offset', value: data.utc_offset_seconds / 3600 + ' hrs' },
-                { label: 'Generation Time', value: (data.generationtime_ms / 1000).toFixed(2) + ' s' }
+                <!-- { label: 'UTC Offset', value: data.utc_offset_seconds / 3600 + ' hrs' }, -->
+                <!-- { label: 'Generation Time', value: (data.generationtime_ms / 1000).toFixed(2) + ' s' } -->
             ];
             
             meta.innerHTML = items.map(item => `
@@ -233,6 +260,7 @@
         }
 
         window.onload = () => {
+            document.getElementById('error').textContent = '';
             const saved = loadSavedCity();
             if (saved) {
                 document.getElementById('cityInput').value = saved.name;
