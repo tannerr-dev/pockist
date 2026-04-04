@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Weather Data</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { 
@@ -84,7 +86,12 @@
         a {
             color:hsl(194 57% 66%);
         }
-        
+        #map {
+            height: 200px;
+            width: 100%;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
     </style>
 </head>
 <body>
@@ -96,14 +103,17 @@
             <button onclick="saveAndFetch()">Fetch</button>
             <button onclick="toggleUnit()" id="unitBtn">°C</button>
         </div>
-        
+
         <div id="error"></div>
         <div id="loading"></div>
         <div id="current" class="current"></div>
         <div id="meta" class="meta"></div>
-        <p>Data obtained from <a href="https://open-meteo.com/">Open-Meteo</a></p>
+        <div id="map"></div>
+        <p>Data obtained from <a href="https://open-meteo.com/">Open-Meteo</a> |
+        Maps by <a href="https://leafletjs.com/">Leaflet</a><br>
+        <small id="mapAttr"></small></p>
         <pre id="data"></pre>
-        
+
     </main>
 
 
@@ -111,10 +121,43 @@
         const FORECAST_API = 'https://api.open-meteo.com/v1/forecast';
         const GEOCODE_API = 'https://nominatim.openstreetmap.org/search';
 
+        let map = null;
+        let marker = null;
+        let tileLayer = null;
+
+        const LIGHT_TILES = { url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', attr: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' };
+        const DARK_TILES = { url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png', attr: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>' };
+
+        function getTiles() {
+            return window.matchMedia('(prefers-color-scheme: dark)').matches ? DARK_TILES : LIGHT_TILES;
+        }
+
+        function updateMap(lat, lon, cityName) {
+            if (!map) {
+                map = L.map('map', { zoomControl: false, attributionControl: false }).setView([lat, lon], 10);
+                const tiles = getTiles();
+                tileLayer = L.tileLayer(tiles.url, { attribution: false }).addTo(map);
+                document.getElementById('mapAttr').innerHTML = tiles.attr;
+                window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+                    if (tileLayer) {
+                        tileLayer.setUrl(getTiles().url);
+                        document.getElementById('mapAttr').innerHTML = getTiles().attr;
+                    }
+                });
+            }
+            map.setView([lat, lon], 10);
+            if (marker) {
+                marker.setLatLng([lat, lon]);
+            } else {
+                marker = L.marker([lat, lon]).addTo(map);
+            }
+
+        }
+
         function saveCity(name, lat, lon) {
             localStorage.setItem('weatherCity', JSON.stringify({ name, lat, lon }));
         }
-        
+
         function loadSavedCity() {
             try {
                 const saved = localStorage.getItem('weatherCity');
@@ -159,12 +202,12 @@
 
         async function saveAndFetch() {
             const cityName = document.getElementById('cityInput').value.trim();
-            
+
             if (!cityName) {
                 document.getElementById('error').textContent = 'Enter a city';
                 return;
             }
-            
+
             try {
                 document.getElementById('error').textContent = '';
                 document.getElementById('loading').textContent = 'Looking up city...';
@@ -195,17 +238,19 @@
             const url = `${FORECAST_API}?latitude=${lat}&longitude=${lon}&hourly=temperature_2m&current=temperature_2m,relative_humidity_2m,precipitation,weather_code,wind_speed_10m&timezone=auto`;
             document.getElementById('error').textContent = '';
             document.getElementById('loading').textContent = 'Fetching data...';
-            
+
             const res = await fetch(url);
             if (!res.ok) {
                 const err = await res.json();
                 throw new Error(err.error || res.status);
             }
             const data = await res.json();
-            
+
             document.getElementById('loading').textContent = '';
             displayCurrent(data);
             displayMeta(data);
+            const saved = loadSavedCity();
+            updateMap(data.latitude, data.longitude, saved?.name);
             document.getElementById('data').textContent = JSON.stringify(data, null, 2);
         }
 
@@ -247,10 +292,10 @@
                 { label: 'Longitude', value: data.longitude },
                 { label: 'Timezone', value: data.timezone },
                 { label: 'Elevation', value: data.elevation + ' m' },
-                <!-- { label: 'UTC Offset', value: data.utc_offset_seconds / 3600 + ' hrs' }, -->
-                <!-- { label: 'Generation Time', value: (data.generationtime_ms / 1000).toFixed(2) + ' s' } -->
+                //{ label: 'UTC Offset', value: data.utc_offset_seconds / 3600 + ' hrs' },
+                //{ label: 'Generation Time', value: (data.generationtime_ms / 1000).toFixed(2) + ' s' }
             ];
-            
+
             meta.innerHTML = items.map(item => `
                 <div class="meta-item">
                     <div class="meta-label">${item.label}</div>
@@ -259,14 +304,14 @@
             `).join('');
         }
 
-        window.onload = () => {
+        window.addEventListener("load", ()=>{
             document.getElementById('error').textContent = '';
             const saved = loadSavedCity();
             if (saved) {
                 document.getElementById('cityInput').value = saved.name;
                 fetchWeatherData(saved.lat, saved.lon);
             }
-        };
+        });
     </script>
 </body>
 </html>
