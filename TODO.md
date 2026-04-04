@@ -1,9 +1,7 @@
 # TODO LIST
-There is no such thing as the 'cloud' it's a remote disk, and it can be your disk if you want. 
-Own your own data.
 
-## things to do
-### todo
+---
+
 - now that local save is automatic
     - create a 'remote save' button that sends a copy of the local data
         - on each remote save create another entry in the data base with a timestamp
@@ -15,20 +13,22 @@ Own your own data.
     - when page loaded with internet connection, check server to see if there is a later copy
         - if there is a later copy prompt user to sync 
 
-### done
+---
 
 
+- feature: tmp login query string to allow someone to edit a private note or list for a few minutes
+- feature: export feature, exports notes or lists into markdown, also ingest md to load into idb
 
-## schema 
+
+---
+
+
 - notes
-    - note_id
-    - date_created
-- note_saves
-    - note_id
-    - 
-
-
-
-
-
+- local first notes
+- monies, make my finance spreadsheet into an app
+- fridge & pantry
+- workout tracker
+- habit tracker
+- tasks
+- events
 
