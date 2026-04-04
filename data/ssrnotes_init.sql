@@ -16,7 +16,7 @@ BEGIN
 END;
 
 -- Create index for better performance on date queries
-CREATE INDEX IF NOT EXISTS idx_notes_date_created ON notes(date_created);
+-- CREATE INDEX IF NOT EXISTS idx_notes_date_created ON notes(date_created);
 
 -- Optional: Insert sample data for testing
 -- INSERT OR IGNORE INTO notes (note) VALUES 
