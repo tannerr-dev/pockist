@@ -6,10 +6,8 @@ import (
 	"net/http"
 	// "os"
 	// "database/sql"
-
 	// "tannerr/pockist/handlers"
 	// "tannerr/pockist/pkg/templates"
-
 	// _ "github.com/mattn/go-sqlite3"
 )
 
@@ -74,9 +72,12 @@ func main() {
 	// server.HandleFunc("/api/monies/insert", insert(db))
 
 	catchAllClientRoutesHandler := func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w,r, "./public/index.html")
+		http.ServeFile(w, r, "./public/index.html")
 	}
 	server.HandleFunc("/note", catchAllClientRoutesHandler)
+	server.HandleFunc("/weather", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "./public/weather.html")
+	})
 	server.Handle("/", http.FileServer(http.Dir("public")))
 	const addr = ":4242"
 	fmt.Println("Server listening on", addr)
