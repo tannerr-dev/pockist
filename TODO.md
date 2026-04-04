@@ -1,5 +1,10 @@
 # TODO LIST
 
+- feature: tmp login query string to allow someone to edit a private note or list for a few minutes
+
+- feature: export feature, exports notes or lists into markdown, also ingest md to load into idb
+
+- implement storage proxy feature so that the same codebase can be deployed as selfhost local or cloud
 ---
 
 - now that local save is automatic
@@ -14,14 +19,6 @@
         - if there is a later copy prompt user to sync 
 
 ---
-
-
-- feature: tmp login query string to allow someone to edit a private note or list for a few minutes
-- feature: export feature, exports notes or lists into markdown, also ingest md to load into idb
-
-
----
-
 
 - notes
 - local first notes
