@@ -1,0 +1,88 @@
+.weather {
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { 
+        font-family: system-ui, sans-serif; 
+        background: #1a1a1a; 
+        color: #fff; 
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        align-items:center;
+    }
+    main {
+        max-width:400px;
+    }
+    .controls { margin-bottom: 20px; display: flex; gap: 10px; }
+    input { 
+        padding: 10px; 
+        border: 1px solid #333; 
+        border-radius: 4px; 
+        background: #2a2a2a; 
+        color: #fff;
+        flex: 1;
+    }
+    button { 
+        padding: 10px 20px; 
+        background: #444; 
+        border: none; 
+        border-radius: 4px; 
+        color: #fff; 
+        cursor: pointer;
+    }
+    button:hover { background: #555; }
+    #error { color: #ff6b6b; margin-bottom: 10px; }
+    #loading { color: #888; margin-bottom: 10px; }
+    .meta {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+    .meta-item {
+        background: #2a2a2a;
+        padding: 12px;
+        border-radius: 4px;
+    }
+    .meta-label { font-size: 11px; color: #888; text-transform: uppercase; }
+    .meta-value { font-size: 18px; margin-top: 4px; }
+    .current {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+    .current-main {
+        background: #2a2a2a;
+        padding: 24px;
+        border-radius: 8px;
+        text-align: center;
+    }
+    .current-temp { font-size: 64px; font-weight: 300; }
+    .current-condition { font-size: 18px; color: #888; margin-top: 8px; }
+    .current-stats {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+    .current-stat {
+        background: #2a2a2a;
+        padding: 16px;
+        border-radius: 8px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .current-stat-label { color: #888; font-size: 12px; }
+    .current-stat-value { font-size: 18px; font-weight: 600; }
+    #data { color: #888; }
+    a {
+        color:hsl(194 57% 66%);
+    }
+    #map {
+        height: 200px;
+        width: 100%;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        background: #1a1a1a;
+    }
+}

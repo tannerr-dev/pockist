@@ -8,7 +8,11 @@
     <link href="/styles/global.css" rel="stylesheet">
     <link href="/styles/nav.css" rel="stylesheet">
     <link href="/styles/local-notes.css" rel="stylesheet">
-    <script src="/app.js" type="module"></script>
+    <link href="/styles/weather.css" rel="stylesheet">
+
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <!-- <meta http-equiv="refresh" content="10" /> -->
     <meta charset="UTF-8">
@@ -122,14 +126,36 @@
         </div>
       </div>
     </nav>
-    <script src="scripts/nav.js"></script>
-    <main></main>
+
+    <main>
+    </main>
+
+    <section class="weather">
+        <div class="controls">
+            <input type="text" id="cityInput" placeholder="City Name, State. Saint Paul, MN">
+            <button onclick="saveAndFetch()">Fetch</button>
+            <button onclick="toggleUnit()" id="unitBtn">°C</button>
+        </div>
+
+        <div id="error"></div>
+        <div id="loading"></div>
+        <div id="current" class="current"></div>
+        <div id="meta" class="meta"></div>
+        <div id="map"></div>
+        <div style="text-align:center;">
+            <p><small>Data from <a href="https://open-meteo.com/">Open-Meteo</a> | Maps by <a href="https://leafletjs.com/">Leaflet</a></small></p>
+            <p><small id="mapAttr"></small></p>
+        </div>
+        <br>
+        <pre id="data"></pre>
+    </section>
+
+    <!-- TEMPLATES -->
     <template id="home-page">
       <h1>Pockist</h1>
       <div class="flex-col">
         <a class="pwa" href="/note"><button class="button">offline note</button></a>
         <a class="pwa" href="/list"><button class="button">offline list</button></a>
-        <a href="/weather"><button class="button">weather</button><a/>
       </div>
       <!-- <a href="/ssrnotes"><button class="button">server notes</button></a> -->
       <!-- <a href="/clock"><button class="button">clock</button></a> -->
@@ -150,5 +176,10 @@
       <h1>Offline List</h1>
       <textarea id="list"></textarea>
     </template>
+    <!-- END OF TEMPLATES -->
+
+    <script src="scripts/nav.js"></script>
+    <script src="scripts/weather.js"></script>
+    <script src="/app.js" type="module"></script>
   </body>
 </html>
