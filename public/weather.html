@@ -134,8 +134,9 @@
         }
 
         function updateMap(lat, lon, cityName) {
+            const zoomVar = 4
             if (!map) {
-                map = L.map('map', { zoomControl: false, attributionControl: false, scrollWheelZoom: false, touchZoom: false, doubleClickZoom: false, dragging: false }).setView([lat, lon], 10);
+                map = L.map('map', { zoomControl: false, attributionControl: false, scrollWheelZoom: false, touchZoom: false, doubleClickZoom: false, dragging: false }).setView([lat, lon], zoomVar);
                 const tiles = getTiles();
                 tileLayer = L.tileLayer(tiles.url, { attribution: false }).addTo(map);
                 document.getElementById('mapAttr').innerHTML = tiles.attr;
@@ -146,7 +147,7 @@
                     }
                 });
             }
-            map.setView([lat, lon], 10);
+            map.setView([lat, lon], zoomVar);
             if (marker) {
                 marker.setLatLng([lat, lon]);
             } else {
