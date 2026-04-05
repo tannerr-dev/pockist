@@ -95,6 +95,11 @@
         width: 100%;
         border-radius: 8px;
         margin-bottom: 20px;
+    }
+    [data-theme="dark"] #map {
         background: var(--bg-dark);
+    }
+    [data-theme="light"] #map {
+        background: var(--bg-light, #e0e0e0);
     }
 }

@@ -8,8 +8,13 @@ let tileLayer = null;
 const LIGHT_TILES = { url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', attr: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' };
 const DARK_TILES = { url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png', attr: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>' };
 
+function getTheme() {
+    return localStorage.getItem('theme') || 
+        (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+}
+
 function getTiles() {
-    return window.matchMedia('(prefers-color-scheme: dark)').matches ? DARK_TILES : LIGHT_TILES;
+    return getTheme() === 'dark' ? DARK_TILES : LIGHT_TILES;
 }
 
 function updateMap(lat, lon, cityName) {
@@ -21,6 +26,12 @@ function updateMap(lat, lon, cityName) {
         document.getElementById('mapAttr').innerHTML = tiles.attr;
         window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
             if (tileLayer) {
+                tileLayer.setUrl(getTiles().url);
+                document.getElementById('mapAttr').innerHTML = getTiles().attr;
+            }
+        });
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'theme' && tileLayer) {
                 tileLayer.setUrl(getTiles().url);
                 document.getElementById('mapAttr').innerHTML = getTiles().attr;
             }
