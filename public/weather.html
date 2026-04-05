@@ -100,7 +100,7 @@
         <h1 style="display:none;">Simple Weather</h1>
 
         <div class="controls">
-            <input type="text" id="cityInput" placeholder="Enter city">
+            <input type="text" id="cityInput" placeholder="City Name, State. Saint Paul, MN">
             <button onclick="saveAndFetch()">Fetch</button>
             <button onclick="toggleUnit()" id="unitBtn">°C</button>
         </div>
@@ -110,9 +110,10 @@
         <div id="current" class="current"></div>
         <div id="meta" class="meta"></div>
         <div id="map"></div>
-        <p>Data obtained from <a href="https://open-meteo.com/">Open-Meteo</a> |
-        Maps by <a href="https://leafletjs.com/">Leaflet</a><br>
-        <small id="mapAttr"></small></p>
+        <div>
+            <p>Data from <a href="https://open-meteo.com/">Open-Meteo</a> | Maps by <a href="https://leafletjs.com/">Leaflet</a></p>
+            <small id="mapAttr"></small></p>
+        </div>
         <pre id="data"></pre>
 
     </main>
@@ -134,7 +135,7 @@
         }
 
         function updateMap(lat, lon, cityName) {
-            const zoomVar = 4
+            const zoomVar = 6
             if (!map) {
                 map = L.map('map', { zoomControl: false, attributionControl: false, scrollWheelZoom: false, touchZoom: false, doubleClickZoom: false, dragging: false }).setView([lat, lon], zoomVar);
                 const tiles = getTiles();
