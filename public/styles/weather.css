@@ -1,29 +1,5 @@
 .weather {
-    /* --color: hsl(var(--hue), calc(50% * var(--mod)), 50%); */
-    /* --bg: hsl(var(--hue), calc(20% * var(--mod)), 8%); */
-    /* --bg-2: hsl(var(--hue), calc(22% * var(--mod)), 18%); */
-    /* --bg-3: hsl(var(--hue), calc(42% * var(--mod)), 28%); */
-    /* --bg-dark: hsl(var(--hue), calc(8% * var(--mod)), 6%); */
-    /* --bg-light: hsl(var(--hue), calc(22% * var(--mod)), 12%); */
-    /**/
-    /* --text: hsl(var(--hue), calc(78% * var(--mod)), 84%); */
-    /* --accent: hsl(var(--hue), calc(32% * var(--mod)), 46%); */
-    /* --accent-2: hsl(var(--hue), calc(22% * var(--mod)), 28%); */
-    /* --accent-dark: hsl(var(--hue), calc(22% * var(--mod)), 28%); */
-
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { 
-        font-family: system-ui, sans-serif; 
-        background: var(--bg-dark); 
-        color: var(--text); 
-        padding: 20px;
-        display: flex;
-        flex-direction: column;
-        align-items:center;
-    }
-    /* main { */
-    /*     max-width:400px; */
-    /* } */
     .controls { margin-bottom: 20px; display: flex; gap: 10px; }
     input { 
         padding: 10px; 
@@ -95,11 +71,6 @@
         width: 100%;
         border-radius: 8px;
         margin-bottom: 20px;
-    }
-    [data-theme="dark"] #map {
-        background: var(--bg-dark);
-    }
-    [data-theme="light"] #map {
-        background: var(--bg-light, #e0e0e0);
+        background: var(--bg);
     }
 }
