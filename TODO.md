@@ -1,5 +1,14 @@
 # TODO LIST
 
+
+- fix height issue
+- figure out how to move apps in and out of focus or show/hide
+
+
+
+
+
+
 - feature: tmp login query string to allow someone to edit a private note or list for a few minutes
 
 - feature: export feature, exports notes or lists into markdown, also ingest md to load into idb

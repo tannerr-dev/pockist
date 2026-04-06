@@ -21,9 +21,9 @@
         flex-direction: column;
         align-items:center;
     }
-    main {
-        max-width:400px;
-    }
+    /* main { */
+    /*     max-width:400px; */
+    /* } */
     .controls { margin-bottom: 20px; display: flex; gap: 10px; }
     input { 
         padding: 10px; 
