@@ -3,7 +3,6 @@ import Store from "./services/Store.js";
 // import { Nav } from "./components/Nav.js";
 import { Router } from "./services/Router.js";
 
-
 navigator.serviceWorker.addEventListener("message", (event) => {
     if (event.data && event.data.type === "CACHE_UPDATED") {
         console.log("Cache updated:", event.data.url);

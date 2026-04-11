@@ -1,29 +1,31 @@
 console.log("Service Worker loaded.");
 
-const CACHE_NAME = "pockist-v8";
+const CACHE_NAME = "pockist-v9";
 
 self.addEventListener("install", function (event) {
 	event.waitUntil(
-		caches.open(CACHE_NAME).then(function (cache) {
-			return cache.addAll([
-				"/",
-				"/app.js",
-				"/note",
-				"/styles/global.css",
-				"/styles/reset.css",
-				"/styles/nav.css",
-				"/services/API.js",
-				"/services/Router.js",
-				"/services/Routes.js",
-				"/services/Store.js",
-				"/scripts/nav.js",
-				"/assets/logo.png",
-				"/assets/logo.svg",
-				"/assets/logo_white.svg",
-				"/components/HomePage.js",
-				"/components/LocalNotes.js",
-			]);
-		}).then(function () {
+		caches.open(CACHE_NAME)
+        // .then(function (cache) {
+		// 	return cache.addAll([
+		// 		"/",
+		// 		"/app.js",
+		// 		"/note",
+		// 		"/styles/global.css",
+		// 		"/styles/reset.css",
+		// 		"/styles/nav.css",
+		// 		"/services/API.js",
+		// 		"/services/Router.js",
+		// 		"/services/Routes.js",
+		// 		"/services/Store.js",
+		// 		"/scripts/nav.js",
+		// 		"/assets/logo.png",
+		// 		"/assets/logo.svg",
+		// 		"/assets/logo_white.svg",
+		// 		"/components/HomePage.js",
+		// 		"/components/LocalNotes.js",
+		// 	]);
+		// })
+        .then(function () {
 			return self.skipWaiting();
 		}),
 	);
