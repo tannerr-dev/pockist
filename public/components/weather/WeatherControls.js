@@ -102,7 +102,7 @@ export class WeatherControls extends HTMLElement {
 
         // Unit toggle functionality
         if (this._showUnit) {
-            const unitBtn = this.querySelector('.unit-btn');
+            const unitBtn = this.querySelector('#unitBtn');
             if (unitBtn) {
                 unitBtn.addEventListener('click', () => this.handleUnitToggle());
             }

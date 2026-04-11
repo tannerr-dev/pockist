@@ -18,10 +18,10 @@ export class WeatherCard extends HTMLElement {
         if (oldValue !== newValue) {
             switch (name) {
                 case 'compact':
-                    this._compact = newValue !== null;
+                    this._compact = newValue !== 'false';
                     break;
                 case 'show-city':
-                    this._showCity = newValue !== null;
+                    this._showCity = newValue !== 'false';
                     break;
                 case 'city-name':
                     this._cityName = newValue || '';

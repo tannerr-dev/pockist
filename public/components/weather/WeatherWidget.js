@@ -78,11 +78,10 @@ export class WeatherWidget extends HTMLElement {
         const cityName = savedCity?.name || '';
         
         const clickableClass = this._clickable ? ' clickable' : '';
-        const clickHandler = this._clickable ? 'onclick="this.handleClick()"' : '';
-        
+
         if (!weatherInfo) {
             this.innerHTML = `
-                <div class="widget-container${clickableClass}" ${clickHandler}>
+                <div class="widget-container${clickableClass}">
                     <div class="widget-header">
                         <h3>Weather</h3>
                         ${this._showCity && cityName ? `<span class="city">${cityName}</span>` : ''}
@@ -96,7 +95,7 @@ export class WeatherWidget extends HTMLElement {
             `;
         } else {
             this.innerHTML = `
-                <div class="widget-container${clickableClass}" ${clickHandler}>
+                <div class="widget-container${clickableClass}">
                     <div class="widget-header">
                         <h3>Weather</h3>
                         ${this._showCity && cityName ? `<span class="city">${cityName}</span>` : ''}
