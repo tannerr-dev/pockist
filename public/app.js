@@ -4,6 +4,12 @@ import Store from "./services/Store.js";
 import { Router } from "./services/Router.js";
 
 
+navigator.serviceWorker.addEventListener("message", (event) => {
+    if (event.data && event.data.type === "CACHE_UPDATED") {
+        console.log("Cache updated:", event.data.url);
+    }
+});
+
 window.addEventListener("DOMContentLoaded", event => {
     app.Router.init()
     navigator.serviceWorker.register("/sw.js")

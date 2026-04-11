@@ -49,22 +49,38 @@ self.addEventListener("fetch", (event) => {
 	event.respondWith(
 		caches.open(CACHE_NAME).then((cache) => {
 			return cache.match(event.request).then((cachedResponse) => {
-			// Start fetching new version in background
-			const fetchPromise = fetch(event.request)
-				.then((networkResponse) => {
-					// Update cache with new response
-					cache.put(event.request, networkResponse.clone());
-					return networkResponse;
-				})
-				.catch((error) => {
-					console.error("Fetch failed:", error);
-					// If no cached response exists, propagate the error
-					if (!cachedResponse) {
-						throw error;
-					}
-				});
+				if (cachedResponse) {
+					console.log("Serving stale from cache:", event.request.url);
 
-			return cachedResponse || fetchPromise;
+					fetch(event.request)
+						.then((networkResponse) => {
+							if (networkResponse.ok) {
+								cache.put(event.request, networkResponse.clone());
+								console.log("Updated cache with fresh version:", event.request.url);
+
+								self.clients.matchAll().then((clients) => {
+									clients.forEach((client) => {
+										client.postMessage({
+											type: "CACHE_UPDATED",
+											url: event.request.url,
+										});
+									});
+								});
+							}
+						})
+						.catch((err) => console.log("Background fetch failed:", err));
+
+					return cachedResponse;
+				}
+
+				return fetch(event.request)
+					.then((networkResponse) => {
+						cache.put(event.request, networkResponse.clone());
+						return networkResponse;
+					})
+					.catch(() => {
+						throw new Error("Failed to fetch:", event.request.url);
+					});
 			});
 		}),
 	);

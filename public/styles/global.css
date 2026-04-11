@@ -28,8 +28,6 @@
 html {
 	background: var(--bg);
 	height: 100vh;
-	/* overflow: hidden; */
-	/* scrollbar-color: red orange; */
 }
 body {
 	height: 100%;
