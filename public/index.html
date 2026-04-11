@@ -9,6 +9,7 @@
     <link href="/styles/nav.css" rel="stylesheet">
     <link href="/styles/local-notes.css" rel="stylesheet">
     <link href="/styles/weather.css" rel="stylesheet">
+    <link href="/styles/weather/weather-components.css" rel="stylesheet">
 
 
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -133,6 +134,11 @@
     <!-- TEMPLATES -->
     <template id="home-page">
       <h1>Pockist</h1>
+      
+      <div class="widgets-section">
+        <weather-widget clickable="true" show-city="true"></weather-widget>
+      </div>
+      
       <div class="flex-col">
         <a class="pwa" href="/note"><button class="button">offline note</button></a>
         <a class="pwa" href="/weather"><button class="button">weather</button></a>
@@ -161,23 +167,28 @@
     </template>
 
     <template id="weather-page">
-        <div class="controls">
-            <input type="text" id="cityInput" placeholder="City Name, State. Saint Paul, MN">
-            <button>Fetch</button>
-            <button id="unitBtn">°C</button>
+        <div class="weather-page-content">
+            <weather-controls></weather-controls>
+            
+            <div class="weather-display">
+                <weather-card show-city city-name=""></weather-card>
+            </div>
+            
+            <div class="weather-meta" id="meta"></div>
+            
+            <div class="weather-map">
+                <div id="map"></div>
+                <div class="map-attribution" style="text-align:center;">
+                    <p><small>Data from <a href="https://open-meteo.com/">Open-Meteo</a> | Maps by <a href="https://leafletjs.com/">Leaflet</a></small></p>
+                    <p><small id="mapAttr"></small></p>
+                </div>
+            </div>
+            
+            <details class="debug-data">
+                <summary>Debug Data</summary>
+                <pre id="data"></pre>
+            </details>
         </div>
-
-        <div id="error"></div>
-        <div id="loading"></div>
-        <div id="current" class="current"></div>
-        <div id="meta" class="meta"></div>
-        <div id="map"></div>
-        <div style="text-align:center;">
-            <p><small>Data from <a href="https://open-meteo.com/">Open-Meteo</a> | Maps by <a href="https://leafletjs.com/">Leaflet</a></small></p>
-            <p><small id="mapAttr"></small></p>
-        </div>
-        <br>
-        <pre id="data"></pre>
     </template>
 
     <!-- END OF TEMPLATES -->
