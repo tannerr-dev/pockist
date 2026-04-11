@@ -134,16 +134,18 @@
     <!-- TEMPLATES -->
     <template id="home-page">
       <h1>Pockist</h1>
-      
+
       <div class="widgets-section">
         <weather-widget clickable="true" show-city="true"></weather-widget>
       </div>
-      
-      <div class="flex-col">
-        <a class="pwa" href="/note"><button class="button">offline note</button></a>
-        <a class="pwa" href="/weather"><button class="button">weather</button></a>
-        <!-- <a class="pwa" href="/list"><button class="button">offline list</button></a> -->
-      </div>
+      <local-notes></local-notes>
+
+      <!-- <div class="flex-col"> -->
+      <!--   <a class="pwa" href="/note"><button class="button">offline note</button></a> -->
+      <!--   <a class="pwa" href="/weather"><button class="button">weather</button></a> -->
+      <!--   <a class="pwa" href="/list"><button class="button">offline list</button></a> -->
+      <!-- </div> -->
+
       <!-- <a href="/ssrnotes"><button class="button">server notes</button></a> -->
       <!-- <a href="/clock"><button class="button">clock</button></a> -->
       <!-- <a href="/monies"><button class="button">monies</button></a> -->
