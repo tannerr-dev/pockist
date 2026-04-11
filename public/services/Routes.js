@@ -1,5 +1,6 @@
 import { HomePage } from "../components/HomePage.js";
 import { LocalNotes } from "../components/LocalNotes.js";
+import { WeatherPage } from "../components/WeatherPage.js";
 // import { MovieDetailsPage } from "../components/MovieDetailsPage.js";
 // import { MoviesPage } from "../components/MoviesPage.js";
 // import { RegisterPage } from "../components/RegisterPage.js";
@@ -16,6 +17,10 @@ export const routes = [
   {
     path: "/note",
     component: LocalNotes,
+  },
+  {
+    path: "/weather",
+    component: WeatherPage,
   },
   // {
   //   path: /\/movies\/(\d+)/,

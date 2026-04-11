@@ -130,31 +130,12 @@
     <main>
     </main>
 
-    <section class="weather">
-        <div class="controls">
-            <input type="text" id="cityInput" placeholder="City Name, State. Saint Paul, MN">
-            <button onclick="saveAndFetch()">Fetch</button>
-            <button onclick="toggleUnit()" id="unitBtn">°C</button>
-        </div>
-
-        <div id="error"></div>
-        <div id="loading"></div>
-        <div id="current" class="current"></div>
-        <div id="meta" class="meta"></div>
-        <div id="map"></div>
-        <div style="text-align:center;">
-            <p><small>Data from <a href="https://open-meteo.com/">Open-Meteo</a> | Maps by <a href="https://leafletjs.com/">Leaflet</a></small></p>
-            <p><small id="mapAttr"></small></p>
-        </div>
-        <br>
-        <pre id="data"></pre>
-    </section>
-
     <!-- TEMPLATES -->
     <template id="home-page">
       <h1>Pockist</h1>
       <div class="flex-col">
         <a class="pwa" href="/note"><button class="button">offline note</button></a>
+        <a class="pwa" href="/weather"><button class="button">weather</button></a>
         <!-- <a class="pwa" href="/list"><button class="button">offline list</button></a> -->
       </div>
       <!-- <a href="/ssrnotes"><button class="button">server notes</button></a> -->
@@ -168,18 +149,40 @@
       <!--     <button class="button" type="submit">login</button> -->
       <!-- </form> -->
     </template>
+
     <template id="local-note">
       <h1>Offline Note</h1>
       <textarea id="note"></textarea>
     </template>
+
     <template id="offline-list">
       <h1>Offline List</h1>
       <ul id="list"></ul>
     </template>
+
+    <template id="weather-page">
+        <div class="controls">
+            <input type="text" id="cityInput" placeholder="City Name, State. Saint Paul, MN">
+            <button>Fetch</button>
+            <button id="unitBtn">°C</button>
+        </div>
+
+        <div id="error"></div>
+        <div id="loading"></div>
+        <div id="current" class="current"></div>
+        <div id="meta" class="meta"></div>
+        <div id="map"></div>
+        <div style="text-align:center;">
+            <p><small>Data from <a href="https://open-meteo.com/">Open-Meteo</a> | Maps by <a href="https://leafletjs.com/">Leaflet</a></small></p>
+            <p><small id="mapAttr"></small></p>
+        </div>
+        <br>
+        <pre id="data"></pre>
+    </template>
+
     <!-- END OF TEMPLATES -->
 
     <script src="scripts/nav.js"></script>
-    <script src="scripts/weather.js"></script>
     <script src="/app.js" type="module"></script>
   </body>
 </html>
