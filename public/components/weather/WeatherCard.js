@@ -80,44 +80,44 @@ export class WeatherCard extends HTMLElement {
             `<div class="city-name">${this._cityName}</div>` : '';
 
         if (this._compact) {
-            // Compact version for widgets
+            // Compact version for widgets - simpler layout
             this.innerHTML = `
-                <div class="weather-card-content compact">
+                <div class="compact-weather">
                     ${cityDisplay}
-                    <div class="main-weather">
-                        <temperature-display 
-                            temperature="${weatherInfo.temperature}" 
-                            unit="${weatherService.getTempUnit()}"
-                            size="large">
-                        </temperature-display>
-                        <div class="condition">${weatherInfo.condition}</div>
+                    <div class="compact-main">
+                        <div class="current-temp">${weatherInfo.tempFormatted}</div>
+                        <div class="current-condition">${weatherInfo.condition}</div>
                     </div>
-                    <stats-grid 
-                        humidity="${weatherInfo.humidity}"
-                        precipitation="${weatherInfo.precipitation}"
-                        wind-speed="${weatherInfo.windSpeed}"
-                        compact>
-                    </stats-grid>
+                    <div class="compact-stats">
+                        <div class="compact-stat">
+                            <span>💧 ${weatherInfo.humidity}%</span>
+                            <span>💨 ${weatherInfo.windSpeed} m/s</span>
+                        </div>
+                    </div>
                 </div>
             `;
         } else {
-            // Full version for weather page
+            // Full version for weather page - use original bento box design
             this.innerHTML = `
-                <div class="weather-card-content">
-                    ${cityDisplay}
-                    <div class="main-weather">
-                        <temperature-display 
-                            temperature="${weatherInfo.temperature}" 
-                            unit="${weatherService.getTempUnit()}"
-                            size="large">
-                        </temperature-display>
-                        <div class="condition">${weatherInfo.condition}</div>
+                <div class="current">
+                    <div class="current-main">
+                        <div class="current-temp">${weatherInfo.tempFormatted}</div>
+                        <div class="current-condition">${weatherInfo.condition}</div>
                     </div>
-                    <stats-grid 
-                        humidity="${weatherInfo.humidity}"
-                        precipitation="${weatherInfo.precipitation}"
-                        wind-speed="${weatherInfo.windSpeed}">
-                    </stats-grid>
+                    <div class="current-stats">
+                        <div class="current-stat">
+                            <span class="current-stat-label">Humidity</span>
+                            <span class="current-stat-value">${weatherInfo.humidity}%</span>
+                        </div>
+                        <div class="current-stat">
+                            <span class="current-stat-label">Rain</span>
+                            <span class="current-stat-value">${weatherInfo.precipitation} mm</span>
+                        </div>
+                        <div class="current-stat">
+                            <span class="current-stat-label">Wind</span>
+                            <span class="current-stat-value">${weatherInfo.windSpeed} m/s</span>
+                        </div>
+                    </div>
                 </div>
             `;
         }

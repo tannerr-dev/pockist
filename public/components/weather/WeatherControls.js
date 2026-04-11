@@ -50,13 +50,10 @@ export class WeatherControls extends HTMLElement {
         let searchSection = '';
         if (this._showSearch) {
             searchSection = `
-                <div class="search-section">
-                    <input type="text" 
-                           id="cityInput" 
-                           placeholder="City Name, State. Saint Paul, MN"
-                           class="city-input">
-                    <button type="button" class="fetch-btn">Fetch</button>
-                </div>
+                <input type="text" 
+                       id="cityInput" 
+                       placeholder="City Name, State. Saint Paul, MN">
+                <button type="button" class="fetch-btn">Fetch</button>
             `;
         }
 
@@ -64,21 +61,17 @@ export class WeatherControls extends HTMLElement {
         if (this._showUnit) {
             const currentUnit = weatherService.getTempUnit();
             unitSection = `
-                <div class="unit-section">
-                    <button type="button" class="unit-btn" id="unitBtn">°${currentUnit}</button>
-                </div>
+                <button type="button" id="unitBtn">°${currentUnit}</button>
             `;
         }
 
         this.innerHTML = `
-            <div class="controls-container">
+            <div class="controls">
                 ${searchSection}
                 ${unitSection}
-                <div class="status-section">
-                    <div class="error-message" id="error"></div>
-                    <div class="loading-message" id="loading"></div>
-                </div>
             </div>
+            <div id="error"></div>
+            <div id="loading"></div>
         `;
     }
 
@@ -86,7 +79,7 @@ export class WeatherControls extends HTMLElement {
         // Search functionality
         if (this._showSearch) {
             const fetchBtn = this.querySelector('.fetch-btn');
-            const cityInput = this.querySelector('.city-input');
+            const cityInput = this.querySelector('#cityInput');
             
             if (fetchBtn) {
                 fetchBtn.addEventListener('click', () => this.handleSearch());
@@ -117,7 +110,7 @@ export class WeatherControls extends HTMLElement {
     }
 
     async handleSearch() {
-        const cityInput = this.querySelector('.city-input');
+        const cityInput = this.querySelector('#cityInput');
         const errorEl = this.querySelector('#error');
         const loadingEl = this.querySelector('#loading');
 
@@ -204,12 +197,12 @@ export class WeatherControls extends HTMLElement {
     }
 
     getCityInput() {
-        const cityInput = this.querySelector('.city-input');
+        const cityInput = this.querySelector('#cityInput');
         return cityInput ? cityInput.value.trim() : '';
     }
 
     setCityInput(cityName) {
-        const cityInput = this.querySelector('.city-input');
+        const cityInput = this.querySelector('#cityInput');
         if (cityInput) {
             cityInput.value = cityName;
         }

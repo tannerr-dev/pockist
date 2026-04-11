@@ -2,8 +2,6 @@ import { Router } from "../services/Router.js";
 import { weatherService } from "../services/WeatherService.js";
 
 // Import weather components
-import './weather/TemperatureDisplay.js';
-import './weather/StatsGrid.js';
 import './weather/WeatherCard.js';
 import './weather/WeatherControls.js';
 
@@ -155,10 +153,12 @@ export class WeatherPage extends HTMLElement {
         if (!metaEl) return;
 
         const items = [
-            { label: 'Latitude', value: data.latitude },
-            { label: 'Longitude', value: data.longitude },
+            { label: 'Latitude', value: data.latitude.toFixed(3) },
+            { label: 'Longitude', value: data.longitude.toFixed(3) },
             { label: 'Timezone', value: data.timezone },
             { label: 'Elevation', value: data.elevation + ' m' },
+            { label: 'UTC Offset', value: `${data.utc_offset_seconds / 3600}h` },
+            { label: 'Gen Time', value: `${(data.generationtime_ms / 1000).toFixed(2)}s` }
         ];
 
         metaEl.innerHTML = items.map(item => `
