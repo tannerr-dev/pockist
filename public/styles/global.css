@@ -34,13 +34,9 @@ html {
 	scrollbar-color: hsl(0 0% 100% /0.2) hsl(0 0% 0% /0);
 	scrollbar-width: thin;
 	scrollbar-gutter: stable both-edges;
+    height:100vh;
 
     padding:10px;
-
-
-	/* height: 100vh; */
-	/* overflow: hidden; */
-	/* scrollbar-color: red orange; */
 }
 body {
 	/* height: 100%; */
