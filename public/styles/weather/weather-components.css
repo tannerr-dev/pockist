@@ -150,7 +150,7 @@
     .weather-controls .unit-section {
         justify-content: center;
     }
-    
+
     .temperature-display .temp-large {
         font-size: 48px;
     }
@@ -160,7 +160,7 @@
     .weather-widget .widget-container {
         padding: 12px;
     }
-    
+
     .weather-card .weather-card-content.compact {
         padding: 12px;
     }
