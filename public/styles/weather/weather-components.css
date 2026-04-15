@@ -34,18 +34,6 @@
     padding: 24px;
 }
 
-.widget-header {
-    background: var(--bg-2);
-    padding: 12px 16px;
-    display: flex;
-    justify-content: space-between;
-}
-
-.widget-header h3 {
-    font-size: 14px;
-    font-weight: 600;
-}
-
 .no-data {
     background: var(--bg-2);
     padding: 24px;

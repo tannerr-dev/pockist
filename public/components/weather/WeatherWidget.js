@@ -82,10 +82,6 @@ export class WeatherWidget extends HTMLElement {
         if (!weatherInfo) {
             this.innerHTML = `
                 <div class="widget-container${clickableClass}">
-                    <div class="widget-header">
-                        <h3>Weather</h3>
-                        ${this._showCity && cityName ? `<span class="city">${cityName}</span>` : ''}
-                    </div>
                     <div class="widget-content">
                         <div class="no-data">
                             <span>Click to set up weather</span>
@@ -96,10 +92,6 @@ export class WeatherWidget extends HTMLElement {
         } else {
             this.innerHTML = `
                 <div class="widget-container${clickableClass}">
-                    <div class="widget-header">
-                        <h3>Weather</h3>
-                        ${this._showCity && cityName ? `<span class="city">${cityName}</span>` : ''}
-                    </div>
                     <div class="widget-content">
                         <weather-card compact show-city="${this._showCity}" city-name="${cityName}">
                         </weather-card>
