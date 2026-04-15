@@ -4,12 +4,47 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 	// "os"
 	// "database/sql"
 	// "tannerr/pockist/handlers"
 	// "tannerr/pockist/pkg/templates"
 	// _ "github.com/mattn/go-sqlite3"
 )
+
+// CacheControlMiddleware creates a middleware with configurable max-age in seconds
+func CacheControlMiddleware(maxAgeSeconds int) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Cache-Control",
+				fmt.Sprintf("max-age=%d, must-revalidate", maxAgeSeconds))
+			next.ServeHTTP(w, r)
+		})
+	}
+}
+
+// FileTypeCacheMiddleware applies different cache durations based on file extension
+func FileTypeCacheMiddleware(defaultMaxAge int, overrides map[string]int) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// Determine file extension
+			ext := ""
+			if dot := strings.LastIndex(r.URL.Path, "."); dot != -1 {
+				ext = strings.ToLower(r.URL.Path[dot:])
+			}
+
+			// Use override if exists, otherwise use default
+			maxAge := defaultMaxAge
+			if override, ok := overrides[ext]; ok {
+				maxAge = override
+			}
+
+			w.Header().Set("Cache-Control",
+				fmt.Sprintf("max-age=%d, must-revalidate", maxAge))
+			next.ServeHTTP(w, r)
+		})
+	}
+}
 
 // func loginHandler(w http.ResponseWriter, r *http.Request) {
 // 	if r.FormValue("username") == os.Getenv("POCKIST_USERNAME") && r.FormValue("password") == os.Getenv("POCKIST_PASSWORD") {
@@ -49,17 +84,16 @@ func main() {
 
 	// server.HandleFunc("/api/login", loginHandler)
 	// server.HandleFunc("/dashboard", my_handler("dashboard"))
-	//
 	// server.HandleFunc("/note", notesHandler.Note)
 	// server.HandleFunc("/api/notes/json", notesHandler.NotesJson)
 
 	// server.HandleFunc("/ssrnotes", notesHandler.SsrNotesRoute)
 	// server.HandleFunc("/api/notes/insert", notesHandler.NotesInsert)
 	// server.HandleFunc("/api/notes/delete", notesHandler.NotesDelete)
-	//
+
 	// server.HandleFunc("/heatmap", my_handler("heatmap"))
 	// server.HandleFunc("/clock", my_handler("clock"))
-	//
+
 	// server.HandleFunc("/admin", my_handler("admin"))
 	// server.HandleFunc("/api/admin/all", adminHandler.AllSelect)
 	// server.HandleFunc("/api/admin/list_tables", adminHandler.ListTables)
@@ -76,10 +110,26 @@ func main() {
 	}
 	server.HandleFunc("/note", catchAllClientRoutesHandler)
 	server.HandleFunc("/weather", catchAllClientRoutesHandler)
+
 	// server.HandleFunc("/weather", func(w http.ResponseWriter, r *http.Request) {
 	// 	http.ServeFile(w, r, "./public/weather.html")
 	// })
-	server.Handle("/", http.FileServer(http.Dir("public")))
+
+
+	// Create middleware with 30-second default cache
+	// Override examples (uncomment to use):
+	// fileCache := FileTypeCacheMiddleware(30, map[string]int{
+	// 	".css":  60,    // 1 minute for CSS
+	// 	".js":   60,    // 1 minute for JS
+	// 	".png":  3600,  // 1 hour for images
+	// 	".jpg":  3600,
+	// 	".svg":  3600,
+	// })
+
+	fileCache := CacheControlMiddleware(30) // 30 seconds for all files
+
+	fileServer := http.FileServer(http.Dir("public"))
+	server.Handle("/", fileCache(fileServer))
 	const addr = ":4242"
 	fmt.Println("Server listening on", addr)
 	err = http.ListenAndServe(addr, server)
