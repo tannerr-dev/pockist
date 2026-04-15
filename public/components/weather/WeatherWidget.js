@@ -76,7 +76,7 @@ export class WeatherWidget extends HTMLElement {
         const weatherInfo = weatherService.getCurrentWeatherInfo();
         const savedCity = weatherService.loadSavedCity();
         const cityName = savedCity?.name || '';
-        
+
         const clickableClass = this._clickable ? ' clickable' : '';
 
         if (!weatherInfo) {
