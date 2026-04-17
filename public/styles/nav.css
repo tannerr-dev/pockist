@@ -55,6 +55,9 @@ nav {
 		cursor: pointer;
 		border-radius: 4px;
 	}
+    .optionals {
+        touch-action: pan-y;
+    }
 }
 /* #options { */
 .flex-row {
