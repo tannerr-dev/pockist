@@ -48,6 +48,9 @@ body {
 }
 main {
     padding: 60px 2px;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
 }
 section{
     width:100%;
@@ -140,4 +143,7 @@ h1 {
     border-radius: 4px;
     cursor: pointer;
     font-weight: bold;
+}
+home-page{
+    width:100%;
 }
