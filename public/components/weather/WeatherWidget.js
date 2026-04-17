@@ -29,7 +29,12 @@ export class WeatherWidget extends HTMLElement {
 
     connectedCallback() {
         this.classList.add('weather-widget');
-        
+
+        // Add click handler for clickable widgets
+        if (this._clickable) {
+            this.addEventListener('click', () => this.handleClick());
+        }
+
         // Subscribe to weather service updates
         this.unsubscribe = weatherService.subscribe((update) => {
             if (update.type === 'weather-updated') {
@@ -77,35 +82,17 @@ export class WeatherWidget extends HTMLElement {
         const savedCity = weatherService.loadSavedCity();
         const cityName = savedCity?.name || '';
 
-        const clickableClass = this._clickable ? ' clickable' : '';
-
         if (!weatherInfo) {
             this.innerHTML = `
-                <div class="widget-container${clickableClass}">
-                    <div class="widget-content">
-                        <div class="no-data">
-                            <span>Click to set up weather</span>
-                        </div>
-                    </div>
+                <div class="no-data">
+                    <span>Click to set up weather</span>
                 </div>
             `;
         } else {
             this.innerHTML = `
-                <div class="widget-container${clickableClass}">
-                    <div class="widget-content">
-                        <weather-card compact show-city="${this._showCity}" city-name="${cityName}">
-                        </weather-card>
-                    </div>
-                </div>
+                <weather-card compact show-city="${this._showCity}" city-name="${cityName}">
+                </weather-card>
             `;
-        }
-
-        // Re-attach click handler since innerHTML replaces content
-        if (this._clickable) {
-            const container = this.querySelector('.widget-container');
-            if (container) {
-                container.addEventListener('click', () => this.handleClick());
-            }
         }
     }
 

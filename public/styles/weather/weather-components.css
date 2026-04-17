@@ -2,6 +2,7 @@
     background: var(--bg-2);
     border-radius: 12px;
     padding: 16px;
+    text-align: center;
 }
 
 .compact-main {
@@ -20,6 +21,7 @@
 
 .compact-stats {
     display: flex;
+    justify-content: center;
     gap: 12px;
     font-size: 12px;
 }
@@ -37,6 +39,7 @@
 .no-data {
     background: var(--bg-2);
     padding: 24px;
+    text-align: center;
 }
 
 .error-state .widget-header {
