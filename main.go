@@ -23,28 +23,6 @@ func CacheControlMiddleware(maxAgeSeconds int) func(http.Handler) http.Handler {
 	}
 }
 
-// FileTypeCacheMiddleware applies different cache durations based on file extension
-func FileTypeCacheMiddleware(defaultMaxAge int, overrides map[string]int) func(http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			// Determine file extension
-			ext := ""
-			if dot := strings.LastIndex(r.URL.Path, "."); dot != -1 {
-				ext = strings.ToLower(r.URL.Path[dot:])
-			}
-
-			// Use override if exists, otherwise use default
-			maxAge := defaultMaxAge
-			if override, ok := overrides[ext]; ok {
-				maxAge = override
-			}
-
-			w.Header().Set("Cache-Control",
-				fmt.Sprintf("max-age=%d, must-revalidate", maxAge))
-			next.ServeHTTP(w, r)
-		})
-	}
-}
 
 // func loginHandler(w http.ResponseWriter, r *http.Request) {
 // 	if r.FormValue("username") == os.Getenv("POCKIST_USERNAME") && r.FormValue("password") == os.Getenv("POCKIST_PASSWORD") {
@@ -110,21 +88,6 @@ func main() {
 	}
 	server.HandleFunc("/note", catchAllClientRoutesHandler)
 	server.HandleFunc("/weather", catchAllClientRoutesHandler)
-
-	// server.HandleFunc("/weather", func(w http.ResponseWriter, r *http.Request) {
-	// 	http.ServeFile(w, r, "./public/weather.html")
-	// })
-
-
-	// Create middleware with 30-second default cache
-	// Override examples (uncomment to use):
-	// fileCache := FileTypeCacheMiddleware(30, map[string]int{
-	// 	".css":  60,    // 1 minute for CSS
-	// 	".js":   60,    // 1 minute for JS
-	// 	".png":  3600,  // 1 hour for images
-	// 	".jpg":  3600,
-	// 	".svg":  3600,
-	// })
 
 	fileCache := CacheControlMiddleware(30) // 30 seconds for all files
 
