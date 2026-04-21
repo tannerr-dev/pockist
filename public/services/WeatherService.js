@@ -1,6 +1,6 @@
 class WeatherService {
     constructor() {
-        this.FORECAST_API = 'https://api.open-meteo.com/v1/forecast';
+        this.FORECAST_API = '/api/weather';
         this.GEOCODE_API = 'https://nominatim.openstreetmap.org/search';
         
         // WMO weather codes
@@ -112,10 +112,10 @@ class WeatherService {
         return { lat: parseFloat(results[0].lat), lon: parseFloat(results[0].lon) };
     }
 
-    // Weather data fetching
+    // Weather data fetching (now goes through server with caching)
     async fetchWeatherData(lat, lon) {
-        const url = `${this.FORECAST_API}?latitude=${lat}&longitude=${lon}&hourly=temperature_2m&current=temperature_2m,relative_humidity_2m,precipitation,weather_code,wind_speed_10m&timezone=auto`;
-        
+        const url = `${this.FORECAST_API}?lat=${lat}&lon=${lon}`;
+
         try {
             const res = await fetch(url);
             if (!res.ok) {
@@ -123,16 +123,16 @@ class WeatherService {
                 throw new Error(err.error || res.status);
             }
             const data = await res.json();
-            
-            // Cache the data
+
+            // Cache the data locally
             this.currentData = data;
-            
+
             // Notify subscribers
             this.notifySubscribers({
                 type: 'weather-updated',
                 data: data
             });
-            
+
             return data;
         } catch (error) {
             // Notify subscribers of error

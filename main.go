@@ -5,9 +5,9 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"tannerr/pockist/handlers"
 	// "os"
 	// "database/sql"
-	// "tannerr/pockist/handlers"
 	// "tannerr/pockist/pkg/templates"
 	// _ "github.com/mattn/go-sqlite3"
 )
@@ -88,6 +88,10 @@ func main() {
 	}
 	server.HandleFunc("/note", catchAllClientRoutesHandler)
 	server.HandleFunc("/weather", catchAllClientRoutesHandler)
+
+	// Weather API endpoint with caching
+	weatherHandler := handlers.NewWeatherHandler()
+	server.HandleFunc("/api/weather", weatherHandler.Weather)
 
 	fileCache := CacheControlMiddleware(30) // 30 seconds for all files
 
