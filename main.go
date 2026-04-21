@@ -5,9 +5,9 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"tannerr/pockist/handlers"
 	// "os"
 	// "database/sql"
-	// "tannerr/pockist/handlers"
 	// "tannerr/pockist/pkg/templates"
 	// _ "github.com/mattn/go-sqlite3"
 )
@@ -111,10 +111,13 @@ func main() {
 	server.HandleFunc("/note", catchAllClientRoutesHandler)
 	server.HandleFunc("/weather", catchAllClientRoutesHandler)
 
+	// Weather API endpoint with caching
+	weatherHandler := handlers.NewWeatherHandler()
+	server.HandleFunc("/api/weather", weatherHandler.Weather)
+
 	// server.HandleFunc("/weather", func(w http.ResponseWriter, r *http.Request) {
 	// 	http.ServeFile(w, r, "./public/weather.html")
 	// })
-
 
 	// Create middleware with 30-second default cache
 	// Override examples (uncomment to use):
