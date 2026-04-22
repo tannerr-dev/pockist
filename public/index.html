@@ -4,12 +4,15 @@
     <title>Pockist</title>
     <link rel="manifest" href="/manifest.json">
     <link rel="icon" href="./assets/logo_white.svg" />
+    <!-- Base Styles -->
     <link href="/styles/reset.css" rel="stylesheet">
     <link href="/styles/global.css" rel="stylesheet">
+    
+    <!-- Component Styles -->
     <link href="/styles/nav.css" rel="stylesheet">
     <link href="/styles/local-notes.css" rel="stylesheet">
     <link href="/styles/weather.css" rel="stylesheet">
-    <link href="/styles/weather/weather-components.css" rel="stylesheet">
+    <link href="/styles/weather-components.css" rel="stylesheet">
 
 
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -136,7 +139,7 @@
       <h1>Pockist</h1>
 
       <div class="widgets-section">
-        <weather-widget clickable="true" show-city="true"></weather-widget>
+        <weather-current clickable="true" show-city="true"></weather-current>
       </div>
       <local-notes></local-notes>
 
@@ -171,22 +174,100 @@
     <template id="weather-page">
         <div class="weather-page-content">
             <weather-controls></weather-controls>
-            <div class="weather-display">
-                <weather-card show-city city-name=""></weather-card>
+            <weather-current show-city="true"></weather-current>
+            <weather-meta></weather-meta>
+            <weather-map></weather-map>
+            <weather-debug></weather-debug>
+        </div>
+    </template>
+
+    <template id="weather-current">
+        <div class="weather-current-inner">
+            <div class="no-data-message">
+                <span>Click to set up weather</span>
             </div>
-            <div class="weather-meta" id="meta"></div>
-            <div class="weather-map">
-                <div id="map"></div>
-                <div class="map-attribution" style="text-align:center;">
-                    <p><small>Data from <a href="https://open-meteo.com/">Open-Meteo</a> | Maps by <a href="https://leafletjs.com/">Leaflet</a></small></p>
-                    <p><small id="mapAttr"></small></p>
+            <div class="weather-data-content" style="display: none;">
+                <div class="city-name skeleton-text">--</div>
+                <div class="current">
+                    <div class="current-main">
+                        <div class="current-temp skeleton-text">--°</div>
+                        <div class="current-condition skeleton-text">Loading weather...</div>
+                    </div>
+                    <div class="current-stats">
+                        <div class="current-stat">
+                            <span class="current-stat-label">Humidity</span>
+                            <span class="current-stat-value humidity skeleton-text">--%</span>
+                        </div>
+                        <div class="current-stat">
+                            <span class="current-stat-label">Rain</span>
+                            <span class="current-stat-value precipitation skeleton-text">--mm</span>
+                        </div>
+                        <div class="current-stat">
+                            <span class="current-stat-label">Wind</span>
+                            <span class="current-stat-value wind skeleton-text">--m/s</span>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <details class="debug-data">
-                <summary>Debug Data</summary>
-                <pre id="data"></pre>
-            </details>
         </div>
+    </template>
+
+    <template id="weather-meta">
+        <div class="weather-meta-inner">
+            <div class="meta-grid">
+                <div class="meta-item">
+                    <div class="meta-label">Latitude</div>
+                    <div class="meta-value skeleton-text">--</div>
+                </div>
+                <div class="meta-item">
+                    <div class="meta-label">Longitude</div>
+                    <div class="meta-value skeleton-text">--</div>
+                </div>
+                <div class="meta-item">
+                    <div class="meta-label">Timezone</div>
+                    <div class="meta-value skeleton-text">--</div>
+                </div>
+                <div class="meta-item">
+                    <div class="meta-label">Elevation</div>
+                    <div class="meta-value skeleton-text">--</div>
+                </div>
+                <div class="meta-item">
+                    <div class="meta-label">UTC Offset</div>
+                    <div class="meta-value skeleton-text">--</div>
+                </div>
+                <div class="meta-item">
+                    <div class="meta-label">Gen Time</div>
+                    <div class="meta-value skeleton-text">--</div>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <template id="weather-map">
+        <div class="weather-map-inner">
+            <div id="map"></div>
+            <div class="map-attribution" style="text-align:center;">
+                <p><small>Data from <a href="https://open-meteo.com/">Open-Meteo</a> | Maps by <a href="https://leafletjs.com/">Leaflet</a></small></p>
+                <p><small id="mapAttr"></small></p>
+            </div>
+        </div>
+    </template>
+
+    <template id="weather-debug">
+        <details class="debug-data">
+            <summary>Debug Data</summary>
+            <pre id="data"></pre>
+        </details>
+    </template>
+
+    <template id="weather-controls">
+        <div class="controls">
+            <input type="text" id="cityInput" placeholder="City Name, State. Saint Paul, MN">
+            <button type="button" class="fetch-btn">Fetch</button>
+            <button type="button" id="unitBtn">°C</button>
+        </div>
+        <div id="error" class="error-message"></div>
+        <div id="loading" class="loading-message"></div>
     </template>
 
     <!-- END OF TEMPLATES -->

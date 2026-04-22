@@ -6,6 +6,13 @@ export class WeatherControls extends HTMLElement {
         this._showSearch = true;
         this._showUnit = true;
         this.unsubscribe = null;
+        
+        // Cached element references
+        this._cityInput = null;
+        this._fetchBtn = null;
+        this._unitBtn = null;
+        this._errorEl = null;
+        this._loadingEl = null;
     }
 
     static get observedAttributes() {
@@ -22,22 +29,39 @@ export class WeatherControls extends HTMLElement {
                     this._showUnit = newValue !== 'false';
                     break;
             }
-            this.render();
+            this._updateVisibility();
         }
     }
 
     connectedCallback() {
         this.classList.add('weather-controls');
 
+        // Clone template
+        const template = document.getElementById('weather-controls');
+        if (!template) {
+            console.error('weather-controls template not found');
+            return;
+        }
+        const content = template.content.cloneNode(true);
+        this.appendChild(content);
+
+        // Cache element references
+        this._cityInput = this.querySelector('#cityInput');
+        this._fetchBtn = this.querySelector('.fetch-btn');
+        this._unitBtn = this.querySelector('#unitBtn');
+        this._errorEl = this.querySelector('#error');
+        this._loadingEl = this.querySelector('#loading');
+
         // Subscribe to weather service updates for unit changes
         this.unsubscribe = weatherService.subscribe((update) => {
             if (update.type === 'unit-changed') {
-                this.updateUnitButton();
+                this._updateUnitButton();
             }
         });
 
-        this.render();
-        this.attachEventListeners();
+        this._updateVisibility();
+        this._attachEventListeners();
+        this._updateUnitButton();
     }
 
     disconnectedCallback() {
@@ -46,90 +70,61 @@ export class WeatherControls extends HTMLElement {
         }
     }
 
-    render() {
-        let searchSection = '';
-        if (this._showSearch) {
-            searchSection = `
-                <input type="text" 
-                       id="cityInput" 
-                       placeholder="City Name, State. Saint Paul, MN">
-                <button type="button" class="fetch-btn">Fetch</button>
-            `;
+    _updateVisibility() {
+        if (this._cityInput) {
+            this._cityInput.style.display = this._showSearch ? '' : 'none';
         }
-
-        let unitSection = '';
-        if (this._showUnit) {
-            const currentUnit = weatherService.getTempUnit();
-            unitSection = `
-                <button type="button" id="unitBtn">°${currentUnit}</button>
-            `;
+        if (this._fetchBtn) {
+            this._fetchBtn.style.display = this._showSearch ? '' : 'none';
         }
-
-        this.innerHTML = `
-            <div class="controls">
-                ${searchSection}
-                ${unitSection}
-            </div>
-            <div id="error"></div>
-            <div id="loading"></div>
-        `;
+        if (this._unitBtn) {
+            this._unitBtn.style.display = this._showUnit ? '' : 'none';
+        }
     }
 
-    attachEventListeners() {
+    _attachEventListeners() {
         // Search functionality
-        if (this._showSearch) {
-            const fetchBtn = this.querySelector('.fetch-btn');
-            const cityInput = this.querySelector('#cityInput');
-            
-            if (fetchBtn) {
-                fetchBtn.addEventListener('click', () => this.handleSearch());
-            }
+        if (this._fetchBtn) {
+            this._fetchBtn.addEventListener('click', () => this.handleSearch());
+        }
 
-            if (cityInput) {
-                cityInput.addEventListener('keydown', (event) => {
-                    if (event.code === 'Enter') {
-                        this.handleSearch();
-                    }
-                });
-
-                // Load saved city name
-                const saved = weatherService.loadSavedCity();
-                if (saved) {
-                    cityInput.value = saved.name;
+        if (this._cityInput) {
+            this._cityInput.addEventListener('keydown', (event) => {
+                if (event.code === 'Enter') {
+                    this.handleSearch();
                 }
+            });
+
+            // Load saved city name
+            const saved = weatherService.loadSavedCity();
+            if (saved) {
+                this._cityInput.value = saved.name;
             }
         }
 
         // Unit toggle functionality
-        if (this._showUnit) {
-            const unitBtn = this.querySelector('#unitBtn');
-            if (unitBtn) {
-                unitBtn.addEventListener('click', () => this.handleUnitToggle());
-            }
+        if (this._unitBtn) {
+            this._unitBtn.addEventListener('click', () => this.handleUnitToggle());
         }
     }
 
     async handleSearch() {
-        const cityInput = this.querySelector('#cityInput');
-        const errorEl = this.querySelector('#error');
-        const loadingEl = this.querySelector('#loading');
+        if (!this._cityInput || !this._errorEl) return;
 
-        if (!cityInput || !errorEl) return;
-
-        const cityName = cityInput.value.trim();
+        const cityName = this._cityInput.value.trim();
 
         if (!cityName) {
-            errorEl.textContent = 'Enter a city';
+            this._errorEl.textContent = 'Enter a city';
             return;
         }
 
         try {
-            errorEl.textContent = '';
-            if (loadingEl) loadingEl.textContent = 'Searching...';
+            this._errorEl.textContent = '';
+            if (this._loadingEl) this._loadingEl.textContent = 'Searching...';
 
             await weatherService.searchAndFetchCity(cityName);
 
-            if (loadingEl) loadingEl.textContent = '';
+            if (this._loadingEl) this._loadingEl.textContent = '';
             
             // Emit custom event for parent components
             this.dispatchEvent(new CustomEvent('weather-search-success', {
@@ -138,8 +133,8 @@ export class WeatherControls extends HTMLElement {
             }));
 
         } catch (error) {
-            errorEl.textContent = error.message;
-            if (loadingEl) loadingEl.textContent = '';
+            if (this._errorEl) this._errorEl.textContent = error.message;
+            if (this._loadingEl) this._loadingEl.textContent = '';
 
             // Emit custom event for error handling
             this.dispatchEvent(new CustomEvent('weather-search-error', {
@@ -151,7 +146,7 @@ export class WeatherControls extends HTMLElement {
 
     handleUnitToggle() {
         const newUnit = weatherService.toggleUnit();
-        this.updateUnitButton();
+        this._updateUnitButton();
 
         // Emit custom event for unit change
         this.dispatchEvent(new CustomEvent('weather-unit-changed', {
@@ -160,51 +155,44 @@ export class WeatherControls extends HTMLElement {
         }));
     }
 
-    updateUnitButton() {
-        const unitBtn = this.querySelector('#unitBtn');
-        if (unitBtn) {
-            unitBtn.textContent = `°${weatherService.getTempUnit()}`;
+    _updateUnitButton() {
+        if (this._unitBtn) {
+            this._unitBtn.textContent = `°${weatherService.getTempUnit()}`;
         }
     }
 
     // Public API
     setError(message) {
-        const errorEl = this.querySelector('#error');
-        if (errorEl) {
-            errorEl.textContent = message;
+        if (this._errorEl) {
+            this._errorEl.textContent = message;
         }
     }
 
     clearError() {
-        const errorEl = this.querySelector('#error');
-        if (errorEl) {
-            errorEl.textContent = '';
+        if (this._errorEl) {
+            this._errorEl.textContent = '';
         }
     }
 
     setLoading(message) {
-        const loadingEl = this.querySelector('#loading');
-        if (loadingEl) {
-            loadingEl.textContent = message;
+        if (this._loadingEl) {
+            this._loadingEl.textContent = message;
         }
     }
 
     clearLoading() {
-        const loadingEl = this.querySelector('#loading');
-        if (loadingEl) {
-            loadingEl.textContent = '';
+        if (this._loadingEl) {
+            this._loadingEl.textContent = '';
         }
     }
 
     getCityInput() {
-        const cityInput = this.querySelector('#cityInput');
-        return cityInput ? cityInput.value.trim() : '';
+        return this._cityInput ? this._cityInput.value.trim() : '';
     }
 
     setCityInput(cityName) {
-        const cityInput = this.querySelector('#cityInput');
-        if (cityInput) {
-            cityInput.value = cityName;
+        if (this._cityInput) {
+            this._cityInput.value = cityName;
         }
     }
 }

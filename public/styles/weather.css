@@ -1,130 +1,23 @@
+/* Weather Page Layout - Legacy styles kept for compatibility */
 .weather {
-    /* * { margin: 0; padding: 0; box-sizing: border-box; } */
-    /* padding: 10px; */
+    padding: 20px;
+}
 
-    .weather-meta {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 15px;
-        margin-bottom: 20px;
-    }
+.weather a {
+    color: var(--accent);
+}
 
-    .controls { margin-bottom: 20px; display: flex; gap: 10px; }
-    input { 
-        padding: 10px; 
-        border: 1px solid var(--bg-3); 
-        border-radius: 4px; 
-        background: var(--bg-2); 
-        color: var(--text);
-        flex: 1;
-    }
-    button { 
-        padding: 10px 20px; 
-        background: var(--bg-3); 
-        border: none; 
-        border-radius: 4px; 
-        color: var(--text); 
-        cursor: pointer;
-    }
-    button:hover { background: var(--bg); }
-    #error { color: var(--accent); margin-bottom: 10px; }
-    #loading { color: var(--text); opacity: 0.5; margin-bottom: 10px; }
-    .meta {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 15px;
-        margin-bottom: 20px;
-    }
-    .meta-item {
-        background: var(--bg-2);
-        padding: 16px;
-        border-radius: 8px;
-        text-align: center;
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
-        min-height: 90px;
-    }
-    .meta-item:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    }
-    .meta-label { 
-        font-size: 11px; 
-        color: var(--text); 
-        opacity: 0.6; 
-        text-transform: uppercase; 
-        font-weight: 600;
-        letter-spacing: 0.5px;
-        margin-bottom: 6px;
-    }
-    .meta-value { 
-        font-size: 18px; 
-        font-weight: 500; 
-        color: var(--text);
-        margin: 0;
-    }
-    .current {
-        display: grid;
-        grid-template-columns: 2fr 1fr;
-        gap: 15px;
-        margin-bottom: 20px;
-    }
-    .current-main {
-        background: var(--bg-2);
-        padding: 32px 24px;
-        border-radius: 12px;
-        text-align: center;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        transition: transform 0.2s ease;
-    }
-    .current-main:hover {
-        transform: translateY(-2px);
-    }
-    .current-temp { 
-        font-size: 64px; 
-        font-weight: 300; 
-        color: var(--text);
-        line-height: 1;
-        margin-bottom: 8px;
-    }
-    .current-condition { 
-        font-size: 18px; 
-        color: var(--text); 
-        opacity: 0.6; 
-        font-weight: 400;
-        margin: 0;
-    }
-    .current-stats {
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-    }
-    .current-stat {
-        background: var(--bg-2);
-        padding: 16px;
-        border-radius: 8px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
-    }
-    .current-stat:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    }
-    .current-stat-label { color: var(--text); opacity: 0.6; font-size: 12px; }
-    .current-stat-value { font-size: 18px; font-weight: 600; }
-    #data { color: var(--text); opacity: 0.6; }
-    a {
-        color: var(--accent);
-    }
-    #map {
-        height: 220px;
-        width: 100%;
-        border-radius: 8px;
-        margin-bottom: 15px;
-        background: var(--bg);
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    }
+/* Legacy styles for elements not yet converted to components */
+#data { 
+    color: var(--text); 
+    opacity: 0.6; 
+}
+
+/* Ensure smooth transitions for interactive elements */
+.weather-page-content button {
+    transition: all 0.2s ease;
+}
+
+.weather-page-content button:hover {
+    transform: translateY(-1px);
 }

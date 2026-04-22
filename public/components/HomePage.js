@@ -1,6 +1,6 @@
 import { API } from "../services/API.js";
 import { Router } from "../services/Router.js";
-import './weather/WeatherWidget.js';
+import './weather/WeatherCurrent.js';
 
 export class HomePage extends HTMLElement {  // <home-page>
     connectedCallback() {

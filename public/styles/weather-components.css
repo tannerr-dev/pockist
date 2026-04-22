@@ -1,0 +1,297 @@
+/* Weather Current Component */
+weather-current {
+    display: block;
+}
+
+.weather-current-inner {
+    background: var(--bg-2);
+    border-radius: 12px;
+    padding: 20px;
+}
+
+.no-data-message {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-muted);
+}
+
+.weather-data-content {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.city-name {
+    font-size: 14px;
+    font-weight: 500;
+    text-align: center;
+    color: var(--text-color);
+}
+
+.current {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    align-items: center;
+}
+
+.current-main {
+    text-align: center;
+}
+
+.current-temp {
+    font-size: 48px;
+    font-weight: 300;
+    line-height: 1;
+    margin-bottom: 8px;
+}
+
+.current-condition {
+    font-size: 14px;
+    opacity: 0.7;
+}
+
+.current-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.current-stat {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: var(--bg-3);
+    border-radius: 8px;
+}
+
+.current-stat-label {
+    font-size: 12px;
+    opacity: 0.6;
+}
+
+.current-stat-value {
+    font-size: 13px;
+    font-weight: 500;
+}
+
+/* Skeleton State */
+.skeleton-text {
+    background: var(--bg-3);
+    color: transparent;
+    border-radius: 4px;
+}
+
+/* Weather Meta Component */
+weather-meta {
+    display: block;
+    margin-top: 20px;
+}
+
+.weather-meta-inner {
+    background: var(--bg-2);
+    border-radius: 12px;
+    padding: 20px;
+}
+
+.meta-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+}
+
+.meta-item {
+    text-align: center;
+    padding: 12px;
+    background: var(--bg-3);
+    border-radius: 8px;
+}
+
+.meta-label {
+    font-size: 11px;
+    opacity: 0.6;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.meta-value {
+    font-size: 14px;
+    font-weight: 500;
+}
+
+/* Weather Map Component */
+weather-map {
+    display: block;
+    margin-top: 20px;
+}
+
+.weather-map-inner {
+    background: var(--bg-2);
+    border-radius: 12px;
+    padding: 16px;
+    overflow: hidden;
+}
+
+#map {
+    height: 240px;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.map-attribution {
+    text-align: center;
+    font-size: 11px;
+    opacity: 0.6;
+    margin-top: 12px;
+}
+
+.map-attribution a {
+    color: var(--accent);
+}
+
+/* Weather Debug Component */
+weather-debug {
+    display: block;
+    margin-top: 20px;
+}
+
+weather-debug .debug-data {
+    background: var(--bg-2);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+weather-debug summary {
+    padding: 16px 20px;
+    background: var(--bg-3);
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+weather-debug pre {
+    padding: 20px;
+    font-size: 11px;
+    overflow-x: auto;
+    margin: 0;
+}
+
+/* Weather Controls Component */
+weather-controls {
+    display: block;
+    margin-bottom: 20px;
+}
+
+weather-controls .controls {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+weather-controls input[type="text"] {
+    flex: 1;
+    padding: 12px 16px;
+    background: var(--bg-2);
+    border: 1px solid var(--border-color, rgba(0,0,0,0.1));
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+weather-controls button {
+    padding: 12px 20px;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+weather-controls button:hover {
+    opacity: 0.9;
+}
+
+weather-controls #unitBtn {
+    background: var(--bg-3);
+    color: var(--text-color);
+    min-width: 48px;
+}
+
+.error-message {
+    color: #ef4444;
+    font-size: 13px;
+    padding: 8px 0;
+}
+
+.loading-message {
+    color: var(--text-muted);
+    font-size: 13px;
+    padding: 8px 0;
+}
+
+/* Homepage Widget Section */
+.widgets-section {
+    margin-bottom: 20px;
+}
+
+.widgets-section weather-current {
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.widgets-section weather-current:hover {
+    transform: translateY(-2px);
+}
+
+/* Weather Page Layout */
+.weather-page-content {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+    .current {
+        grid-template-columns: 1fr;
+    }
+    
+    .meta-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .current-temp {
+        font-size: 36px;
+    }
+    
+    #map {
+        height: 180px;
+    }
+    
+    .weather-current-inner,
+    .weather-meta-inner,
+    .weather-map-inner {
+        padding: 16px;
+    }
+    
+    .no-data-message {
+        padding: 30px 16px;
+    }
+}
+
+@media (max-width: 400px) {
+    .meta-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    weather-controls .controls {
+        flex-wrap: wrap;
+    }
+    
+    weather-controls input[type="text"] {
+        width: 100%;
+        margin-bottom: 8px;
+    }
+}
