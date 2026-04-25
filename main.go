@@ -33,6 +33,10 @@ func main() {
 	weatherHandler := handlers.NewWeatherHandler()
 	server.HandleFunc("/api/weather", weatherHandler.Weather)
 
+	// Geocode API endpoint with caching
+	geocodeHandler := handlers.NewGeocodeHandler()
+	server.HandleFunc("/api/geocode", geocodeHandler.Geocode)
+
 	fileCache := CacheControlMiddleware(30) // 30 seconds for all files
 
 	fileServer := http.FileServer(http.Dir("public"))

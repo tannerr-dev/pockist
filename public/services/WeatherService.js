@@ -1,8 +1,8 @@
 class WeatherService {
     constructor() {
         this.FORECAST_API = '/api/weather';
-        this.GEOCODE_API = 'https://nominatim.openstreetmap.org/search';
-        
+        this.GEOCODE_API = '/api/geocode';
+
         // WMO weather codes
         this.WMO_CODES = {
             0: 'Clear sky', 1: 'Mainly clear', 2: 'Partly cloudy', 3: 'Overcast',
@@ -17,15 +17,18 @@ class WeatherService {
             85: 'Slight snow showers', 86: 'Heavy snow showers',
             95: 'Thunderstorm', 96: 'Thunderstorm with slight hail', 99: 'Thunderstorm with heavy hail'
         };
-        
+
         // Current weather data cache
         this.currentData = null;
-        
+
         // Temperature unit preference
         this.tempUnit = localStorage.getItem('tempUnit') || 'C';
-        
+
         // Subscribers for weather data changes
         this.subscribers = [];
+
+        // Track in-flight requests to prevent duplicates
+        this.inFlightRequests = new Map();
     }
 
     // Subscription system for components to listen to weather updates
@@ -94,26 +97,52 @@ class WeatherService {
         }
     }
 
-    // Geocoding API
+    // Geocoding API (proxied through backend with caching)
     async geocodeCity(cityName) {
-        const params = new URLSearchParams({ q: cityName, format: 'json', limit: '1' });
-        const res = await fetch(`${this.GEOCODE_API}?${params}`, { 
-            headers: { 'User-Agent': 'WeatherApp/1.0' } 
-        });
-        let results;
-        try {
-            results = await res.json();
-        } catch {
-            throw new Error('Invalid response from geocoding service');
+        const params = new URLSearchParams({ q: cityName });
+        const res = await fetch(`${this.GEOCODE_API}?${params}`);
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({ error: 'Geocoding failed' }));
+            throw new Error(err.error || 'City not found');
         }
-        if (!results || !Array.isArray(results) || !results.length) {
-            throw new Error('City not found');
-        }
-        return { lat: parseFloat(results[0].lat), lon: parseFloat(results[0].lon) };
+        const data = await res.json();
+        return { lat: data.lat, lon: data.lon };
     }
 
     // Weather data fetching (now goes through server with caching)
     async fetchWeatherData(lat, lon) {
+        // Round coordinates to 2 decimal places for consistent cache keys
+        // (matches server-side rounding)
+        const latRounded = Math.round(lat * 100) / 100;
+        const lonRounded = Math.round(lon * 100) / 100;
+        const cacheKey = `${latRounded},${lonRounded}`;
+
+        // Check if there's already an in-flight request for these coordinates
+        if (this.inFlightRequests.has(cacheKey)) {
+            console.log(`[WeatherService] Reusing in-flight request for ${cacheKey}`);
+            return this.inFlightRequests.get(cacheKey);
+        }
+
+        // Create the fetch promise
+        const fetchPromise = this._doFetchWeather(latRounded, lonRounded);
+
+        // Track the in-flight request
+        this.inFlightRequests.set(cacheKey, fetchPromise);
+
+        // Clean up when done (success or error)
+        fetchPromise
+            .then(() => {
+                this.inFlightRequests.delete(cacheKey);
+            })
+            .catch(() => {
+                this.inFlightRequests.delete(cacheKey);
+            });
+
+        return fetchPromise;
+    }
+
+    // Internal method to actually perform the fetch
+    async _doFetchWeather(lat, lon) {
         const url = `${this.FORECAST_API}?lat=${lat}&lon=${lon}`;
 
         try {
