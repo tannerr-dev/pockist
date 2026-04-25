@@ -96,7 +96,7 @@ func (h *WeatherHandler) Weather(w http.ResponseWriter, r *http.Request) {
 
 	// Check cache first
 	if cachedData, found := h.cache.Get(cacheKey); found {
-		log.Printf("[Weather] Cache HIT for %s", cacheKey)
+		log.Printf("[CACHE-HIT] Weather API | Key: %s", cacheKey)
 		w.Header().Set("Content-Type", "application/json")
 		w.Header().Set("X-Cache", "HIT")
 		json.NewEncoder(w).Encode(cachedData)
@@ -104,17 +104,17 @@ func (h *WeatherHandler) Weather(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Fetch from Open-Meteo API
-	log.Printf("[Weather] Cache MISS, fetching from API for %.2f,%.2f", latRounded, lonRounded)
+	log.Printf("[CACHE-MISS] Weather API | Fetching: %.2f,%.2f", latRounded, lonRounded)
 	weatherData, err := h.fetchFromAPI(latRounded, lonRounded)
 	if err != nil {
-		log.Printf("[Weather] Error fetching from API: %v", err)
+		log.Printf("[API-ERROR] Weather API | %v", err)
 		http.Error(w, fmt.Sprintf(`{"error": "%s"}`, err.Error()), http.StatusInternalServerError)
 		return
 	}
 
 	// Store in cache
 	h.cache.Set(cacheKey, weatherData)
-	log.Printf("[Weather] Cached data for %s (expires in 20m)", cacheKey)
+	log.Printf("[CACHE-STORE] Weather API | Key: %s | TTL: 20m", cacheKey)
 
 	// Return response
 	w.Header().Set("Content-Type", "application/json")
