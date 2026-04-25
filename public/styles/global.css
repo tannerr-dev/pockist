@@ -10,9 +10,12 @@
 	--bg-light: hsl(var(--hue), calc(22% * var(--mod)), 12%);
 
 	--text: hsl(var(--hue), calc(78% * var(--mod)), 84%);
+	--text-muted: hsl(var(--hue), calc(40% * var(--mod)), 60%);
 	--accent: hsl(var(--hue), calc(32% * var(--mod)), 46%);
 	--accent-2: hsl(var(--hue), calc(22% * var(--mod)), 28%);
 	--accent-dark: hsl(var(--hue), calc(22% * var(--mod)), 28%);
+	--border-color: hsl(var(--hue), calc(30% * var(--mod)), 25%);
+	--error: hsl(0, calc(70% * var(--mod)), 55%);
 }
 [data-theme="light"] {
 	--bg: hsl(var(--hue), calc(20% * var(--mod)), 88%);
@@ -21,9 +24,12 @@
 	--bg-light: hsl(var(--hue), calc(22% * var(--mod)), 72%);
 
 	--text: hsl(var(--hue), calc(78% * var(--mod)), 8%);
+	--text-muted: hsl(var(--hue), calc(30% * var(--mod)), 45%);
 	--accent: hsl(var(--hue), calc(40% * var(--mod)), 40%);
 	--accent-2: hsl(var(--hue), calc(32% * var(--mod)), 32%);
 	--accent-dark: hsl(var(--hue), calc(22% * var(--mod)), 8%);
+	--border-color: hsl(var(--hue), calc(20% * var(--mod)), 70%);
+	--error: hsl(0, calc(70% * var(--mod)), 50%);
 }
 html {
 	background: var(--bg);

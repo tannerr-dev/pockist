@@ -7,17 +7,8 @@
     color: var(--accent);
 }
 
-/* Legacy styles for elements not yet converted to components */
-#data { 
-    color: var(--text); 
-    opacity: 0.6; 
-}
-
-/* Ensure smooth transitions for interactive elements */
-.weather-page-content button {
-    transition: all 0.2s ease;
-}
-
-.weather-page-content button:hover {
-    transform: translateY(-1px);
+/* Debug data styling */
+#data {
+    color: var(--text);
+    opacity: 0.6;
 }
