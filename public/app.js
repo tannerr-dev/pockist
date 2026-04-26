@@ -1,7 +1,7 @@
 import {API} from "./services/API.js";
 import Store from "./services/Store.js";
-// import { Nav } from "./components/Nav.js";
 import { Router } from "./services/Router.js";
+import { DBManager } from "./services/DBManager.js";
 
 navigator.serviceWorker.addEventListener("message", (event) => {
     if (event.data && event.data.type === "CACHE_UPDATED") {
@@ -9,10 +9,17 @@ navigator.serviceWorker.addEventListener("message", (event) => {
     }
 });
 
-window.addEventListener("DOMContentLoaded", event => {
-    app.Router.init()
-    navigator.serviceWorker.register("/sw.js")
-    .then(registration => {
+window.addEventListener("DOMContentLoaded", async () => {
+    // Run database migration before initializing the router
+    try {
+        await DBManager.migrateFromOldDB();
+    } catch (err) {
+        console.error("Migration failed:", err);
+    }
+
+    app.Router.init();
+    
+    navigator.serviceWorker.register("/sw.js").then(registration => {
         const showUpdatePrompt = () => {
             const banner = document.createElement("div");
             banner.id = "update-banner";
@@ -43,19 +50,10 @@ window.addEventListener("DOMContentLoaded", event => {
             });
         });
     });
-    // we do not need to inject the homepage or details page anymore since
-    // the Router does that now
-    // document.querySelector("main").appendChild(new HomePage())
-    // document.querySelector("main").appendChild(new LocalNotes())
- 
-    // Load the navigation component
-    // const body = document.querySelector("body");
-    // const navComponent = new Nav();
-    // body.insertBefore(navComponent, body.firstChild);
 });
 
 window.app = {
-    Router, // same as Router: Router; // js shortcut
+    Router,
     API,
     Store,
     showError: (message="There was an error.", goToHome=true)=>{

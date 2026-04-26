@@ -1,23 +1,33 @@
+/**
+ * LocalNotes Component
+ * 
+ * A custom web component that provides a textarea for offline note-taking.
+ * Notes are persisted to IndexedDB using the shared DBManager service.
+ */
+
+import { DBManager } from '../services/DBManager.js';
+
 export class LocalNotes extends HTMLElement {
 	constructor() {
 		super();
-		this.db = null;
-		this.timeoutId = null;
 		this.textArea = null;
+		this.timeoutId = null;
+		this.noteId = 1;
 	}
 
 	async connectedCallback() {
 		const template = document.getElementById("local-note");
 		if (!template) {
-			console.error("Template with id 'local-note' not found");
+			console.error("LocalNotes: Template with id 'local-note' not found");
 			return;
 		}
+		
 		const content = template.content.cloneNode(true);
 		this.appendChild(content);
 
 		this.textArea = this.querySelector("#note");
 		if (!this.textArea) {
-			console.error("Textarea with id 'note' not found in LocalNotes template");
+			console.error("LocalNotes: Textarea with id 'note' not found");
 			return;
 		}
 
@@ -26,10 +36,12 @@ export class LocalNotes extends HTMLElement {
 
 	async #init() {
 		try {
-			const storedValue = await this.#getDataFromIndexedDB();
-			this.textArea.value = storedValue;
+			await DBManager.init();
+			const note = await DBManager.getNote(this.noteId);
+			this.textArea.value = note?.content ?? "";
 		} catch (error) {
-			console.error("Error fetching from IndexedDB:", error);
+			console.error("Error loading note:", error);
+			this.textArea.value = "";
 		}
 
 		this.textArea.addEventListener("input", () => {
@@ -38,70 +50,25 @@ export class LocalNotes extends HTMLElement {
 	}
 
 	#handleInput() {
-		clearTimeout(this.timeoutId);
+		if (this.timeoutId) {
+			clearTimeout(this.timeoutId);
+		}
+		
 		this.timeoutId = setTimeout(async () => {
 			const currentValue = this.textArea.value;
+			
 			try {
-				await this.#saveDataToIndexedDB(currentValue);
-				console.log("Changes saved to IndexedDB");
+				await DBManager.saveNote(this.noteId, currentValue);
 			} catch (error) {
-				console.error("Error saving to IndexedDB:", error);
+				console.error("Error saving note:", error);
 			}
-		}, 1000); // Wait 1 second before saving
-	}
-
-	async #openDB() {
-		if (this.db) {
-			return; // Already connected
-		}
-		return new Promise((resolve, reject) => {
-			const request = indexedDB.open("textAreaDB", 1);
-			request.onupgradeneeded = (e) => {
-				this.db = e.target.result;
-				this.db.createObjectStore("textAreaStore");
-			};
-			request.onsuccess = (e) => {
-				this.db = e.target.result;
-				resolve();
-			};
-			request.onerror = (e) => {
-				reject(e);
-			};
-		});
-	}
-
-	async #saveDataToIndexedDB(value) {
-		await this.#openDB();
-		return new Promise((resolve, reject) => {
-			const transaction = this.db.transaction(["textAreaStore"], "readwrite");
-			const store = transaction.objectStore("textAreaStore");
-			const request = store.put({ value: value }, "singleRecord");
-
-			request.onsuccess = () => resolve();
-			request.onerror = () => reject(request.error);
-		});
-	}
-
-	async #getDataFromIndexedDB() {
-		await this.#openDB();
-		return new Promise((resolve, reject) => {
-			const transaction = this.db.transaction(["textAreaStore"], "readonly");
-			const store = transaction.objectStore("textAreaStore");
-			const request = store.get("singleRecord");
-
-			request.onsuccess = () => {
-				resolve(request.result?.value ?? "");
-			};
-			request.onerror = () => reject(request.error);
-		});
+		}, 1000);
 	}
 
 	disconnectedCallback() {
 		if (this.timeoutId) {
 			clearTimeout(this.timeoutId);
-		}
-		if (this.db) {
-			this.db.close();
+			this.timeoutId = null;
 		}
 	}
 }
