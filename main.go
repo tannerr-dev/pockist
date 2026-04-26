@@ -27,6 +27,7 @@ func main() {
 		http.ServeFile(w, r, "./public/index.html")
 	}
 	server.HandleFunc("/note", catchAllClientRoutesHandler)
+	server.HandleFunc("/list", catchAllClientRoutesHandler)
 	server.HandleFunc("/weather", catchAllClientRoutesHandler)
 
 	// Weather API endpoint with caching

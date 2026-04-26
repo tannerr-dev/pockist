@@ -13,6 +13,7 @@
     <link href="/styles/local-notes.css" rel="stylesheet">
     <link href="/styles/weather.css" rel="stylesheet">
     <link href="/styles/weather-components.css" rel="stylesheet">
+    <link href="/styles/todo-list.css" rel="stylesheet">
 
 
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -141,6 +142,7 @@
       <div class="widgets-section">
         <weather-current clickable="true" show-city="true"></weather-current>
       </div>
+      <todo-list></todo-list>
       <local-notes></local-notes>
 
       <!-- <div class="flex-col"> -->
@@ -268,6 +270,26 @@
         </div>
         <div id="error" class="error-message"></div>
         <div id="loading" class="loading-message"></div>
+    </template>
+
+    <template id="todo-list">
+      <div class="todo-list-container">
+        <h2>Todos</h2>
+        <div class="todo-input-row">
+          <input type="text" id="todo-input" placeholder="Add a new task..." autocomplete="off">
+          <button id="add-btn">Add</button>
+        </div>
+        <ul id="todo-list-ul"></ul>
+        <div class="todo-footer">
+          <span id="items-left">0 items left</span>
+          <button id="clear-completed" class="button-link">Clear completed</button>
+        </div>
+      </div>
+    </template>
+
+    <template id="todo-list-page">
+      <h1>Todo List</h1>
+      <todo-list></todo-list>
     </template>
 
     <!-- END OF TEMPLATES -->
