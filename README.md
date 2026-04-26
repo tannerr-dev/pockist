@@ -27,7 +27,7 @@ but I am using this as a learning experience and because its fun.
 
 
 ## Deploy notes
-
+C
 ### Local: Build and package
 docker build -t pockist:latest .
 docker save pockist:latest | gzip > pockist.tar.gz
@@ -65,3 +65,13 @@ or
 ```
 
 ---
+
+## Cache control
+
+- everything 30 seconds on client
+- weather api 20 min on server
+- geolocation like 7 days?
+
+
+
+
