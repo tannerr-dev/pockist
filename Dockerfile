@@ -28,9 +28,7 @@ WORKDIR /app
 COPY --from=builder /app/pockist .
 
 # Copy static assets
-COPY --from=builder /app/templates ./templates
 COPY --from=builder /app/public ./public
-COPY --from=builder /app/data ./data
 
 # Create a directory for the SQLite database
 RUN mkdir -p /app/data
