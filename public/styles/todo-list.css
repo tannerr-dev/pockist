@@ -134,9 +134,22 @@
 	font-size: 1.1rem;
 	color: var(--text);
 	margin: 0;
-	display: flex;
+	display: inline-flex;
 	align-items: center;
 	gap: 0.5rem;
+	cursor: text;
+	padding: 0.25rem 0.5rem;
+	border-radius: 4px;
+	transition: background-color 0.2s;
+}
+
+.todo-list-header h3:hover {
+	background-color: hsl(0 0% 50% / 0.1);
+}
+
+.todo-list-header h3:focus {
+	background-color: hsl(0 0% 50% / 0.15);
+	outline: none;
 }
 
 .default-badge {

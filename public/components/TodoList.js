@@ -236,6 +236,17 @@ export class TodoList extends HTMLElement {
 		this.#render();
 	}
 
+	#editListName(listId, newName) {
+		const list = this.#lists.find((l) => l.id === listId);
+		if (!list || !newName) return;
+
+		if (newName.trim() && newName.trim() !== list.name) {
+			list.name = newName.trim();
+			this.#saveToDB();
+			this.#render();
+		}
+	}
+
 	#render() {
 		if (this.#mode === "single") {
 			this.#renderSingleMode();
@@ -309,7 +320,7 @@ export class TodoList extends HTMLElement {
 				const isDefault = list.isDefault;
 				listSection.innerHTML = `
 					<div class="todo-list-header">
-						<h3>${this.#escapeHtml(list.name)} ${isDefault ? '<span class="default-badge">default</span>' : ""}</h3>
+						<h3 class="list-title" contenteditable="true" data-list-id="${list.id}">${this.#escapeHtml(list.name)}</h3> ${isDefault ? '<span class="default-badge">default</span>' : ""}
 						<div class="todo-list-actions">
 							${!isDefault ? `<button class="button-link set-default-btn" data-list-id="${list.id}">Set as default</button>` : ""}
 							<button class="button-link delete-list-btn" data-list-id="${list.id}">Delete</button>
@@ -391,6 +402,23 @@ export class TodoList extends HTMLElement {
 						this.#deleteList(list.id);
 					}
 				});
+
+				// Edit list title
+				const titleEl = listSection.querySelector(
+					`.list-title[data-list-id="${list.id}"]`
+				);
+				if (titleEl) {
+					titleEl.addEventListener("blur", () => {
+						this.#editListName(list.id, titleEl.textContent.trim());
+					});
+
+					titleEl.addEventListener("keydown", (e) => {
+						if (e.key === "Enter") {
+							e.preventDefault();
+							titleEl.blur();
+						}
+					});
+				}
 			});
 		}
 	}
