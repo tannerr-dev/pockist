@@ -116,52 +116,86 @@ nav {
 #drawer {
 	position: fixed;
 	z-index: 1;
-	height: 100%;
-	width: 0;
-	top: 0;
+	top: var(--height);
 	right: 0;
-	/* width: 250px; */
-	/* height: 0; */
-	/* bottom: 0; */
-	/* left: 0; */
-	/* background-color: #111111db;  */
-	background-color: var(--bg-op);
-	overflow-x: hidden;
-	/* padding-top: 18svh; */
-	/* transition: 0.2s; */
-	opacity: 0;
-}
-.change #drawer {
-	width: 250px;
-	/* height: 250px; */
-}
-.butt {
-	width: 80%;
+	width: 200px;
+	background-color: var(--bg);
+	border-bottom-left-radius: 12px;
+	box-shadow: -4px 4px 12px rgba(0, 0, 0, 0.3);
 	display: flex;
+	flex-direction: column;
+	padding: 16px;
+	gap: 10px;
+}
+#drawer.hide {
+	display: none;
+}
+.drawer-optionals {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
 	justify-content: center;
-	margin: 20px 0px 20px 0px;
+	gap: 12px;
+	padding-bottom: 10px;
+	border-bottom: 1px solid var(--accent-2);
+	margin-bottom: 6px;
+}
+.drawer-optionals input {
+	--br: 4px;
+	--h: 24px;
+	--w: 16px;
+	width: 80px;
+	height: 8px;
+	background-color: var(--accent-2);
+	border-radius: var(--br);
+	-webkit-appearance: none;
+	appearance: none;
+}
+.drawer-optionals input::-webkit-slider-thumb {
+	-webkit-appearance: none;
+	appearance: none;
+	width: var(--w);
+	height: var(--h);
+	background-color: var(--color);
+	cursor: pointer;
+	border-radius: 4px;
+}
+.drawer-optionals input::-moz-range-thumb {
+	width: var(--w);
+	height: var(--h);
+	background-color: var(--color);
+	cursor: pointer;
+	border-radius: 4px;
+}
+.drawer-optionals #theme-switch {
+	--d: 32px;
+	height: var(--d);
+	width: var(--d);
+	fill: none;
+	stroke: var(--accent);
 }
 .drawer-btn {
-	padding: 20px;
-	/* color: antiquewhite; */
+	padding: 16px 24px;
 	color: var(--text);
-	font-size: 20px;
+	font-size: 18px;
 	font-family: monospace;
 	background-color: var(--nav-btn);
 	text-decoration: none;
-	width: 100%;
 	text-align: center;
-	border-radius: 6px;
+	border-radius: 8px;
 	cursor: pointer;
+	transition: transform 0.1s;
 }
 .drawer-btn:hover {
 	color: var(--text);
 	background-color: var(--nav-btn-hv);
-	box-shadow: 0px 0px 5px 1px var(--nav-btn-hv);
+	box-shadow: 0px 0px 8px 1px var(--nav-btn-hv);
+	transform: scale(1.02);
 }
 .drawer-btn:active {
-	color: var(nav-btn-act);
-	background-color: var(nav-btn-act-bg);
+	color: var(--nav-btn-act);
+	background-color: var(--nav-btn-act-bg);
+	transform: scale(0.98);
 }
 
 nav #optionals.hide,

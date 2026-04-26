@@ -1,22 +1,24 @@
 const root = document.querySelector(":root");
 const options = document.querySelector("#optionals");
+const drawer = document.querySelector("#drawer");
 let menu = document.querySelector(".menu");
-if (menu) {
-	menu.addEventListener("click", () => {
-		menu.classList.toggle("change");
-        options.classList.toggle("hide");
-		// console.log("todo: add drawer lol");
-		// if (drawer.style.width == "100%") {
-		//   drawer.style.width = "0px";
-		//   drawer.style.opacity = "0";
-		// } else {
-		//   drawer.style.width = "100%";
-		//   drawer.style.opacity = "1";
-		// }
-	});
+
+function toggleDrawer() {
+	menu.classList.toggle("change");
+	drawer.classList.toggle("hide");
 }
 
-// let drawer = document.querySelector("#drawer");
+if (menu) {
+	menu.addEventListener("click", toggleDrawer);
+}
+
+// Close drawer and navigate when clicking nav links
+const navLinks = document.querySelectorAll("[data-nav-link]");
+navLinks.forEach(link => {
+	link.addEventListener("click", () => {
+		toggleDrawer();
+	});
+});
 
 function hueCheck(hue){
     root.style.setProperty("--hue", hue);
@@ -110,33 +112,4 @@ if (themeSwitch) {
 		switchTheme();
 		detectColorScheme();
 	});
-}
-
-window
-	.matchMedia("(prefers-color-scheme: light)")
-	.addEventListener("change", (event) => {
-		if (!window.matchMedia) {
-			//matchMedia method not supported
-			return false;
-		} else if (window.matchMedia("(prefers-color-scheme: light)").matches) {
-			localStorage.setItem("theme", "light");
-			document.documentElement.setAttribute("data-theme", "light");
-		} else {
-			localStorage.setItem("theme", "dark");
-			document.documentElement.setAttribute("data-theme", "dark");
-		}
-		detectColorScheme();
-	});
-
-function switchTheme() {
-	if (!localStorage.getItem("theme")) {
-		localStorage.setItem("theme", "dark");
-	}
-	if (localStorage.getItem("theme") == "light") {
-		localStorage.setItem("theme", "dark");
-		document.documentElement.setAttribute("data-theme", "dark");
-	} else {
-		localStorage.setItem("theme", "light");
-		document.documentElement.setAttribute("data-theme", "light");
-	}
 }

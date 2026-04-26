@@ -89,38 +89,6 @@
         </a>
       </div>
       <div id="options" class="flex-row">
-          <div id="optionals" class="hide flex-row">
-        <div class="slidecontainer">
-          <input
-            class="slider"
-            id="color-slider"
-            type="range"
-            min="0"
-            max="360"
-            value="0"
-          >
-        </div>
-        <svg
-          id="theme-switch"
-          class="theme-switch"
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 24 24"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          class="lucide lucide-sun-moon"
-        >
-          <path d="M12 8a2.83 2.83 0 0 0 4 4 4 4 0 1 1-4-4"></path>
-          <path d="M12 2v2"></path>
-          <path d="M12 20v2"></path>
-          <path d="m4.9 4.9 1.4 1.4"></path>
-          <path d="m17.7 17.7 1.4 1.4"></path>
-          <path d="M2 12h2"></path>
-          <path d="M20 12h2"></path>
-          <path d="m6.3 17.7-1.4 1.4"></path>
-          <path d="m19.1 4.9-1.4 1.4"></path>
-        </svg>
-        </div>
         <div class="menu-wrapper">
           <div class="menu">
             <div class="bar1"></div>
@@ -128,6 +96,44 @@
             <div class="bar3"></div>
           </div>
         </div>
+      </div>
+      <div id="drawer" class="hide">
+        <div id="optionals" class="flex-row drawer-optionals">
+          <div class="slidecontainer">
+            <input
+              class="slider"
+              id="color-slider"
+              type="range"
+              min="0"
+              max="360"
+              value="0"
+            >
+          </div>
+          <svg
+            id="theme-switch"
+            class="theme-switch"
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            class="lucide lucide-sun-moon"
+          >
+            <path d="M12 8a2.83 2.83 0 0 0 4 4 4 4 0 1 1-4-4"></path>
+            <path d="M12 2v2"></path>
+            <path d="M12 20v2"></path>
+            <path d="m4.9 4.9 1.4 1.4"></path>
+            <path d="m17.7 17.7 1.4 1.4"></path>
+            <path d="M2 12h2"></path>
+            <path d="M20 12h2"></path>
+            <path d="m6.3 17.7-1.4 1.4"></path>
+            <path d="m19.1 4.9-1.4 1.4"></path>
+          </svg>
+        </div>
+        <a href="/" class="drawer-btn" data-nav-link>Home</a>
+        <a href="/note" class="drawer-btn" data-nav-link>Notes</a>
+        <a href="/weather" class="drawer-btn" data-nav-link>Weather</a>
+        <a href="/list" class="drawer-btn" data-nav-link>List</a>
       </div>
     </nav>
 
