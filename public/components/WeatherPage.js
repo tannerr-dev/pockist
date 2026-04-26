@@ -17,11 +17,11 @@ export class WeatherPage extends HTMLElement {
     connectedCallback() {
         // Add the weather class to this component for CSS styling
         this.classList.add('weather');
-        
+
         const template = document.getElementById("weather-page");
         const content = template.content.cloneNode(true);
         this.appendChild(content);
-        
+
         // Set up PWA navigation links
         document.querySelectorAll("a.pwa").forEach(a=>{
             a.addEventListener("click", event => {
@@ -62,9 +62,13 @@ export class WeatherPage extends HTMLElement {
     }
 
     async loadInitialData() {
-        const saved = await weatherService.loadSavedCityWeather();
-        if (saved) {
-            this.updateCityName();
+        try {
+            const saved = await weatherService.loadSavedCityWeather();
+            if (saved) {
+                this.updateCityName();
+            }
+        } catch (error) {
+            console.error('Failed to load initial weather data:', error);
         }
     }
 

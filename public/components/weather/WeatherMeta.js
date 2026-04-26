@@ -27,13 +27,13 @@ export class WeatherMeta extends HTMLElement {
         const content = template.content.cloneNode(true);
         this.appendChild(content);
 
-        // Cache element references
-        this._latEl = this.querySelector('.meta-item:nth-child(1) .meta-value');
-        this._lonEl = this.querySelector('.meta-item:nth-child(2) .meta-value');
-        this._timezoneEl = this.querySelector('.meta-item:nth-child(3) .meta-value');
-        this._elevationEl = this.querySelector('.meta-item:nth-child(4) .meta-value');
-        this._utcOffsetEl = this.querySelector('.meta-item:nth-child(5) .meta-value');
-        this._genTimeEl = this.querySelector('.meta-item:nth-child(6) .meta-value');
+        // Cache element references using data attributes (robust against layout changes)
+        this._latEl = this.querySelector('[data-meta="latitude"]');
+        this._lonEl = this.querySelector('[data-meta="longitude"]');
+        this._timezoneEl = this.querySelector('[data-meta="timezone"]');
+        this._elevationEl = this.querySelector('[data-meta="elevation"]');
+        this._utcOffsetEl = this.querySelector('[data-meta="utc-offset"]');
+        this._genTimeEl = this.querySelector('[data-meta="gen-time"]');
 
         // Subscribe to weather service updates
         this.unsubscribe = weatherService.subscribe((update) => {

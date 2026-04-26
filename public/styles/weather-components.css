@@ -15,6 +15,12 @@ weather-current {
     color: var(--text-muted);
 }
 
+.error-message {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--error);
+}
+
 .weather-data-content {
     display: flex;
     flex-direction: column;

@@ -192,6 +192,9 @@
             <div class="no-data-message">
                 <span>Click to set up weather</span>
             </div>
+            <div class="error-message" style="display: none;">
+                <span>Unable to load weather data</span>
+            </div>
             <div class="weather-data-content" style="display: none;">
                 <div class="city-name skeleton-text">--</div>
                 <div class="current">
@@ -223,27 +226,27 @@
             <div class="meta-grid">
                 <div class="meta-item">
                     <div class="meta-label">Latitude</div>
-                    <div class="meta-value skeleton-text">--</div>
+                    <div class="meta-value skeleton-text" data-meta="latitude">--</div>
                 </div>
                 <div class="meta-item">
                     <div class="meta-label">Longitude</div>
-                    <div class="meta-value skeleton-text">--</div>
+                    <div class="meta-value skeleton-text" data-meta="longitude">--</div>
                 </div>
                 <div class="meta-item">
                     <div class="meta-label">Timezone</div>
-                    <div class="meta-value skeleton-text">--</div>
+                    <div class="meta-value skeleton-text" data-meta="timezone">--</div>
                 </div>
                 <div class="meta-item">
                     <div class="meta-label">Elevation</div>
-                    <div class="meta-value skeleton-text">--</div>
+                    <div class="meta-value skeleton-text" data-meta="elevation">--</div>
                 </div>
                 <div class="meta-item">
                     <div class="meta-label">UTC Offset</div>
-                    <div class="meta-value skeleton-text">--</div>
+                    <div class="meta-value skeleton-text" data-meta="utc-offset">--</div>
                 </div>
                 <div class="meta-item">
                     <div class="meta-label">Gen Time</div>
-                    <div class="meta-value skeleton-text">--</div>
+                    <div class="meta-value skeleton-text" data-meta="gen-time">--</div>
                 </div>
             </div>
         </div>
