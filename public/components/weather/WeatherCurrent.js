@@ -13,6 +13,7 @@ export class WeatherCurrent extends HTMLElement {
         // Cached element references
         this._noDataEl = null;
         this._contentEl = null;
+        this._errorEl = null;
         this._cityEl = null;
         this._tempEl = null;
         this._conditionEl = null;
@@ -58,6 +59,7 @@ export class WeatherCurrent extends HTMLElement {
         // Cache element references
         this._noDataEl = this.querySelector('.no-data-message');
         this._contentEl = this.querySelector('.weather-data-content');
+        this._errorEl = this.querySelector('.error-message');
         this._cityEl = this.querySelector('.city-name');
         this._tempEl = this.querySelector('.current-temp');
         this._conditionEl = this.querySelector('.current-condition');
@@ -72,7 +74,10 @@ export class WeatherCurrent extends HTMLElement {
         this.unsubscribe = weatherService.subscribe((update) => {
             if (update.type === 'weather-updated') {
                 this._weatherData = update.data;
+                this._clearError();
                 this._updateView();
+            } else if (update.type === 'weather-error') {
+                this._showError();
             } else if (update.type === 'unit-changed') {
                 this._updateView();
             }
@@ -116,6 +121,25 @@ export class WeatherCurrent extends HTMLElement {
             await weatherService.loadSavedCityWeather();
         } catch (error) {
             console.log('No saved weather data or failed to load');
+            this._showError();
+        }
+    }
+
+    _showError() {
+        if (this._noDataEl) {
+            this._noDataEl.style.display = 'none';
+        }
+        if (this._contentEl) {
+            this._contentEl.style.display = 'none';
+        }
+        if (this._errorEl) {
+            this._errorEl.style.display = '';
+        }
+    }
+
+    _clearError() {
+        if (this._errorEl) {
+            this._errorEl.style.display = 'none';
         }
     }
 
