@@ -1,6 +1,7 @@
 import { HomePage } from "../components/HomePage.js";
 import { LocalNotes } from "../components/LocalNotes.js";
 import { WeatherPage } from "../components/WeatherPage.js";
+import { TodoListPage } from "../components/TodoListPage.js";
 // import { MovieDetailsPage } from "../components/MovieDetailsPage.js";
 // import { MoviesPage } from "../components/MoviesPage.js";
 // import { RegisterPage } from "../components/RegisterPage.js";
@@ -21,6 +22,10 @@ export const routes = [
   {
     path: "/weather",
     component: WeatherPage,
+  },
+  {
+    path: "/list",
+    component: TodoListPage,
   },
   // {
   //   path: /\/movies\/(\d+)/,

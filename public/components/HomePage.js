@@ -1,6 +1,7 @@
 import { API } from "../services/API.js";
 import { Router } from "../services/Router.js";
 import './weather/WeatherCurrent.js';
+import './TodoList.js';
 
 export class HomePage extends HTMLElement {  // <home-page>
     connectedCallback() {

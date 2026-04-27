@@ -12,6 +12,7 @@
     <link href="/styles/nav.css" rel="stylesheet">
     <link href="/styles/local-notes.css" rel="stylesheet">
     <link href="/styles/weather-components.css" rel="stylesheet">
+    <link href="/styles/todo-list.css" rel="stylesheet">
 
 
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -144,6 +145,7 @@
       <div class="widgets-section">
         <weather-current clickable="true" show-city="true"></weather-current>
       </div>
+      <todo-list></todo-list>
       <div class="notes-widget-section">
         <a href="/note" class="notes-header-link" data-nav-link>
           <h2>Notes</h2>
@@ -315,6 +317,35 @@
         </div>
         <div id="error" class="error-message"></div>
         <div id="loading" class="loading-message"></div>
+    </template>
+
+    <template id="todo-list">
+      <div class="todo-list-container">
+        <div class="todo-list-selector-row">
+          <h2><a href="/list" class="todo-heading-link">Todos</a></h2>
+          <select id="list-selector" class="list-selector">
+            <option>Loading...</option>
+          </select>
+        </div>
+        <div class="todo-input-row">
+          <input type="text" id="todo-input" placeholder="Add a new task..." autocomplete="off">
+          <button id="add-btn">Add</button>
+        </div>
+        <div id="new-list-row" class="todo-input-row new-list-row" style="display: none;">
+          <input type="text" id="new-list-input" placeholder="New list name..." autocomplete="off">
+          <button id="new-list-btn">Create</button>
+        </div>
+        <div id="lists-container"></div>
+        <div class="todo-footer" id="single-list-footer">
+          <span id="items-left">0 items left</span>
+          <button id="clear-completed" class="button-link">Clear completed</button>
+        </div>
+      </div>
+    </template>
+
+    <template id="todo-list-page">
+      <h1>Todo List</h1>
+      <todo-list mode="all"></todo-list>
     </template>
 
     <!-- END OF TEMPLATES -->
