@@ -162,8 +162,8 @@
 
 #delete-btn {
     background-color: transparent;
-    color: #dc2626;
-    border: 1px solid #dc2626;
+    color: var(--error);
+    border: 1px solid var(--error);
     padding: 0.4rem 0.8rem;
     border-radius: 6px;
     cursor: pointer;
@@ -172,7 +172,7 @@
 }
 
 #delete-btn:hover {
-    background-color: #dc2626;
+    background-color: var(--error);
     color: white;
 }
 
@@ -243,20 +243,16 @@
     }
 }
 
-/** Legacy single note textarea (kept for backward compatibility if needed) */
-#note {
-    height: 600px;
-    width: 100%;
-    max-width: 500px;
-    box-sizing: border-box;
-    border: none;
-    border-radius: 8px;
-    outline: none;
-    padding: 1rem;
-    background-color: var(--bg-2);
-    color: var(--text);
-    font-size: 1.1rem;
-    scrollbar-color: hsl(0 0% 100% /0.2) hsl(0 0% 0% /0);
-    scrollbar-gutter: stable both-edges;
-    resize: none;
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    .note-item,
+    #new-note-btn,
+    #create-first-note-btn,
+    #back-btn,
+    #delete-btn {
+        transition: none;
+    }
+    .note-item:hover {
+        transform: none;
+    }
 }

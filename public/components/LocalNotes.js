@@ -285,6 +285,13 @@ export class LocalNotes extends HTMLElement {
 			notesListEl.style.display = 'block';
 		}
 
+		// Update notes count
+		const notesCountEl = this.listContainer.querySelector('.notes-count');
+		if (notesCountEl) {
+			const count = this.notes.length;
+			notesCountEl.textContent = `${count} note${count !== 1 ? 's' : ''}`;
+		}
+
 		// Render each note (normalize to ensure clean data)
 		this.notes.forEach(note => {
 			const normalizedNote = this.#normalizeNote(note);
