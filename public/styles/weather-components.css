@@ -303,28 +303,28 @@ weather-controls .error-message:not(:empty) {
 
 /* Responsive */
 @media (max-width: 600px) {
-    .current {
-        grid-template-columns: 1fr;
+    .weather-page-content {
+        padding: 12px 0;
     }
-    
+
     .meta-grid {
         grid-template-columns: repeat(2, 1fr);
     }
-    
+
     .current-temp {
         font-size: 36px;
     }
-    
+
     #map {
         height: 180px;
     }
-    
+
     .weather-current-inner,
     .weather-meta-inner,
     .weather-map-inner {
         padding: 16px;
     }
-    
+
     .no-data-message {
         padding: 30px 16px;
     }
