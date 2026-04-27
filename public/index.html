@@ -144,7 +144,12 @@
       <div class="widgets-section">
         <weather-current clickable="true" show-city="true"></weather-current>
       </div>
-      <local-notes></local-notes>
+      <div class="notes-widget-section">
+        <a href="/note" class="notes-header-link" data-nav-link>
+          <h2>Notes</h2>
+        </a>
+        <local-notes></local-notes>
+      </div>
 
       <!-- <div class="flex-col"> -->
       <!--   <a class="pwa" href="/note"><button class="button">offline note</button></a> -->
@@ -165,8 +170,44 @@
     </template>
 
     <template id="local-note">
-      <h1>Offline Note</h1>
-      <textarea id="note"></textarea>
+      <!-- List View -->
+      <div id="notes-list">
+        <h1>My Notes</h1>
+        <div class="notes-header">
+          <span class="notes-count"></span>
+          <button id="new-note-btn" type="button">+ New Note</button>
+        </div>
+        
+        <div id="empty-state" style="display: none;">
+          <p>No notes yet.</p>
+          <button id="create-first-note-btn" type="button">Create your first note</button>
+        </div>
+        
+        <div id="notes-items"></div>
+      </div>
+      
+      <!-- Editor View -->
+      <div id="note-editor" style="display: none;">
+        <div class="editor-header">
+          <button id="back-btn" type="button">&larr; Back to list</button>
+          <div class="editor-actions">
+            <span id="save-indicator"></span>
+            <button id="delete-btn" type="button">Delete</button>
+          </div>
+        </div>
+        
+        <input 
+          type="text" 
+          id="note-title" 
+          placeholder="Title" 
+          autocomplete="off"
+        >
+        
+        <textarea 
+          id="note-content" 
+          placeholder="Start typing your note..."
+        ></textarea>
+      </div>
     </template>
 
     <template id="offline-list">

@@ -28,12 +28,12 @@
 const DB_CONFIG = {
     // The shared database name used by all Pockist mini-apps
     NAME: 'pockist-db',
-    
-    // Current database version. Incremented to 2 to ensure onupgradeneeded fires
-    // for users who have a database without the notes store (migration bug fix).
+
+    // Current database version. Incremented to 3 to trigger migration of old-format notes
+    // (notes with numeric IDs) to new multi-note format with string IDs.
     // Increment this when adding new object stores or changing structures.
-    VERSION: 2,
-    
+    VERSION: 3,
+
     // Object store names - each mini-app should have its own store
     STORES: {
         NOTES: 'notes',
@@ -111,9 +111,9 @@ export class DBManager {
     /**
      * Save a note to the database.
      * If a note with the same ID exists, it will be overwritten.
-     * 
-     * @param {number} id - The note ID
-     * @param {string} content - The note content text
+     *
+     * @param {number|string} id - The note ID
+     * @param {string|Object} content - The note content text OR a full note object
      * @returns {Promise<void>}
      */
     static async saveNote(id, content) {
@@ -127,13 +127,23 @@ export class DBManager {
 
             const transaction = this.#db.transaction([DB_CONFIG.STORES.NOTES], 'readwrite');
             const store = transaction.objectStore(DB_CONFIG.STORES.NOTES);
-            
-            const note = {
-                id: id,
-                content: content,
-                updatedAt: new Date().toISOString()
-            };
-            
+
+            let note;
+            if (typeof content === 'object' && content !== null && content.id) {
+                // Full note object passed - use it directly, just update updatedAt
+                note = {
+                    ...content,
+                    updatedAt: new Date().toISOString()
+                };
+            } else {
+                // Legacy string content - wrap it (or content is null/undefined)
+                note = {
+                    id: id,
+                    content: String(content || ''),
+                    updatedAt: new Date().toISOString()
+                };
+            }
+
             const request = store.put(note);
 
             request.onsuccess = () => {
@@ -388,5 +398,248 @@ export class DBManager {
     }
     // ============================================================================
     // END OF TEMPORARY MIGRATION CODE
+    // ============================================================================
+
+    // ============================================================================
+    // MULTI-NOTE MIGRATION (v2 to v3)
+    // Migrates old-format notes (numeric ID, no title) to new multi-note format
+    // ============================================================================
+
+    /**
+     * Migrate notes from old single-note format to new multi-note format.
+     * Old format: { id: 1, content: "...", updatedAt: "..." }
+     * New format: { id: "timestamp-slug", title: "...", content: "...", createdAt: "...", updatedAt: "..." }
+     * @returns {Promise<boolean>} true if migration was performed
+     */
+    static async migrateToMultiNoteFormat() {
+        // Check if migration was already completed - but re-run if DB version changed
+        const currentVersion = DB_CONFIG.VERSION.toString();
+        const lastMigratedVersion = localStorage.getItem('multiNoteMigrationVersion');
+
+        if (localStorage.getItem('multiNoteMigrationComplete') === 'true' && lastMigratedVersion === currentVersion) {
+            return false;
+        }
+
+        try {
+            await this.init();
+
+            if (!this.#db.objectStoreNames.contains(DB_CONFIG.STORES.NOTES)) {
+                localStorage.setItem('multiNoteMigrationComplete', 'true');
+                localStorage.setItem('multiNoteMigrationVersion', currentVersion);
+                return false;
+            }
+
+            // Get all notes
+            const allNotes = await this.getAllNotes();
+
+            // Find notes with numeric IDs (old format) OR notes with invalid string content
+            const oldFormatNotes = allNotes.filter(note => {
+                // Numeric ID is old format
+                if (typeof note.id === 'number') return true;
+                // Also check if content is not a string (corrupted data)
+                if (note.content && typeof note.content !== 'string') return true;
+                return false;
+            });
+
+            if (oldFormatNotes.length === 0) {
+                // No old-format notes to migrate
+                localStorage.setItem('multiNoteMigrationComplete', 'true');
+                localStorage.setItem('multiNoteMigrationVersion', currentVersion);
+                return false;
+            }
+
+            console.log(`Migrating ${oldFormatNotes.length} old-format note(s) to multi-note format...`);
+
+            // Migrate each old-format note
+            for (const oldNote of oldFormatNotes) {
+                await this.#migrateSingleNote(oldNote);
+            }
+
+            console.log('Multi-note migration completed successfully');
+            localStorage.setItem('multiNoteMigrationComplete', 'true');
+            localStorage.setItem('multiNoteMigrationVersion', currentVersion);
+            return true;
+
+        } catch (error) {
+            console.error('Multi-note migration failed:', error);
+            return false;
+        }
+    }
+
+    /**
+     * Migrate a single old-format note to new format
+     * @private
+     * @param {Object} oldNote - The old-format note
+     */
+    static async #migrateSingleNote(oldNote) {
+        // Handle case where content might be stored as an object instead of string
+        let content = oldNote.content || '';
+        if (typeof content === 'object' && content !== null) {
+            // If content is an object, it might be a nested note - extract the actual content
+            content = content.content || '';
+        }
+        content = String(content);
+
+        const timestamp = oldNote.updatedAt || oldNote.createdAt || new Date().toISOString();
+
+        // Generate new ID
+        const newId = this.#generateNoteId(content, timestamp);
+
+        // Extract title from first 20 chars of content
+        const title = this.#extractTitle(content);
+
+        // Create new-format note
+        const newNote = {
+            id: newId,
+            title: title,
+            content: content,
+            createdAt: timestamp,
+            updatedAt: timestamp
+        };
+
+        // Save new note using raw IndexedDB put to avoid saveNote's wrapping
+        await this.#rawSaveNote(newNote);
+
+        // Delete old note
+        await this.deleteNote(oldNote.id);
+
+        console.log(`Migrated note ${oldNote.id} -> ${newId}`);
+    }
+
+    /**
+     * Raw save - saves note object directly without wrapping
+     * @private
+     * @param {Object} note - The complete note object to save
+     */
+    static async #rawSaveNote(note) {
+        await this.init();
+
+        return new Promise((resolve, reject) => {
+            if (!this.#db.objectStoreNames.contains(DB_CONFIG.STORES.NOTES)) {
+                reject(new Error('Notes object store not found'));
+                return;
+            }
+
+            const transaction = this.#db.transaction([DB_CONFIG.STORES.NOTES], 'readwrite');
+            const store = transaction.objectStore(DB_CONFIG.STORES.NOTES);
+
+            const request = store.put(note);
+
+            request.onsuccess = () => {
+                resolve();
+            };
+
+            request.onerror = () => {
+                reject(request.error);
+            };
+        });
+    }
+
+    /**
+     * Generate a note ID from timestamp and content
+     * @private
+     * @param {string} content - Note content
+     * @param {string} timestamp - ISO timestamp string
+     * @returns {string} The generated ID
+     */
+    static #generateNoteId(content, timestamp) {
+        const date = new Date(timestamp);
+        const dateStr = date.getFullYear().toString() +
+            String(date.getMonth() + 1).padStart(2, '0') +
+            String(date.getDate()).padStart(2, '0') +
+            String(date.getHours()).padStart(2, '0') +
+            String(date.getMinutes()).padStart(2, '0') +
+            String(date.getSeconds()).padStart(2, '0');
+
+        const text = content || 'untitled';
+        const slug = text
+            .slice(0, 20)
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/^-+|-+$/g, '');
+
+        return `${dateStr}-${slug || 'note'}`;
+    }
+
+    /**
+     * Extract title from content (first 20 chars)
+     * @private
+     * @param {string} content - Note content
+     * @returns {string} The extracted title
+     */
+    static #extractTitle(content) {
+        if (!content) return 'Untitled';
+        const firstLine = content.split('\n')[0].trim();
+        return firstLine.slice(0, 20) || 'Untitled';
+    }
+    // ============================================================================
+    // END OF MULTI-NOTE MIGRATION
+    // ============================================================================
+
+    // ============================================================================
+    // DATA REPAIR MIGRATION
+    // Fixes notes corrupted by the saveNote() bug where content was double-wrapped
+    // ============================================================================
+
+    /**
+     * Repair corrupted notes where content is stored as an object instead of string.
+     * This happened when saveNote() was called with a full note object but wrapped it again.
+     * @returns {Promise<boolean>} true if any notes were repaired
+     */
+    static async repairCorruptedNotes() {
+        // Only run repair once per session
+        if (localStorage.getItem('notesRepairComplete') === 'true') {
+            return false;
+        }
+
+        try {
+            await this.init();
+
+            if (!this.#db.objectStoreNames.contains(DB_CONFIG.STORES.NOTES)) {
+                localStorage.setItem('notesRepairComplete', 'true');
+                return false;
+            }
+
+            const allNotes = await this.getAllNotes();
+            let fixedCount = 0;
+
+            for (const note of allNotes) {
+                // Check if content is an object (corrupted by double-wrapping)
+                if (note.content && typeof note.content === 'object') {
+                    const fixedNote = {
+                        id: note.id,
+                        title: note.content.title || note.title || 'Untitled',
+                        content: note.content.content || '',
+                        createdAt: note.content.createdAt || note.createdAt || new Date().toISOString(),
+                        updatedAt: new Date().toISOString()
+                    };
+                    await this.#rawSaveNote(fixedNote);
+                    fixedCount++;
+                }
+            }
+
+            if (fixedCount > 0) {
+                console.log(`Repaired ${fixedCount} corrupted note(s)`);
+            }
+
+            localStorage.setItem('notesRepairComplete', 'true');
+            return fixedCount > 0;
+
+        } catch (error) {
+            console.error('Notes repair failed:', error);
+            return false;
+        }
+    }
+
+    /**
+     * Force repair of corrupted notes (for debugging/testing)
+     * Clears the repair flag and runs repair again
+     */
+    static async forceRepairCorruptedNotes() {
+        localStorage.removeItem('notesRepairComplete');
+        return this.repairCorruptedNotes();
+    }
+    // ============================================================================
+    // END OF DATA REPAIR MIGRATION
     // ============================================================================
 }
