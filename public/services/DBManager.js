@@ -28,12 +28,12 @@
 const DB_CONFIG = {
     // The shared database name used by all Pockist mini-apps
     NAME: 'pockist-db',
-    
-    // Current database version. Incremented to 2 to ensure onupgradeneeded fires
-    // for users who have a database without the notes store (migration bug fix).
+
+    // Current database version. Incremented to 3 to trigger migration of old-format notes
+    // (notes with numeric IDs) to new multi-note format with string IDs.
     // Increment this when adding new object stores or changing structures.
-    VERSION: 2,
-    
+    VERSION: 3,
+
     // Object store names - each mini-app should have its own store
     STORES: {
         NOTES: 'notes',
@@ -388,5 +388,133 @@ export class DBManager {
     }
     // ============================================================================
     // END OF TEMPORARY MIGRATION CODE
+    // ============================================================================
+
+    // ============================================================================
+    // MULTI-NOTE MIGRATION (v2 to v3)
+    // Migrates old-format notes (numeric ID, no title) to new multi-note format
+    // ============================================================================
+
+    /**
+     * Migrate notes from old single-note format to new multi-note format.
+     * Old format: { id: 1, content: "...", updatedAt: "..." }
+     * New format: { id: "timestamp-slug", title: "...", content: "...", createdAt: "...", updatedAt: "..." }
+     * @returns {Promise<boolean>} true if migration was performed
+     */
+    static async migrateToMultiNoteFormat() {
+        // Check if migration was already completed
+        if (localStorage.getItem('multiNoteMigrationComplete') === 'true') {
+            return false;
+        }
+
+        try {
+            await this.init();
+
+            if (!this.#db.objectStoreNames.contains(DB_CONFIG.STORES.NOTES)) {
+                localStorage.setItem('multiNoteMigrationComplete', 'true');
+                return false;
+            }
+
+            // Get all notes
+            const allNotes = await this.getAllNotes();
+
+            // Find notes with numeric IDs (old format)
+            const oldFormatNotes = allNotes.filter(note => typeof note.id === 'number');
+
+            if (oldFormatNotes.length === 0) {
+                // No old-format notes to migrate
+                localStorage.setItem('multiNoteMigrationComplete', 'true');
+                return false;
+            }
+
+            console.log(`Migrating ${oldFormatNotes.length} old-format note(s) to multi-note format...`);
+
+            // Migrate each old-format note
+            for (const oldNote of oldFormatNotes) {
+                await this.#migrateSingleNote(oldNote);
+            }
+
+            console.log('Multi-note migration completed successfully');
+            localStorage.setItem('multiNoteMigrationComplete', 'true');
+            return true;
+
+        } catch (error) {
+            console.error('Multi-note migration failed:', error);
+            return false;
+        }
+    }
+
+    /**
+     * Migrate a single old-format note to new format
+     * @private
+     * @param {Object} oldNote - The old-format note
+     */
+    static async #migrateSingleNote(oldNote) {
+        const content = oldNote.content || '';
+        const timestamp = oldNote.updatedAt || oldNote.createdAt || new Date().toISOString();
+
+        // Generate new ID
+        const newId = this.#generateNoteId(content, timestamp);
+
+        // Extract title from first 20 chars of content
+        const title = this.#extractTitle(content);
+
+        // Create new-format note
+        const newNote = {
+            id: newId,
+            title: title,
+            content: content,
+            createdAt: timestamp,
+            updatedAt: timestamp
+        };
+
+        // Save new note
+        await this.saveNote(newId, newNote);
+
+        // Delete old note
+        await this.deleteNote(oldNote.id);
+
+        console.log(`Migrated note ${oldNote.id} -> ${newId}`);
+    }
+
+    /**
+     * Generate a note ID from timestamp and content
+     * @private
+     * @param {string} content - Note content
+     * @param {string} timestamp - ISO timestamp string
+     * @returns {string} The generated ID
+     */
+    static #generateNoteId(content, timestamp) {
+        const date = new Date(timestamp);
+        const dateStr = date.getFullYear().toString() +
+            String(date.getMonth() + 1).padStart(2, '0') +
+            String(date.getDate()).padStart(2, '0') +
+            String(date.getHours()).padStart(2, '0') +
+            String(date.getMinutes()).padStart(2, '0') +
+            String(date.getSeconds()).padStart(2, '0');
+
+        const text = content || 'untitled';
+        const slug = text
+            .slice(0, 20)
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/^-+|-+$/g, '');
+
+        return `${dateStr}-${slug || 'note'}`;
+    }
+
+    /**
+     * Extract title from content (first 20 chars)
+     * @private
+     * @param {string} content - Note content
+     * @returns {string} The extracted title
+     */
+    static #extractTitle(content) {
+        if (!content) return 'Untitled';
+        const firstLine = content.split('\n')[0].trim();
+        return firstLine.slice(0, 20) || 'Untitled';
+    }
+    // ============================================================================
+    // END OF MULTI-NOTE MIGRATION
     // ============================================================================
 }

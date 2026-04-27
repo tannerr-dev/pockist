@@ -10,9 +10,11 @@ navigator.serviceWorker.addEventListener("message", (event) => {
 });
 
 window.addEventListener("DOMContentLoaded", async () => {
-    // Run database migration before initializing the router
+    // Run database migrations before initializing the router
+    // Order matters: first migrate from oldest DB, then migrate to multi-note format
     try {
         await DBManager.migrateFromOldDB();
+        await DBManager.migrateToMultiNoteFormat();
     } catch (err) {
         console.error("Migration failed:", err);
     }
