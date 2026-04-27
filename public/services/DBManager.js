@@ -29,15 +29,14 @@ const DB_CONFIG = {
     // The shared database name used by all Pockist mini-apps
     NAME: 'pockist-db',
 
-    // Current database version. Incremented to 3 to trigger migration of old-format notes
-    // (notes with numeric IDs) to new multi-note format with string IDs.
+    // Current database version. Incremented to 4 to add lists object store.
     // Increment this when adding new object stores or changing structures.
-    VERSION: 3,
+    VERSION: 4,
 
     // Object store names - each mini-app should have its own store
     STORES: {
         NOTES: 'notes',
-        // TODOS: 'todos', // Future: uncomment when todo app is ready
+        LISTS: 'lists',
     }
 };
 
@@ -186,7 +185,7 @@ export class DBManager {
 
     /**
      * Delete a note from the database.
-     * 
+     *
      * @param {number} id - The note ID to delete
      * @returns {Promise<void>}
      */
@@ -213,6 +212,207 @@ export class DBManager {
         });
     }
 
+    // ============================================================================
+    // LISTS METHODS
+    // Methods for managing todo lists in the lists object store
+    // ============================================================================
+
+    /**
+     * Get all lists from the database.
+     *
+     * @returns {Promise<Array>} Array of list objects
+     */
+    static async getLists() {
+        await this.init();
+
+        return new Promise((resolve, reject) => {
+            if (!this.#db.objectStoreNames.contains(DB_CONFIG.STORES.LISTS)) {
+                reject(new Error('Lists object store not found'));
+                return;
+            }
+
+            const transaction = this.#db.transaction([DB_CONFIG.STORES.LISTS], 'readonly');
+            const store = transaction.objectStore(DB_CONFIG.STORES.LISTS);
+            const request = store.get('todoLists');
+
+            request.onsuccess = () => {
+                resolve(request.result || []);
+            };
+
+            request.onerror = () => {
+                reject(request.error);
+            };
+        });
+    }
+
+    /**
+     * Save lists to the database.
+     *
+     * @param {Array} lists - Array of list objects to save
+     * @returns {Promise<void>}
+     */
+    static async saveLists(lists) {
+        await this.init();
+
+        return new Promise((resolve, reject) => {
+            if (!this.#db.objectStoreNames.contains(DB_CONFIG.STORES.LISTS)) {
+                reject(new Error('Lists object store not found'));
+                return;
+            }
+
+            const transaction = this.#db.transaction([DB_CONFIG.STORES.LISTS], 'readwrite');
+            const store = transaction.objectStore(DB_CONFIG.STORES.LISTS);
+            const request = store.put(lists, 'todoLists');
+
+            request.onsuccess = () => {
+                resolve();
+            };
+
+            request.onerror = () => {
+                reject(request.error);
+            };
+        });
+    }
+
+    // ============================================================================
+    // TODODB MIGRATION
+    // Migrates data from old 'TodoDB' to 'pockist-db' lists store
+    // ============================================================================
+
+    /**
+     * Configuration for the old TodoDB database
+     */
+    static #TODO_DB_CONFIG = {
+        NAME: 'TodoDB',
+        STORE: 'todos',
+        KEY: 'todoLists'
+    };
+
+    /**
+     * Migrate data from old TodoDB to pockist-db.
+     * Only runs if TodoDB exists and migration hasn't been completed.
+     * Deletes TodoDB after successful migration.
+     *
+     * @returns {Promise<boolean>} true if migration was performed
+     */
+    static async migrateFromTodoDB() {
+        if (localStorage.getItem('todoDBMigrationComplete') === 'true') {
+            return false;
+        }
+
+        try {
+            const oldData = await this.#readFromTodoDB();
+
+            if (!oldData) {
+                localStorage.setItem('todoDBMigrationComplete', 'true');
+                return false;
+            }
+
+            await this.init();
+
+            if (!this.#db.objectStoreNames.contains(DB_CONFIG.STORES.LISTS)) {
+                throw new Error('Lists store not found');
+            }
+
+            // Save the migrated data to the new location
+            await this.saveLists(oldData);
+            console.log('TodoDB data migrated to pockist-db/lists');
+
+            // Delete the old database
+            await this.#deleteTodoDB();
+            console.log('Old TodoDB deleted');
+
+            localStorage.setItem('todoDBMigrationComplete', 'true');
+            return true;
+
+        } catch (error) {
+            console.error('TodoDB migration failed:', error);
+            return false;
+        }
+    }
+
+    /**
+     * Read data from old TodoDB
+     * @private
+     * @returns {Promise<Array|null>} The lists data or null if not found
+     */
+    static #readFromTodoDB() {
+        return new Promise((resolve) => {
+            try {
+                const request = indexedDB.open(this.#TODO_DB_CONFIG.NAME);
+
+                request.onsuccess = (event) => {
+                    const db = event.target.result;
+
+                    try {
+                        if (!db.objectStoreNames.contains(this.#TODO_DB_CONFIG.STORE)) {
+                            db.close();
+                            resolve(null);
+                            return;
+                        }
+
+                        const transaction = db.transaction([this.#TODO_DB_CONFIG.STORE], 'readonly');
+                        const store = transaction.objectStore(this.#TODO_DB_CONFIG.STORE);
+                        const getRequest = store.get(this.#TODO_DB_CONFIG.KEY);
+
+                        getRequest.onsuccess = () => {
+                            db.close();
+                            resolve(getRequest.result || null);
+                        };
+
+                        getRequest.onerror = () => {
+                            db.close();
+                            resolve(null);
+                        };
+                    } catch (error) {
+                        db.close();
+                        resolve(null);
+                    }
+                };
+
+                request.onerror = () => {
+                    resolve(null);
+                };
+
+                request.onupgradeneeded = () => {
+                    // This means the DB didn't exist before, so no migration needed
+                    try {
+                        request.transaction.abort();
+                    } catch (e) {}
+                    resolve(null);
+                };
+            } catch (error) {
+                resolve(null);
+            }
+        });
+    }
+
+    /**
+     * Delete the old TodoDB database
+     * @private
+     * @returns {Promise<void>}
+     */
+    static #deleteTodoDB() {
+        return new Promise((resolve) => {
+            const request = indexedDB.deleteDatabase(this.#TODO_DB_CONFIG.NAME);
+
+            request.onsuccess = () => {
+                resolve();
+            };
+
+            request.onerror = () => {
+                resolve();
+            };
+
+            request.onblocked = () => {
+                resolve();
+            };
+        });
+    }
+    // ============================================================================
+    // END OF TODODB MIGRATION
+    // ============================================================================
+
     /**
      * Private method to open/create the IndexedDB database.
      * @private
@@ -229,6 +429,10 @@ export class DBManager {
                     db.createObjectStore(DB_CONFIG.STORES.NOTES, { 
                         keyPath: 'id' 
                     });
+                }
+
+                if (!db.objectStoreNames.contains(DB_CONFIG.STORES.LISTS)) {
+                    db.createObjectStore(DB_CONFIG.STORES.LISTS);
                 }
             };
 

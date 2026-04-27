@@ -1,12 +1,9 @@
 import { Router } from "../services/Router.js";
+import { DBManager } from "../services/DBManager.js";
 
 export class TodoList extends HTMLElement {
 	#lists = [];
 	#currentListId = null;
-	#db = null;
-	#dbName = "TodoDB";
-	#storeName = "todos";
-	#key = "todoLists";
 	#mode = "single"; // "single" for home page (one list), "all" for /list page
 
 	// DOM element references
@@ -69,7 +66,12 @@ export class TodoList extends HTMLElement {
 
 	async #init() {
 		try {
-			await this.#loadFromDB();
+			// Migrate from old TodoDB if needed
+			await DBManager.migrateFromTodoDB();
+
+			// Load lists from pockist-db
+			this.#lists = await DBManager.getLists();
+
 			// Ensure at least one list exists
 			if (this.#lists.length === 0) {
 				this.#lists.push({
@@ -79,7 +81,7 @@ export class TodoList extends HTMLElement {
 					isDefault: true,
 					createdAt: Date.now(),
 				});
-				await this.#saveToDB();
+				await DBManager.saveLists(this.#lists);
 			}
 			// Set current list to default if not set
 			if (!this.#currentListId) {
@@ -129,7 +131,7 @@ export class TodoList extends HTMLElement {
 		return this.#lists.find((l) => l.id === this.#currentListId);
 	}
 
-	#handleAdd() {
+	async #handleAdd() {
 		const text = this.#inputEl?.value.trim();
 		if (!text) return;
 
@@ -145,53 +147,53 @@ export class TodoList extends HTMLElement {
 
 		list.todos.push(todo);
 		this.#inputEl.value = "";
-		this.#saveToDB();
+		await DBManager.saveLists(this.#lists);
 		this.#render();
 	}
 
-	#toggleTodo(listId, todoId) {
+	async #toggleTodo(listId, todoId) {
 		const list = this.#lists.find((l) => l.id === listId);
 		if (!list) return;
 
 		const todo = list.todos.find((t) => t.id === todoId);
 		if (todo) {
 			todo.completed = !todo.completed;
-			this.#saveToDB();
+			await DBManager.saveLists(this.#lists);
 			this.#render();
 		}
 	}
 
-	#editTodo(listId, todoId, newText) {
+	async #editTodo(listId, todoId, newText) {
 		const list = this.#lists.find((l) => l.id === listId);
 		if (!list) return;
 
 		const todo = list.todos.find((t) => t.id === todoId);
 		if (todo && newText.trim()) {
 			todo.text = newText.trim();
-			this.#saveToDB();
+			await DBManager.saveLists(this.#lists);
 			this.#render();
 		}
 	}
 
-	#deleteTodo(listId, todoId) {
+	async #deleteTodo(listId, todoId) {
 		const list = this.#lists.find((l) => l.id === listId);
 		if (!list) return;
 
 		list.todos = list.todos.filter((t) => t.id !== todoId);
-		this.#saveToDB();
+		await DBManager.saveLists(this.#lists);
 		this.#render();
 	}
 
-	#clearCompleted() {
+	async #clearCompleted() {
 		const list = this.#getCurrentList();
 		if (!list) return;
 
 		list.todos = list.todos.filter((t) => !t.completed);
-		this.#saveToDB();
+		await DBManager.saveLists(this.#lists);
 		this.#render();
 	}
 
-	#handleNewList() {
+	async #handleNewList() {
 		const name = this.#newListInputEl?.value.trim();
 		if (!name) return;
 
@@ -206,19 +208,19 @@ export class TodoList extends HTMLElement {
 		this.#lists.push(newList);
 		this.#currentListId = newList.id;
 		this.#newListInputEl.value = "";
-		this.#saveToDB();
+		await DBManager.saveLists(this.#lists);
 		this.#render();
 	}
 
-	#setDefaultList(listId) {
+	async #setDefaultList(listId) {
 		this.#lists.forEach((l) => {
 			l.isDefault = l.id === listId;
 		});
-		this.#saveToDB();
+		await DBManager.saveLists(this.#lists);
 		this.#render();
 	}
 
-	#deleteList(listId) {
+	async #deleteList(listId) {
 		if (this.#lists.length <= 1) {
 			alert("Cannot delete the last list");
 			return;
@@ -232,17 +234,17 @@ export class TodoList extends HTMLElement {
 			this.#currentListId = defaultList?.id || this.#lists[0]?.id;
 		}
 
-		this.#saveToDB();
+		await DBManager.saveLists(this.#lists);
 		this.#render();
 	}
 
-	#editListName(listId, newName) {
+	async #editListName(listId, newName) {
 		const list = this.#lists.find((l) => l.id === listId);
 		if (!list || !newName) return;
 
 		if (newName.trim() && newName.trim() !== list.name) {
 			list.name = newName.trim();
-			this.#saveToDB();
+			await DBManager.saveLists(this.#lists);
 			this.#render();
 		}
 	}
@@ -505,7 +507,7 @@ export class TodoList extends HTMLElement {
 		});
 	}
 
-	#addTodoToList(listId, text) {
+	async #addTodoToList(listId, text) {
 		if (!text.trim()) return;
 
 		const list = this.#lists.find((l) => l.id === listId);
@@ -519,16 +521,16 @@ export class TodoList extends HTMLElement {
 		};
 
 		list.todos.push(todo);
-		this.#saveToDB();
+		await DBManager.saveLists(this.#lists);
 		this.#render();
 	}
 
-	#clearCompletedForList(listId) {
+	async #clearCompletedForList(listId) {
 		const list = this.#lists.find((l) => l.id === listId);
 		if (!list) return;
 
 		list.todos = list.todos.filter((t) => !t.completed);
-		this.#saveToDB();
+		await DBManager.saveLists(this.#lists);
 		this.#render();
 	}
 
@@ -536,62 +538,6 @@ export class TodoList extends HTMLElement {
 		const div = document.createElement("div");
 		div.textContent = text;
 		return div.innerHTML;
-	}
-
-	// IndexedDB methods
-	async #openDB() {
-		if (this.#db) return;
-
-		return new Promise((resolve, reject) => {
-			const request = indexedDB.open(this.#dbName, 1);
-
-			request.onupgradeneeded = (e) => {
-				this.#db = e.target.result;
-				if (!this.#db.objectStoreNames.contains(this.#storeName)) {
-					this.#db.createObjectStore(this.#storeName);
-				}
-			};
-
-			request.onsuccess = (e) => {
-				this.#db = e.target.result;
-				resolve();
-			};
-
-			request.onerror = (e) => reject(e);
-		});
-	}
-
-	async #saveToDB() {
-		await this.#openDB();
-		return new Promise((resolve, reject) => {
-			const transaction = this.#db.transaction([this.#storeName], "readwrite");
-			const store = transaction.objectStore(this.#storeName);
-			const request = store.put(this.#lists, this.#key);
-
-			request.onsuccess = () => resolve();
-			request.onerror = () => reject(request.error);
-		});
-	}
-
-	async #loadFromDB() {
-		await this.#openDB();
-		return new Promise((resolve, reject) => {
-			const transaction = this.#db.transaction([this.#storeName], "readonly");
-			const store = transaction.objectStore(this.#storeName);
-			const request = store.get(this.#key);
-
-			request.onsuccess = () => {
-				this.#lists = request.result || [];
-				resolve();
-			};
-			request.onerror = () => reject(request.error);
-		});
-	}
-
-	disconnectedCallback() {
-		if (this.#db) {
-			this.#db.close();
-		}
 	}
 }
 
