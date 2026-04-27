@@ -111,9 +111,9 @@ export class DBManager {
     /**
      * Save a note to the database.
      * If a note with the same ID exists, it will be overwritten.
-     * 
-     * @param {number} id - The note ID
-     * @param {string} content - The note content text
+     *
+     * @param {number|string} id - The note ID
+     * @param {string|Object} content - The note content text OR a full note object
      * @returns {Promise<void>}
      */
     static async saveNote(id, content) {
@@ -127,13 +127,23 @@ export class DBManager {
 
             const transaction = this.#db.transaction([DB_CONFIG.STORES.NOTES], 'readwrite');
             const store = transaction.objectStore(DB_CONFIG.STORES.NOTES);
-            
-            const note = {
-                id: id,
-                content: content,
-                updatedAt: new Date().toISOString()
-            };
-            
+
+            let note;
+            if (typeof content === 'object' && content !== null && content.id) {
+                // Full note object passed - use it directly, just update updatedAt
+                note = {
+                    ...content,
+                    updatedAt: new Date().toISOString()
+                };
+            } else {
+                // Legacy string content - wrap it (or content is null/undefined)
+                note = {
+                    id: id,
+                    content: String(content || ''),
+                    updatedAt: new Date().toISOString()
+                };
+            }
+
             const request = store.put(note);
 
             request.onsuccess = () => {
@@ -564,5 +574,72 @@ export class DBManager {
     }
     // ============================================================================
     // END OF MULTI-NOTE MIGRATION
+    // ============================================================================
+
+    // ============================================================================
+    // DATA REPAIR MIGRATION
+    // Fixes notes corrupted by the saveNote() bug where content was double-wrapped
+    // ============================================================================
+
+    /**
+     * Repair corrupted notes where content is stored as an object instead of string.
+     * This happened when saveNote() was called with a full note object but wrapped it again.
+     * @returns {Promise<boolean>} true if any notes were repaired
+     */
+    static async repairCorruptedNotes() {
+        // Only run repair once per session
+        if (localStorage.getItem('notesRepairComplete') === 'true') {
+            return false;
+        }
+
+        try {
+            await this.init();
+
+            if (!this.#db.objectStoreNames.contains(DB_CONFIG.STORES.NOTES)) {
+                localStorage.setItem('notesRepairComplete', 'true');
+                return false;
+            }
+
+            const allNotes = await this.getAllNotes();
+            let fixedCount = 0;
+
+            for (const note of allNotes) {
+                // Check if content is an object (corrupted by double-wrapping)
+                if (note.content && typeof note.content === 'object') {
+                    const fixedNote = {
+                        id: note.id,
+                        title: note.content.title || note.title || 'Untitled',
+                        content: note.content.content || '',
+                        createdAt: note.content.createdAt || note.createdAt || new Date().toISOString(),
+                        updatedAt: new Date().toISOString()
+                    };
+                    await this.#rawSaveNote(fixedNote);
+                    fixedCount++;
+                }
+            }
+
+            if (fixedCount > 0) {
+                console.log(`Repaired ${fixedCount} corrupted note(s)`);
+            }
+
+            localStorage.setItem('notesRepairComplete', 'true');
+            return fixedCount > 0;
+
+        } catch (error) {
+            console.error('Notes repair failed:', error);
+            return false;
+        }
+    }
+
+    /**
+     * Force repair of corrupted notes (for debugging/testing)
+     * Clears the repair flag and runs repair again
+     */
+    static async forceRepairCorruptedNotes() {
+        localStorage.removeItem('notesRepairComplete');
+        return this.repairCorruptedNotes();
+    }
+    // ============================================================================
+    // END OF DATA REPAIR MIGRATION
     // ============================================================================
 }

@@ -52,14 +52,17 @@ export class LocalNotes extends HTMLElement {
 	async #init() {
 		try {
 			await DBManager.init();
-			this.notes = await DBManager.getAllNotes();
-			
+			const rawNotes = await DBManager.getAllNotes();
+
+			// Normalize notes to fix any corrupted data
+			this.notes = rawNotes.map(note => this.#normalizeNote(note));
+
 			// Sort by updatedAt (most recent first)
 			this.#sortNotes();
-			
+
 			// Show list view by default
 			this.#showListView();
-			
+
 			// Setup event listeners
 			this.#setupEventListeners();
 		} catch (error) {
@@ -159,9 +162,14 @@ export class LocalNotes extends HTMLElement {
 		// Handle case where content might not be a string
 		if (!content) return '';
 		if (typeof content !== 'string') {
-			// Try to convert to string or extract content property
-			if (typeof content === 'object' && content.content) {
-				content = content.content;
+			// Try to extract content from corrupted double-wrapped object
+			if (typeof content === 'object') {
+				if (content.content && typeof content.content === 'string') {
+					content = content.content;
+				} else {
+					// Fallback: convert object to string, but avoid "[object Object]"
+					content = JSON.stringify(content);
+				}
 			} else {
 				content = String(content);
 			}
@@ -169,6 +177,34 @@ export class LocalNotes extends HTMLElement {
 		const text = content.replace(/\n/g, ' ').trim();
 		if (text.length <= maxLength) return text;
 		return text.slice(0, maxLength) + '...';
+	}
+
+	/**
+	 * Normalize a note object, fixing any corrupted data structures.
+	 * This handles notes where content was accidentally stored as an object.
+	 * @param {Object} note - The note to normalize
+	 * @returns {Object} The normalized note
+	 */
+	#normalizeNote(note) {
+		if (!note) return note;
+
+		const normalized = { ...note };
+
+		// Fix corrupted content that was stored as an object
+		if (note.content && typeof note.content === 'object') {
+			const corruptedContent = note.content;
+			normalized.content = corruptedContent.content || '';
+			normalized.title = note.title || corruptedContent.title || '';
+			normalized.createdAt = note.createdAt || corruptedContent.createdAt;
+			normalized.updatedAt = note.updatedAt || corruptedContent.updatedAt;
+		}
+
+		// Ensure content is always a string
+		if (typeof normalized.content !== 'string') {
+			normalized.content = String(normalized.content || '');
+		}
+
+		return normalized;
 	}
 
 	#createNewNote() {
@@ -228,13 +264,13 @@ export class LocalNotes extends HTMLElement {
 
 	#renderNoteList() {
 		if (!this.listContainer) return;
-		
+
 		const notesListEl = this.listContainer.querySelector('#notes-items');
 		if (!notesListEl) return;
-		
+
 		// Clear current list
 		notesListEl.innerHTML = '';
-		
+
 		// Show/hide empty state
 		if (this.notes.length === 0) {
 			if (this.emptyState) {
@@ -248,42 +284,47 @@ export class LocalNotes extends HTMLElement {
 			}
 			notesListEl.style.display = 'block';
 		}
-		
-		// Render each note
+
+		// Render each note (normalize to ensure clean data)
 		this.notes.forEach(note => {
+			const normalizedNote = this.#normalizeNote(note);
 			const noteEl = document.createElement('div');
 			noteEl.className = 'note-item';
-			noteEl.dataset.noteId = note.id;
-			
-			const title = note.title || 'Untitled';
-			const preview = this.#getNotePreview(note.content);
-			const date = this.#formatDate(note.updatedAt || note.createdAt);
-			
+			noteEl.dataset.noteId = normalizedNote.id;
+
+			const title = normalizedNote.title || 'Untitled';
+			const preview = this.#getNotePreview(normalizedNote.content);
+			const date = this.#formatDate(normalizedNote.updatedAt || normalizedNote.createdAt);
+
 			noteEl.innerHTML = `
 				<div class="note-item-title">${this.#escapeHtml(title)}</div>
 				<div class="note-item-preview">${this.#escapeHtml(preview)}</div>
 				<div class="note-item-date">${date}</div>
 			`;
-			
-			noteEl.addEventListener('click', () => this.#openNote(note.id));
-			
+
+			noteEl.addEventListener('click', () => this.#openNote(normalizedNote.id));
+
 			notesListEl.appendChild(noteEl);
 		});
 	}
 
 	#loadCurrentNoteIntoEditor() {
 		if (!this.titleInput || !this.contentTextarea) return;
-		
-		const note = this.notes.find(n => n.id === this.currentNoteId);
-		if (!note) {
+
+		const rawNote = this.notes.find(n => n.id === this.currentNoteId);
+		if (!rawNote) {
 			// Note not found, go back to list
 			this.#showListView();
 			return;
 		}
-		
+
+		// Normalize the note to fix any corrupted data
+		const note = this.#normalizeNote(rawNote);
+
+		// Ensure we're working with strings
 		this.titleInput.value = note.title || '';
 		this.contentTextarea.value = note.content || '';
-		
+
 		// Clear any save indicator
 		this.#updateSaveIndicator('');
 	}
