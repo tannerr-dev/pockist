@@ -1,22 +1,21 @@
 const root = document.querySelector(":root");
-const options = document.querySelector("#optionals");
 const drawer = document.querySelector("#drawer");
 let menu = document.querySelector(".menu");
 
-function toggleDrawer() {
-	menu.classList.toggle("change");
-	drawer.classList.toggle("hide");
-}
-
-if (menu) {
-	menu.addEventListener("click", toggleDrawer);
-}
+// Toggle X animation on menu button when popover opens/closes
+drawer.addEventListener("toggle", (event) => {
+	if (event.newState === "open") {
+		menu.classList.add("change");
+	} else {
+		menu.classList.remove("change");
+	}
+});
 
 // Close drawer and navigate when clicking nav links
 const navLinks = document.querySelectorAll("[data-nav-link]");
 navLinks.forEach(link => {
 	link.addEventListener("click", () => {
-		toggleDrawer();
+		drawer.hidePopover();
 	});
 });
 

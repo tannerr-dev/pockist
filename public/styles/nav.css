@@ -92,6 +92,11 @@ nav {
 	display: inline-block;
 	cursor: pointer;
 	color: var(--text);
+	background: none;
+	border: none;
+	padding: 0;
+	margin: 0;
+	anchor-name: --menu-btn;
 }
 .bar1,
 .bar2,
@@ -114,21 +119,25 @@ nav {
 	transform: translate(0, -11px) rotate(45deg);
 }
 #drawer {
-	position: fixed;
-	z-index: 1;
-	top: var(--height);
-	right: 0;
+	position: absolute;
+	position-anchor: --menu-btn;
+	position-area: bottom span-right;
+	margin: 0;
+	margin-block-start: 8px;
+	inset: auto;
 	width: 200px;
 	background-color: var(--bg);
+	border: none;
 	border-bottom-left-radius: 12px;
 	box-shadow: -4px 4px 12px rgba(0, 0, 0, 0.3);
-	display: flex;
-	flex-direction: column;
 	padding: 16px;
 	gap: 10px;
+	overflow: visible;
 }
-#drawer.hide {
-	display: none;
+
+#drawer:popover-open {
+	display: flex;
+	flex-direction: column;
 }
 .drawer-optionals {
 	display: flex;
@@ -198,8 +207,4 @@ nav {
 	transform: scale(0.98);
 }
 
-nav #optionals.hide,
-#optionals.flex-row.hide,
-#optionals.hide {
-	display: none;
-}
+
