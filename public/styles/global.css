@@ -153,3 +153,37 @@ h1 {
 home-page{
     width:100%;
 }
+
+/* Notes widget section on home page */
+.notes-widget-section {
+    width: 100%;
+    max-width: 500px;
+    margin: 1.5rem auto;
+}
+
+.notes-header-link {
+    text-decoration: none;
+    color: var(--text);
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+.notes-header-link h2 {
+    margin: 0;
+    font-size: 1.3rem;
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.notes-header-link h2::after {
+    content: "→";
+    font-size: 1rem;
+    opacity: 0.7;
+    transition: transform 0.2s;
+}
+
+.notes-header-link:hover h2::after {
+    transform: translateX(4px);
+}

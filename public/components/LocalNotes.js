@@ -156,7 +156,16 @@ export class LocalNotes extends HTMLElement {
 	}
 
 	#getNotePreview(content, maxLength = 60) {
+		// Handle case where content might not be a string
 		if (!content) return '';
+		if (typeof content !== 'string') {
+			// Try to convert to string or extract content property
+			if (typeof content === 'object' && content.content) {
+				content = content.content;
+			} else {
+				content = String(content);
+			}
+		}
 		const text = content.replace(/\n/g, ' ').trim();
 		if (text.length <= maxLength) return text;
 		return text.slice(0, maxLength) + '...';

@@ -402,8 +402,11 @@ export class DBManager {
      * @returns {Promise<boolean>} true if migration was performed
      */
     static async migrateToMultiNoteFormat() {
-        // Check if migration was already completed
-        if (localStorage.getItem('multiNoteMigrationComplete') === 'true') {
+        // Check if migration was already completed - but re-run if DB version changed
+        const currentVersion = DB_CONFIG.VERSION.toString();
+        const lastMigratedVersion = localStorage.getItem('multiNoteMigrationVersion');
+
+        if (localStorage.getItem('multiNoteMigrationComplete') === 'true' && lastMigratedVersion === currentVersion) {
             return false;
         }
 
@@ -412,18 +415,26 @@ export class DBManager {
 
             if (!this.#db.objectStoreNames.contains(DB_CONFIG.STORES.NOTES)) {
                 localStorage.setItem('multiNoteMigrationComplete', 'true');
+                localStorage.setItem('multiNoteMigrationVersion', currentVersion);
                 return false;
             }
 
             // Get all notes
             const allNotes = await this.getAllNotes();
 
-            // Find notes with numeric IDs (old format)
-            const oldFormatNotes = allNotes.filter(note => typeof note.id === 'number');
+            // Find notes with numeric IDs (old format) OR notes with invalid string content
+            const oldFormatNotes = allNotes.filter(note => {
+                // Numeric ID is old format
+                if (typeof note.id === 'number') return true;
+                // Also check if content is not a string (corrupted data)
+                if (note.content && typeof note.content !== 'string') return true;
+                return false;
+            });
 
             if (oldFormatNotes.length === 0) {
                 // No old-format notes to migrate
                 localStorage.setItem('multiNoteMigrationComplete', 'true');
+                localStorage.setItem('multiNoteMigrationVersion', currentVersion);
                 return false;
             }
 
@@ -436,6 +447,7 @@ export class DBManager {
 
             console.log('Multi-note migration completed successfully');
             localStorage.setItem('multiNoteMigrationComplete', 'true');
+            localStorage.setItem('multiNoteMigrationVersion', currentVersion);
             return true;
 
         } catch (error) {
@@ -450,7 +462,14 @@ export class DBManager {
      * @param {Object} oldNote - The old-format note
      */
     static async #migrateSingleNote(oldNote) {
-        const content = oldNote.content || '';
+        // Handle case where content might be stored as an object instead of string
+        let content = oldNote.content || '';
+        if (typeof content === 'object' && content !== null) {
+            // If content is an object, it might be a nested note - extract the actual content
+            content = content.content || '';
+        }
+        content = String(content);
+
         const timestamp = oldNote.updatedAt || oldNote.createdAt || new Date().toISOString();
 
         // Generate new ID
@@ -468,13 +487,42 @@ export class DBManager {
             updatedAt: timestamp
         };
 
-        // Save new note
-        await this.saveNote(newId, newNote);
+        // Save new note using raw IndexedDB put to avoid saveNote's wrapping
+        await this.#rawSaveNote(newNote);
 
         // Delete old note
         await this.deleteNote(oldNote.id);
 
         console.log(`Migrated note ${oldNote.id} -> ${newId}`);
+    }
+
+    /**
+     * Raw save - saves note object directly without wrapping
+     * @private
+     * @param {Object} note - The complete note object to save
+     */
+    static async #rawSaveNote(note) {
+        await this.init();
+
+        return new Promise((resolve, reject) => {
+            if (!this.#db.objectStoreNames.contains(DB_CONFIG.STORES.NOTES)) {
+                reject(new Error('Notes object store not found'));
+                return;
+            }
+
+            const transaction = this.#db.transaction([DB_CONFIG.STORES.NOTES], 'readwrite');
+            const store = transaction.objectStore(DB_CONFIG.STORES.NOTES);
+
+            const request = store.put(note);
+
+            request.onsuccess = () => {
+                resolve();
+            };
+
+            request.onerror = () => {
+                reject(request.error);
+            };
+        });
     }
 
     /**
