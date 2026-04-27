@@ -1,3 +1,29 @@
+/* Weather Component Variables */
+:root {
+    --weather-space-xs: 4px;
+    --weather-space-sm: 8px;
+    --weather-space-md: 12px;
+    --weather-space-lg: 16px;
+    --weather-space-xl: 20px;
+    --weather-radius: 8px;
+    --weather-radius-lg: 12px;
+}
+
+/* Legacy Weather Page Styles */
+.weather {
+    padding: 20px;
+}
+
+.weather a {
+    color: var(--accent);
+}
+
+/* Debug data styling */
+#data {
+    color: var(--text);
+    opacity: 0.6;
+}
+
 /* Weather Current Component */
 weather-current {
     display: block;
@@ -205,6 +231,12 @@ weather-controls input[type="text"] {
     font-size: 14px;
 }
 
+weather-controls input[type="text"]:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px var(--accent-2);
+}
+
 weather-controls button {
     padding: 12px 20px;
     background: var(--accent);
@@ -226,14 +258,14 @@ weather-controls #unitBtn {
     min-width: 48px;
 }
 
-.error-message {
+weather-controls .error-message {
     color: var(--error);
     font-size: 13px;
     padding: 8px 0;
     display: none;
 }
 
-.error-message:not(:empty) {
+weather-controls .error-message:not(:empty) {
     display: block;
 }
 
@@ -310,5 +342,13 @@ weather-controls #unitBtn {
     weather-controls input[type="text"] {
         width: 100%;
         margin-bottom: 8px;
+    }
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+    weather-controls button,
+    .widgets-section weather-current {
+        transition: none;
     }
 }
