@@ -53,7 +53,7 @@ body {
     }
 }
 main {
-    padding: 60px 2px;
+    padding: 60px 20px;
     display:flex;
     flex-direction:column;
     justify-content:center;
