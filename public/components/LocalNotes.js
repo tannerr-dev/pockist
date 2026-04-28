@@ -115,7 +115,6 @@ export class LocalNotes extends HTMLElement {
 		// Content textarea change
 		if (this.contentTextarea) {
 			this.contentTextarea.addEventListener("input", () => {
-				this.#autoFillTitle();
 				this.#handleInput();
 			});
 		}
@@ -341,12 +340,14 @@ export class LocalNotes extends HTMLElement {
 		if (this.timeoutId) {
 			clearTimeout(this.timeoutId);
 		}
-		
+
 		// Show saving indicator
 		this.#updateSaveIndicator('Saving...');
-		
+
 		// Debounce save
 		this.timeoutId = setTimeout(async () => {
+			// Auto-fill title if empty (happens during debounce, not immediately)
+			this.#autoFillTitle();
 			await this.#saveCurrentNote();
 		}, 1000);
 	}
