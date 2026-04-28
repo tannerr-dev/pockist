@@ -16,6 +16,7 @@ export class TodoList extends HTMLElement {
 	#addBtn = null;
 	#itemsLeftEl = null;
 	#clearCompletedBtn = null;
+	#sortTodosBtn = null;
 	#newListInputEl = null;
 	#newListBtn = null;
 
@@ -51,6 +52,7 @@ export class TodoList extends HTMLElement {
 		this.#addBtn = this.querySelector("#add-btn");
 		this.#itemsLeftEl = this.querySelector("#items-left");
 		this.#clearCompletedBtn = this.querySelector("#clear-completed");
+		this.#sortTodosBtn = this.querySelector("#sort-todos");
 		this.#newListInputEl = this.querySelector("#new-list-input");
 		this.#newListBtn = this.querySelector("#new-list-btn");
 
@@ -172,6 +174,12 @@ export class TodoList extends HTMLElement {
 				this.#clearCompleted()
 			);
 			console.log('[TodoList] Clear completed listener attached');
+		}
+		if (this.#sortTodosBtn) {
+			this.#sortTodosBtn.addEventListener("click", () =>
+				this.#sortTodos(this.#currentListId)
+			);
+			console.log('[TodoList] Sort todos listener attached');
 		}
 
 		// Event listeners for new list creation
@@ -401,6 +409,43 @@ export class TodoList extends HTMLElement {
 			this.#renderWithTransition();
 		} catch (error) {
 			console.error('[TodoList] Error saving after clear:', error);
+		}
+	}
+
+	async #sortTodos(listId) {
+		console.log('[TodoList] #sortTodos() called:', listId);
+		const list = this.#lists.find((l) => l.id === listId);
+		if (!list) {
+			console.error('[TodoList] List not found:', listId);
+			return;
+		}
+
+		// Sort: active items first, then completed items
+		// Within each group, maintain current order
+		list.todos.sort((a, b) => {
+			// Completed items go to the bottom
+			if (a.completed !== b.completed) {
+				return a.completed ? 1 : -1;
+			}
+			// Within same completion status, sort by existing order
+			const orderA = typeof a.order === 'number' ? a.order : 0;
+			const orderB = typeof b.order === 'number' ? b.order : 0;
+			return orderA - orderB;
+		});
+
+		// Reassign order values to reflect new positions
+		list.todos.forEach((todo, index) => {
+			todo.order = index;
+		});
+
+		console.log('[TodoList] Todos sorted for list:', listId);
+		
+		try {
+			await DBManager.saveLists(this.#lists);
+			console.log('[TodoList] Lists saved after sort');
+			this.#renderWithTransition();
+		} catch (error) {
+			console.error('[TodoList] Error saving after sort:', error);
 		}
 	}
 
@@ -661,10 +706,13 @@ export class TodoList extends HTMLElement {
 						<button class="list-add-btn button" data-list-id="${list.id}">Add</button>
 					</div>
 					<ul class="todo-list-ul" data-list-id="${list.id}"></ul>
-					<div class="todo-footer">
+				<div class="todo-footer">
 						<span class="items-left" data-list-id="${list.id}">0 items left</span>
-						<button class="clear-completed-btn button-link" data-list-id="${list.id}">Clear completed</button>
-					</div>
+						<div class="todo-footer-actions">
+							<button class="sort-todos-btn button-link" data-list-id="${list.id}">Sort</button>
+							<button class="clear-completed-btn button-link" data-list-id="${list.id}">Clear completed</button>
+						</div>
+				</div>
 				`;
 
 				this.#listsContainerEl.appendChild(listSection);
@@ -689,6 +737,12 @@ export class TodoList extends HTMLElement {
 				const hasCompleted = list.todos.some((t) => t.completed);
 				clearBtn.style.display = hasCompleted ? "inline" : "none";
 
+				// Show/hide sort button
+				const sortBtn = listSection.querySelector(
+					`.sort-todos-btn[data-list-id="${list.id}"]`
+				);
+				sortBtn.style.display = list.todos.length > 0 ? "inline" : "none";
+
 				// Attach event listeners
 				const input = listSection.querySelector(
 					`.list-todo-input[data-list-id="${list.id}"]`
@@ -711,6 +765,11 @@ export class TodoList extends HTMLElement {
 
 				clearBtn.addEventListener("click", () => {
 					this.#clearCompletedForList(list.id);
+				});
+
+				// Sort button
+				sortBtn.addEventListener("click", () => {
+					this.#sortTodos(list.id);
 				});
 
 				// Set default button
@@ -805,6 +864,12 @@ export class TodoList extends HTMLElement {
 					? "inline"
 					: "none";
 			}
+			// Show sort button when there are todos
+			if (this.#sortTodosBtn) {
+				this.#sortTodosBtn.style.display = list?.todos.length > 0
+					? "inline"
+					: "none";
+			}
 		}
 	}
 
@@ -818,19 +883,15 @@ export class TodoList extends HTMLElement {
 			return;
 		}
 
-		// Sort: active items first (by order), then completed items (by order)
-		const sortedTodos = [...list.todos].sort((a, b) => {
-			// Completed items go to the bottom
-			if (a.completed !== b.completed) {
-				return a.completed ? 1 : -1;
-			}
-			// Within same completion status, sort by order
+		// Render todos in their current order (respecting manual order field)
+		// No auto-sorting - todos stay where they are until manually sorted
+		const orderedTodos = [...list.todos].sort((a, b) => {
 			const orderA = typeof a.order === 'number' ? a.order : 0;
 			const orderB = typeof b.order === 'number' ? b.order : 0;
 			return orderA - orderB;
 		});
 
-		sortedTodos.forEach((todo, index) => {
+		orderedTodos.forEach((todo, index) => {
 			const li = document.createElement("li");
 			li.className = `todo-item ${todo.completed ? "completed" : ""}`;
 			li.dataset.todoId = todo.id;
@@ -838,7 +899,7 @@ export class TodoList extends HTMLElement {
 			li.style.viewTransitionName = `todo-${todo.id}`;
 
 			const isFirst = index === 0;
-			const isLast = index === sortedTodos.length - 1;
+			const isLast = index === orderedTodos.length - 1;
 
 			li.innerHTML = `
 				<input type="checkbox" class="todo-checkbox" ${
