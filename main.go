@@ -29,6 +29,7 @@ func main() {
 	server.HandleFunc("/note", catchAllClientRoutesHandler)
 	server.HandleFunc("/list", catchAllClientRoutesHandler)
 	server.HandleFunc("/weather", catchAllClientRoutesHandler)
+	server.HandleFunc("/about", catchAllClientRoutesHandler)
 
 	// Weather API endpoint with caching
 	weatherHandler := handlers.NewWeatherHandler()
