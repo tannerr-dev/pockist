@@ -345,6 +345,64 @@
 	}
 }
 
+/* List reordering styles */
+.list-reorder {
+	display: flex;
+	gap: 0.25rem;
+	flex-shrink: 0;
+	opacity: 0;
+	transition: opacity 0.2s;
+}
+
+.todo-list-header:hover .list-reorder {
+	opacity: 1;
+}
+
+.list-move-up,
+.list-move-down {
+	width: 22px;
+	height: 22px;
+	border: none;
+	background: transparent;
+	color: var(--text);
+	opacity: 0.5;
+	font-size: 0.65rem;
+	cursor: pointer;
+	border-radius: 4px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	transition: all 0.15s ease;
+	padding: 0;
+}
+
+.list-move-up:hover:not(:disabled),
+.list-move-down:hover:not(:disabled) {
+	opacity: 1;
+	background-color: hsl(0 0% 50% / 0.15);
+	transform: scale(1.1);
+}
+
+.list-move-up:active:not(:disabled),
+.list-move-down:active:not(:disabled) {
+	opacity: 1;
+	transform: scale(0.95);
+	background-color: hsl(0 0% 50% / 0.2);
+}
+
+.list-move-up:disabled,
+.list-move-down:disabled {
+	opacity: 0.15;
+	cursor: default;
+}
+
+/* Always show list reorder buttons on touch devices */
+@media (hover: none) {
+	.list-reorder {
+		opacity: 1;
+	}
+}
+
 /* View Transitions API styles */
 ::view-transition-old(root),
 ::view-transition-new(root) {
@@ -359,6 +417,11 @@
 ::view-transition-old(todo-item),
 ::view-transition-new(todo-item) {
 	animation-duration: 0.2s;
+}
+
+::view-transition-old(list-item),
+::view-transition-new(list-item) {
+	animation-duration: 0.25s;
 }
 
 .todo-empty {
