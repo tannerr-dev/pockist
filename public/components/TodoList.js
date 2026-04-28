@@ -217,6 +217,7 @@ export class TodoList extends HTMLElement {
 			text: text,
 			completed: false,
 			createdAt: Date.now(),
+			order: list.todos.length,
 		};
 
 		console.log('[TodoList] Adding todo:', todo);
@@ -227,9 +228,17 @@ export class TodoList extends HTMLElement {
 			console.log('[TodoList] Saving lists...');
 			await DBManager.saveLists(this.#lists);
 			console.log('[TodoList] Lists saved successfully');
-			this.#render();
+			this.#renderWithTransition();
 		} catch (error) {
 			console.error('[TodoList] Error saving lists:', error);
+		}
+	}
+
+	#renderWithTransition() {
+		if (document.startViewTransition) {
+			document.startViewTransition(() => this.#render());
+		} else {
+			this.#render();
 		}
 	}
 
@@ -248,7 +257,7 @@ export class TodoList extends HTMLElement {
 			try {
 				await DBManager.saveLists(this.#lists);
 				console.log('[TodoList] Lists saved after toggle');
-				this.#render();
+				this.#renderWithTransition();
 			} catch (error) {
 				console.error('[TodoList] Error saving after toggle:', error);
 			}
@@ -272,7 +281,7 @@ export class TodoList extends HTMLElement {
 			try {
 				await DBManager.saveLists(this.#lists);
 				console.log('[TodoList] Lists saved after edit');
-				this.#render();
+				this.#renderWithTransition();
 			} catch (error) {
 				console.error('[TodoList] Error saving after edit:', error);
 			}
@@ -291,12 +300,63 @@ export class TodoList extends HTMLElement {
 		list.todos = list.todos.filter((t) => t.id !== todoId);
 		console.log('[TodoList] Todos filtered, removed:', originalLength - list.todos.length);
 		
+		// Reorder remaining todos
+		list.todos.forEach((todo, index) => {
+			todo.order = index;
+		});
+		
 		try {
 			await DBManager.saveLists(this.#lists);
 			console.log('[TodoList] Lists saved after delete');
-			this.#render();
+			this.#renderWithTransition();
 		} catch (error) {
 			console.error('[TodoList] Error saving after delete:', error);
+		}
+	}
+
+	async #moveTodo(listId, todoId, direction) {
+		console.log('[TodoList] #moveTodo() called:', listId, todoId, direction);
+		const list = this.#lists.find((l) => l.id === listId);
+		if (!list) {
+			console.error('[TodoList] List not found:', listId);
+			return;
+		}
+
+		// Ensure todos have order field (backward compatibility)
+		list.todos.forEach((todo, index) => {
+			if (typeof todo.order !== 'number') {
+				todo.order = index;
+			}
+		});
+
+		const todoIndex = list.todos.findIndex((t) => t.id === todoId);
+		if (todoIndex === -1) {
+			console.warn('[TodoList] Todo not found:', todoId);
+			return;
+		}
+
+		const newIndex = todoIndex + direction;
+		if (newIndex < 0 || newIndex >= list.todos.length) {
+			console.log('[TodoList] Cannot move todo, already at boundary');
+			return;
+		}
+
+		// Swap the todos and update their order values
+		const tempOrder = list.todos[todoIndex].order;
+		list.todos[todoIndex].order = list.todos[newIndex].order;
+		list.todos[newIndex].order = tempOrder;
+
+		// Sort todos by order
+		list.todos.sort((a, b) => a.order - b.order);
+
+		console.log('[TodoList] Todo moved from', todoIndex, 'to', newIndex);
+		
+		try {
+			await DBManager.saveLists(this.#lists);
+			console.log('[TodoList] Lists saved after move');
+			this.#renderWithTransition();
+		} catch (error) {
+			console.error('[TodoList] Error saving after move:', error);
 		}
 	}
 
@@ -312,10 +372,15 @@ export class TodoList extends HTMLElement {
 		list.todos = list.todos.filter((t) => !t.completed);
 		console.log('[TodoList] Cleared completed todos, removed:', originalLength - list.todos.length);
 		
+		// Reorder remaining todos
+		list.todos.forEach((todo, index) => {
+			todo.order = index;
+		});
+		
 		try {
 			await DBManager.saveLists(this.#lists);
 			console.log('[TodoList] Lists saved after clear completed');
-			this.#render();
+			this.#renderWithTransition();
 		} catch (error) {
 			console.error('[TodoList] Error saving after clear:', error);
 		}
@@ -345,7 +410,7 @@ export class TodoList extends HTMLElement {
 		try {
 			await DBManager.saveLists(this.#lists);
 			console.log('[TodoList] New list saved');
-			this.#render();
+			this.#renderWithTransition();
 		} catch (error) {
 			console.error('[TodoList] Error saving new list:', error);
 		}
@@ -360,7 +425,7 @@ export class TodoList extends HTMLElement {
 		try {
 			await DBManager.saveLists(this.#lists);
 			console.log('[TodoList] Default list set and saved');
-			this.#render();
+			this.#renderWithTransition();
 		} catch (error) {
 			console.error('[TodoList] Error saving default list:', error);
 		}
@@ -387,7 +452,7 @@ export class TodoList extends HTMLElement {
 		try {
 			await DBManager.saveLists(this.#lists);
 			console.log('[TodoList] Lists saved after delete');
-			this.#render();
+			this.#renderWithTransition();
 		} catch (error) {
 			console.error('[TodoList] Error saving after list delete:', error);
 		}
@@ -408,7 +473,7 @@ export class TodoList extends HTMLElement {
 			try {
 				await DBManager.saveLists(this.#lists);
 				console.log('[TodoList] Lists saved after name edit');
-				this.#render();
+				this.#renderWithTransition();
 			} catch (error) {
 				console.error('[TodoList] Error saving after name edit:', error);
 			}
@@ -645,11 +710,22 @@ export class TodoList extends HTMLElement {
 			return;
 		}
 
-		list.todos.forEach((todo) => {
+		// Sort todos by order (backward compatibility: use array index if no order field)
+		const sortedTodos = [...list.todos].sort((a, b) => {
+			const orderA = typeof a.order === 'number' ? a.order : list.todos.indexOf(a);
+			const orderB = typeof b.order === 'number' ? b.order : list.todos.indexOf(b);
+			return orderA - orderB;
+		});
+
+		sortedTodos.forEach((todo, index) => {
 			const li = document.createElement("li");
 			li.className = `todo-item ${todo.completed ? "completed" : ""}`;
 			li.dataset.todoId = todo.id;
 			li.dataset.listId = list.id;
+			li.style.viewTransitionName = `todo-${todo.id}`;
+
+			const isFirst = index === 0;
+			const isLast = index === sortedTodos.length - 1;
 
 			li.innerHTML = `
 				<input type="checkbox" class="todo-checkbox" ${
@@ -658,12 +734,18 @@ export class TodoList extends HTMLElement {
 				<span class="todo-text" contenteditable="true">${this.#escapeHtml(
 					todo.text
 				)}</span>
+				<div class="todo-reorder">
+					<button class="todo-move-up ${isFirst ? 'disabled' : ''}" aria-label="Move up" ${isFirst ? 'disabled' : ''}>▲</button>
+					<button class="todo-move-down ${isLast ? 'disabled' : ''}" aria-label="Move down" ${isLast ? 'disabled' : ''}>▼</button>
+				</div>
 				<button class="todo-delete" aria-label="Delete todo">×</button>
 			`;
 
 			const checkbox = li.querySelector(".todo-checkbox");
 			const textSpan = li.querySelector(".todo-text");
 			const deleteBtn = li.querySelector(".todo-delete");
+			const moveUpBtn = li.querySelector(".todo-move-up");
+			const moveDownBtn = li.querySelector(".todo-move-down");
 
 			checkbox.addEventListener("change", () => {
 				this.#toggleTodo(list.id, todo.id);
@@ -683,6 +765,18 @@ export class TodoList extends HTMLElement {
 			deleteBtn.addEventListener("click", () => {
 				this.#deleteTodo(list.id, todo.id);
 			});
+
+			if (!isFirst) {
+				moveUpBtn.addEventListener("click", () => {
+					this.#moveTodo(list.id, todo.id, -1);
+				});
+			}
+
+			if (!isLast) {
+				moveDownBtn.addEventListener("click", () => {
+					this.#moveTodo(list.id, todo.id, 1);
+				});
+			}
 
 			container.appendChild(li);
 		});
@@ -706,6 +800,7 @@ export class TodoList extends HTMLElement {
 			text: text.trim(),
 			completed: false,
 			createdAt: Date.now(),
+			order: list.todos.length,
 		};
 
 		console.log('[TodoList] Adding todo to list:', todo);
@@ -714,7 +809,7 @@ export class TodoList extends HTMLElement {
 		try {
 			await DBManager.saveLists(this.#lists);
 			console.log('[TodoList] Lists saved after adding todo');
-			this.#render();
+			this.#renderWithTransition();
 		} catch (error) {
 			console.error('[TodoList] Error saving after adding todo:', error);
 		}
@@ -732,10 +827,15 @@ export class TodoList extends HTMLElement {
 		list.todos = list.todos.filter((t) => !t.completed);
 		console.log('[TodoList] Cleared completed for list, removed:', originalLength - list.todos.length);
 		
+		// Reorder remaining todos
+		list.todos.forEach((todo, index) => {
+			todo.order = index;
+		});
+		
 		try {
 			await DBManager.saveLists(this.#lists);
 			console.log('[TodoList] Lists saved after clear completed for list');
-			this.#render();
+			this.#renderWithTransition();
 		} catch (error) {
 			console.error('[TodoList] Error saving after clear list completed:', error);
 		}

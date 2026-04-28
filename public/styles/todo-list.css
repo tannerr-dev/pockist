@@ -109,6 +109,11 @@
 	overflow: hidden;
 }
 
+/* Smooth transitions for list items reordering */
+#lists-container ul:has(.todo-item) {
+	transition: all 0.2s ease;
+}
+
 /* Multi-list sections */
 .todo-list-section {
 	background-color: var(--bg-2);
@@ -196,6 +201,7 @@
 	border-radius: 8px;
 	overflow: hidden;
 	margin-bottom: 0.5rem;
+	transition: all 0.2s ease;
 }
 
 .todo-list-section .todo-footer {
@@ -209,6 +215,12 @@
 	padding: 0.875rem 1rem;
 	border-bottom: 1px solid hsl(0 0% 50% / 0.1);
 	transition: background-color 0.2s;
+}
+
+/* Highlight effect when reorder buttons are clicked */
+.todo-item:has(.todo-move-up:active),
+.todo-item:has(.todo-move-down:active) {
+	background-color: hsl(0 0% 50% / 0.1);
 }
 
 .todo-item:last-child {
@@ -276,6 +288,77 @@
 	opacity: 1;
 	background-color: hsl(0 70% 50% / 0.2);
 	color: hsl(0 70% 50%);
+}
+
+.todo-reorder {
+	display: flex;
+	gap: 0.25rem;
+	flex-shrink: 0;
+	opacity: 0;
+	transition: opacity 0.2s;
+}
+
+.todo-item:hover .todo-reorder {
+	opacity: 1;
+}
+
+.todo-move-up,
+.todo-move-down {
+	width: 24px;
+	height: 24px;
+	border: none;
+	background: transparent;
+	color: var(--text);
+	opacity: 0.5;
+	font-size: 0.7rem;
+	cursor: pointer;
+	border-radius: 4px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	transition: all 0.15s ease;
+	padding: 0;
+}
+
+.todo-move-up:hover:not(:disabled),
+.todo-move-down:hover:not(:disabled) {
+	opacity: 1;
+	background-color: hsl(0 0% 50% / 0.15);
+	transform: scale(1.1);
+}
+
+.todo-move-up:active:not(:disabled),
+.todo-move-down:active:not(:disabled) {
+	transform: scale(0.95);
+}
+
+.todo-move-up:disabled,
+.todo-move-down:disabled {
+	opacity: 0.15;
+	cursor: default;
+}
+
+/* Always show reorder buttons on touch devices */
+@media (hover: none) {
+	.todo-reorder {
+		opacity: 1;
+	}
+}
+
+/* View Transitions API styles */
+::view-transition-old(root),
+::view-transition-new(root) {
+	animation-duration: 0.25s;
+}
+
+/* Smooth transitions for list containers during view transitions */
+::view-transition-group(todo-list) {
+	animation-duration: 0.3s;
+}
+
+::view-transition-old(todo-item),
+::view-transition-new(todo-item) {
+	animation-duration: 0.2s;
 }
 
 .todo-empty {
