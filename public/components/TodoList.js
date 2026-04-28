@@ -710,10 +710,15 @@ export class TodoList extends HTMLElement {
 			return;
 		}
 
-		// Sort todos by order (backward compatibility: use array index if no order field)
+		// Sort: active items first (by order), then completed items (by order)
 		const sortedTodos = [...list.todos].sort((a, b) => {
-			const orderA = typeof a.order === 'number' ? a.order : list.todos.indexOf(a);
-			const orderB = typeof b.order === 'number' ? b.order : list.todos.indexOf(b);
+			// Completed items go to the bottom
+			if (a.completed !== b.completed) {
+				return a.completed ? 1 : -1;
+			}
+			// Within same completion status, sort by order
+			const orderA = typeof a.order === 'number' ? a.order : 0;
+			const orderB = typeof b.order === 'number' ? b.order : 0;
 			return orderA - orderB;
 		});
 
