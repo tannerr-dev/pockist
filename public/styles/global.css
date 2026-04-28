@@ -176,8 +176,8 @@ home-page{
 	border-radius: 12px;
 	background: var(--bg-2);
 	color: var(--text);
-	max-width: 400px;
-	width: 90%;
+	/* max-width: 400px; */
+	/* width: 90%; */
 	box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
 	animation: dialog-fade-in 0.2s ease-out;
 }
@@ -266,8 +266,8 @@ home-page{
 /* Mobile adjustments */
 @media (max-width: 480px) {
 	.app-dialog {
-		width: 95%;
-		max-width: none;
+		/* width: 95%; */
+		/* max-width: none; */
 		margin: 1rem;
 	}
 	
