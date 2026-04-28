@@ -1,5 +1,6 @@
 import { Router } from "../services/Router.js";
 import { DBManager } from "../services/DBManager.js";
+import { DialogService } from "../services/DialogService.js";
 
 export class TodoList extends HTMLElement {
 	#lists = [];
@@ -304,21 +305,30 @@ export class TodoList extends HTMLElement {
 			return;
 		}
 
-		const originalLength = list.todos.length;
-		list.todos = list.todos.filter((t) => t.id !== todoId);
-		console.log('[TodoList] Todos filtered, removed:', originalLength - list.todos.length);
-		
-		// Reorder remaining todos
-		list.todos.forEach((todo, index) => {
-			todo.order = index;
-		});
-		
-		try {
-			await DBManager.saveLists(this.#lists);
-			console.log('[TodoList] Lists saved after delete');
-			this.#renderWithTransition();
-		} catch (error) {
-			console.error('[TodoList] Error saving after delete:', error);
+		const todo = list.todos.find((t) => t.id === todoId);
+		if (!todo) {
+			console.warn('[TodoList] Todo not found:', todoId);
+			return;
+		}
+
+		const confirmed = await DialogService.confirm(`Delete "${todo.text}"? This cannot be undone.`, "Delete");
+		if (confirmed) {
+			const originalLength = list.todos.length;
+			list.todos = list.todos.filter((t) => t.id !== todoId);
+			console.log('[TodoList] Todos filtered, removed:', originalLength - list.todos.length);
+			
+			// Reorder remaining todos
+			list.todos.forEach((todo, index) => {
+				todo.order = index;
+			});
+			
+			try {
+				await DBManager.saveLists(this.#lists);
+				console.log('[TodoList] Lists saved after delete');
+				this.#renderWithTransition();
+			} catch (error) {
+				console.error('[TodoList] Error saving after delete:', error);
+			}
 		}
 	}
 
@@ -717,8 +727,9 @@ export class TodoList extends HTMLElement {
 				const deleteListBtn = listSection.querySelector(
 					`.delete-list-btn[data-list-id="${list.id}"]`
 				);
-				deleteListBtn.addEventListener("click", () => {
-					if (confirm(`Delete "${list.name}"? This cannot be undone.`)) {
+				deleteListBtn.addEventListener("click", async () => {
+					const confirmed = await DialogService.confirm(`Delete "${list.name}"? This cannot be undone.`, "Delete");
+					if (confirmed) {
 						this.#deleteList(list.id);
 					}
 				});
