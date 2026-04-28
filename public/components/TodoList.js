@@ -274,7 +274,7 @@ export class TodoList extends HTMLElement {
 			try {
 				await DBManager.saveLists(this.#lists);
 				console.log('[TodoList] Lists saved after toggle');
-				this.#renderWithTransition();
+				this.#render();
 			} catch (error) {
 				console.error('[TodoList] Error saving after toggle:', error);
 			}
