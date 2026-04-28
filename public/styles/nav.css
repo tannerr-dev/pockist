@@ -119,7 +119,7 @@ nav {
 	transform: translate(0, -11px) rotate(45deg);
 }
 #drawer {
-	position: absolute;
+	position: fixed;
 	position-anchor: --menu-btn;
 	position-area: bottom span-right;
 	margin: 0;
