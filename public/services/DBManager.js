@@ -7,9 +7,10 @@
  * 
  * Current structure:
  * - Database: pockist-db
- * - Version: 2 (incremented from 1 to fix missing object store issue)
+ * - Version: 4 (added lists object store)
  * - Object Stores:
  *   - notes: Stores note content with id as keyPath
+ *   - lists: Stores todo lists
  * 
  * Future expansion:
  * - Additional object stores can be added by incrementing DB_VERSION
@@ -72,9 +73,12 @@ export class DBManager {
      * @returns {Promise<IDBDatabase>} The database connection
      */
     static async init() {
+        console.log('[DBManager] init() called');
         if (this.#db) {
+            console.log('[DBManager] Using existing database connection');
             return this.#db;
         }
+        console.log('[DBManager] Opening database...');
         return this.#openDB();
     }
 
@@ -85,10 +89,12 @@ export class DBManager {
      * @returns {Promise<Object|null>} The note object {id, content, updatedAt} or null if not found
      */
     static async getNote(id) {
+        console.log(`[DBManager] getNote(${id}) called`);
         await this.init();
 
         return new Promise((resolve, reject) => {
             if (!this.#db.objectStoreNames.contains(DB_CONFIG.STORES.NOTES)) {
+                console.error('[DBManager] Notes object store not found');
                 reject(new Error('Notes object store not found'));
                 return;
             }
@@ -98,10 +104,12 @@ export class DBManager {
             const request = store.get(id);
 
             request.onsuccess = () => {
+                console.log(`[DBManager] getNote(${id}) success:`, request.result);
                 resolve(request.result || null);
             };
 
             request.onerror = () => {
+                console.error(`[DBManager] getNote(${id}) error:`, request.error);
                 reject(request.error);
             };
         });
@@ -116,10 +124,12 @@ export class DBManager {
      * @returns {Promise<void>}
      */
     static async saveNote(id, content) {
+        console.log(`[DBManager] saveNote(${id}) called`);
         await this.init();
 
         return new Promise((resolve, reject) => {
             if (!this.#db.objectStoreNames.contains(DB_CONFIG.STORES.NOTES)) {
+                console.error('[DBManager] Notes object store not found');
                 reject(new Error('Notes object store not found'));
                 return;
             }
@@ -146,10 +156,12 @@ export class DBManager {
             const request = store.put(note);
 
             request.onsuccess = () => {
+                console.log(`[DBManager] saveNote(${id}) success`);
                 resolve();
             };
 
             request.onerror = () => {
+                console.error(`[DBManager] saveNote(${id}) error:`, request.error);
                 reject(request.error);
             };
         });
@@ -161,10 +173,12 @@ export class DBManager {
      * @returns {Promise<Array>} Array of note objects
      */
     static async getAllNotes() {
+        console.log('[DBManager] getAllNotes() called');
         await this.init();
 
         return new Promise((resolve, reject) => {
             if (!this.#db.objectStoreNames.contains(DB_CONFIG.STORES.NOTES)) {
+                console.error('[DBManager] Notes object store not found');
                 reject(new Error('Notes object store not found'));
                 return;
             }
@@ -174,10 +188,12 @@ export class DBManager {
             const request = store.getAll();
 
             request.onsuccess = () => {
+                console.log(`[DBManager] getAllNotes() success, found ${request.result.length} notes`);
                 resolve(request.result);
             };
 
             request.onerror = () => {
+                console.error('[DBManager] getAllNotes() error:', request.error);
                 reject(request.error);
             };
         });
@@ -190,10 +206,12 @@ export class DBManager {
      * @returns {Promise<void>}
      */
     static async deleteNote(id) {
+        console.log(`[DBManager] deleteNote(${id}) called`);
         await this.init();
 
         return new Promise((resolve, reject) => {
             if (!this.#db.objectStoreNames.contains(DB_CONFIG.STORES.NOTES)) {
+                console.error('[DBManager] Notes object store not found');
                 reject(new Error('Notes object store not found'));
                 return;
             }
@@ -203,10 +221,12 @@ export class DBManager {
             const request = store.delete(id);
 
             request.onsuccess = () => {
+                console.log(`[DBManager] deleteNote(${id}) success`);
                 resolve();
             };
 
             request.onerror = () => {
+                console.error(`[DBManager] deleteNote(${id}) error:`, request.error);
                 reject(request.error);
             };
         });
@@ -223,10 +243,15 @@ export class DBManager {
      * @returns {Promise<Array>} Array of list objects
      */
     static async getLists() {
+        console.log('[DBManager] getLists() called');
         await this.init();
 
         return new Promise((resolve, reject) => {
+            console.log('[DBManager] Checking if lists store exists:', this.#db.objectStoreNames.contains(DB_CONFIG.STORES.LISTS));
+            console.log('[DBManager] Available stores:', Array.from(this.#db.objectStoreNames));
+            
             if (!this.#db.objectStoreNames.contains(DB_CONFIG.STORES.LISTS)) {
+                console.error('[DBManager] Lists object store not found');
                 reject(new Error('Lists object store not found'));
                 return;
             }
@@ -236,10 +261,12 @@ export class DBManager {
             const request = store.get('todoLists');
 
             request.onsuccess = () => {
+                console.log('[DBManager] getLists() success:', request.result);
                 resolve(request.result || []);
             };
 
             request.onerror = () => {
+                console.error('[DBManager] getLists() error:', request.error);
                 reject(request.error);
             };
         });
@@ -252,10 +279,12 @@ export class DBManager {
      * @returns {Promise<void>}
      */
     static async saveLists(lists) {
+        console.log('[DBManager] saveLists() called with', lists.length, 'lists');
         await this.init();
 
         return new Promise((resolve, reject) => {
             if (!this.#db.objectStoreNames.contains(DB_CONFIG.STORES.LISTS)) {
+                console.error('[DBManager] Lists object store not found');
                 reject(new Error('Lists object store not found'));
                 return;
             }
@@ -265,10 +294,12 @@ export class DBManager {
             const request = store.put(lists, 'todoLists');
 
             request.onsuccess = () => {
+                console.log('[DBManager] saveLists() success');
                 resolve();
             };
 
             request.onerror = () => {
+                console.error('[DBManager] saveLists() error:', request.error);
                 reject(request.error);
             };
         });
@@ -296,38 +327,51 @@ export class DBManager {
      * @returns {Promise<boolean>} true if migration was performed
      */
     static async migrateFromTodoDB() {
+        console.log('[DBManager] migrateFromTodoDB() starting...');
+        
         if (localStorage.getItem('todoDBMigrationComplete') === 'true') {
+            console.log('[DBManager] TodoDB migration already complete, skipping');
             return false;
         }
 
         try {
+            console.log('[DBManager] Checking for old TodoDB...');
             const oldData = await this.#readFromTodoDB();
 
             if (!oldData) {
+                console.log('[DBManager] No old TodoDB data found, marking migration complete');
                 localStorage.setItem('todoDBMigrationComplete', 'true');
                 return false;
             }
 
+            console.log('[DBManager] Found old TodoDB data:', oldData);
+            console.log('[DBManager] Initializing pockist-db...');
             await this.init();
-
+            
+            console.log('[DBManager] Checking if lists store exists...');
             if (!this.#db.objectStoreNames.contains(DB_CONFIG.STORES.LISTS)) {
+                console.error('[DBManager] Lists store not found in pockist-db!');
                 throw new Error('Lists store not found');
             }
 
             // Save the migrated data to the new location
+            console.log('[DBManager] Saving migrated data to pockist-db/lists...');
             await this.saveLists(oldData);
-            console.log('TodoDB data migrated to pockist-db/lists');
+            console.log('[DBManager] TodoDB data migrated to pockist-db/lists successfully');
 
             // Delete the old database
+            console.log('[DBManager] Deleting old TodoDB...');
             await this.#deleteTodoDB();
-            console.log('Old TodoDB deleted');
+            console.log('[DBManager] Old TodoDB deleted successfully');
 
             localStorage.setItem('todoDBMigrationComplete', 'true');
+            console.log('[DBManager] TodoDB migration completed and marked');
             return true;
 
         } catch (error) {
-            console.error('TodoDB migration failed:', error);
-            return false;
+            console.error('[DBManager] TodoDB migration failed:', error);
+            console.error('[DBManager] Error stack:', error.stack);
+            throw error; // Re-throw so caller knows migration failed
         }
     }
 
@@ -338,14 +382,17 @@ export class DBManager {
      */
     static #readFromTodoDB() {
         return new Promise((resolve) => {
+            console.log('[DBManager] #readFromTodoDB() opening TodoDB...');
             try {
                 const request = indexedDB.open(this.#TODO_DB_CONFIG.NAME);
 
                 request.onsuccess = (event) => {
                     const db = event.target.result;
+                    console.log('[DBManager] TodoDB opened successfully, version:', db.version);
 
                     try {
                         if (!db.objectStoreNames.contains(this.#TODO_DB_CONFIG.STORE)) {
+                            console.log('[DBManager] TodoDB store not found, closing');
                             db.close();
                             resolve(null);
                             return;
@@ -356,32 +403,38 @@ export class DBManager {
                         const getRequest = store.get(this.#TODO_DB_CONFIG.KEY);
 
                         getRequest.onsuccess = () => {
+                            console.log('[DBManager] TodoDB data read:', getRequest.result);
                             db.close();
                             resolve(getRequest.result || null);
                         };
 
                         getRequest.onerror = () => {
+                            console.error('[DBManager] Error reading TodoDB:', getRequest.error);
                             db.close();
                             resolve(null);
                         };
                     } catch (error) {
+                        console.error('[DBManager] Exception reading TodoDB:', error);
                         db.close();
                         resolve(null);
                     }
                 };
 
                 request.onerror = () => {
+                    console.log('[DBManager] TodoDB open failed (probably does not exist)');
                     resolve(null);
                 };
 
                 request.onupgradeneeded = () => {
                     // This means the DB didn't exist before, so no migration needed
+                    console.log('[DBManager] TodoDB onupgradeneeded - DB does not exist');
                     try {
                         request.transaction.abort();
                     } catch (e) {}
                     resolve(null);
                 };
             } catch (error) {
+                console.error('[DBManager] Exception opening TodoDB:', error);
                 resolve(null);
             }
         });
@@ -394,17 +447,21 @@ export class DBManager {
      */
     static #deleteTodoDB() {
         return new Promise((resolve) => {
+            console.log('[DBManager] #deleteTodoDB() deleting TodoDB...');
             const request = indexedDB.deleteDatabase(this.#TODO_DB_CONFIG.NAME);
 
             request.onsuccess = () => {
+                console.log('[DBManager] TodoDB deleted successfully');
                 resolve();
             };
 
             request.onerror = () => {
+                console.error('[DBManager] Error deleting TodoDB');
                 resolve();
             };
 
             request.onblocked = () => {
+                console.warn('[DBManager] TodoDB delete blocked');
                 resolve();
             };
         });
@@ -419,34 +476,131 @@ export class DBManager {
      * @returns {Promise<IDBDatabase>} The database connection
      */
     static #openDB() {
+        console.log('[DBManager] #openDB() opening database:', DB_CONFIG.NAME, 'version:', DB_CONFIG.VERSION);
+        
         return new Promise((resolve, reject) => {
             const request = indexedDB.open(DB_CONFIG.NAME, DB_CONFIG.VERSION);
 
             request.onupgradeneeded = (event) => {
+                console.log('[DBManager] onupgradeneeded triggered, old version:', event.oldVersion, 'new version:', event.newVersion);
                 const db = event.target.result;
 
                 if (!db.objectStoreNames.contains(DB_CONFIG.STORES.NOTES)) {
+                    console.log('[DBManager] Creating notes store...');
                     db.createObjectStore(DB_CONFIG.STORES.NOTES, { 
                         keyPath: 'id' 
                     });
+                    console.log('[DBManager] Notes store created');
+                } else {
+                    console.log('[DBManager] Notes store already exists');
                 }
 
                 if (!db.objectStoreNames.contains(DB_CONFIG.STORES.LISTS)) {
+                    console.log('[DBManager] Creating lists store...');
                     db.createObjectStore(DB_CONFIG.STORES.LISTS);
+                    console.log('[DBManager] Lists store created');
+                } else {
+                    console.log('[DBManager] Lists store already exists');
                 }
+                
+                console.log('[DBManager] Stores after upgrade:', Array.from(db.objectStoreNames));
             };
 
             request.onsuccess = (event) => {
                 this.#db = event.target.result;
+                console.log('[DBManager] Database opened successfully');
+                console.log('[DBManager] Database version:', this.#db.version);
+                console.log('[DBManager] Available stores:', Array.from(this.#db.objectStoreNames));
+                
+                // Verify stores exist
+                const hasNotes = this.#db.objectStoreNames.contains(DB_CONFIG.STORES.NOTES);
+                const hasLists = this.#db.objectStoreNames.contains(DB_CONFIG.STORES.LISTS);
+                
+                if (!hasNotes) {
+                    console.error('[DBManager] CRITICAL: Notes store missing after open!');
+                }
+                if (!hasLists) {
+                    console.error('[DBManager] CRITICAL: Lists store missing after open!');
+                }
+                
                 resolve(this.#db);
             };
 
             request.onerror = (event) => {
+                console.error('[DBManager] Database open error:', event.target.error);
                 reject(event.target.error);
             };
 
             request.onblocked = () => {
+                console.error('[DBManager] Database upgrade blocked');
                 reject(new Error('Database upgrade blocked'));
+            };
+        });
+    }
+
+    // ============================================================================
+    // DEBUG AND UTILITY METHODS
+    // ============================================================================
+
+    /**
+     * Log current database status for debugging
+     */
+    static async debugStatus() {
+        console.log('=== DBManager Debug Status ===');
+        console.log('DB_CONFIG:', DB_CONFIG);
+        console.log('localStorage flags:');
+        console.log('  - migrationComplete:', localStorage.getItem('migrationComplete'));
+        console.log('  - multiNoteMigrationComplete:', localStorage.getItem('multiNoteMigrationComplete'));
+        console.log('  - multiNoteMigrationVersion:', localStorage.getItem('multiNoteMigrationVersion'));
+        console.log('  - notesRepairComplete:', localStorage.getItem('notesRepairComplete'));
+        console.log('  - todoDBMigrationComplete:', localStorage.getItem('todoDBMigrationComplete'));
+        
+        try {
+            await this.init();
+            console.log('Database connected: yes');
+            console.log('Database version:', this.#db.version);
+            console.log('Object stores:', Array.from(this.#db.objectStoreNames));
+        } catch (error) {
+            console.error('Database not connected:', error);
+        }
+        console.log('=== End Debug Status ===');
+    }
+
+    /**
+     * Force reset the database - USE WITH CAUTION
+     * Deletes the entire database and recreates it
+     */
+    static async forceReset() {
+        console.warn('[DBManager] forceReset() called - deleting database!');
+        return new Promise((resolve) => {
+            // Close existing connection
+            if (this.#db) {
+                this.#db.close();
+                this.#db = null;
+            }
+            
+            const request = indexedDB.deleteDatabase(DB_CONFIG.NAME);
+            
+            request.onsuccess = () => {
+                console.log('[DBManager] Database deleted, will recreate on next init');
+                // Clear migration flags so everything re-runs
+                localStorage.removeItem('migrationComplete');
+                localStorage.removeItem('multiNoteMigrationComplete');
+                localStorage.removeItem('multiNoteMigrationVersion');
+                localStorage.removeItem('notesRepairComplete');
+                localStorage.removeItem('todoDBMigrationComplete');
+                console.log('[DBManager] Migration flags cleared');
+                resolve(true);
+            };
+            
+            request.onerror = () => {
+                console.error('[DBManager] Failed to delete database');
+                resolve(false);
+            };
+            
+            request.onblocked = () => {
+                console.error('[DBManager] Database delete blocked');
+                resolve(false);
             };
         });
     }
@@ -463,38 +617,56 @@ export class DBManager {
      * @returns {Promise<boolean>} true if migration was performed
      */
     static async migrateFromOldDB() {
+        console.log('[DBManager] migrateFromOldDB() starting...');
+        
         if (localStorage.getItem('migrationComplete') === 'true') {
+            console.log('[DBManager] OldDB migration already complete, skipping');
             return false;
         }
 
         try {
+            console.log('[DBManager] Checking if old textAreaDB exists...');
             const oldDBExists = await this.#checkOldDBExists();
+            console.log('[DBManager] Old DB exists:', oldDBExists);
             
             if (!oldDBExists) {
+                console.log('[DBManager] No old DB found, marking migration complete');
                 localStorage.setItem('migrationComplete', 'true');
                 return false;
             }
 
+            console.log('[DBManager] Reading data from old DB...');
             const oldData = await this.#readFromOldDB();
+            console.log('[DBManager] Old DB data:', oldData);
             
+            console.log('[DBManager] Initializing pockist-db...');
             await this.init();
             
             if (!this.#db.objectStoreNames.contains(DB_CONFIG.STORES.NOTES)) {
+                console.error('[DBManager] Notes store not found!');
                 throw new Error('Notes store not found');
             }
 
             if (oldData !== null && oldData !== undefined && oldData !== '') {
+                console.log('[DBManager] Saving old data to notes store...');
                 await this.saveNote(1, oldData);
+                console.log('[DBManager] Data saved successfully');
+            } else {
+                console.log('[DBManager] No data to migrate');
             }
 
+            console.log('[DBManager] Deleting old textAreaDB...');
             await this.#deleteOldDB();
-            localStorage.setItem('migrationComplete', 'true');
+            console.log('[DBManager] Old DB deleted');
             
+            localStorage.setItem('migrationComplete', 'true');
+            console.log('[DBManager] OldDB migration completed');
             return true;
 
         } catch (error) {
-            console.error('Migration failed:', error);
-            return false;
+            console.error('[DBManager] OldDB migration failed:', error);
+            console.error('[DBManager] Error stack:', error.stack);
+            throw error;
         }
     }
 
@@ -503,11 +675,14 @@ export class DBManager {
             if (indexedDB.databases) {
                 indexedDB.databases().then(databases => {
                     const exists = databases.some(db => db.name === OLD_DB_CONFIG.NAME);
+                    console.log('[DBManager] indexedDB.databases() found old DB:', exists);
                     resolve(exists);
                 }).catch(() => {
+                    console.log('[DBManager] indexedDB.databases() failed, trying open method');
                     resolve(this.#tryOpenOldDB());
                 });
             } else {
+                console.log('[DBManager] indexedDB.databases not supported, trying open method');
                 resolve(this.#tryOpenOldDB());
             }
         });
@@ -519,21 +694,25 @@ export class DBManager {
                 const request = indexedDB.open(OLD_DB_CONFIG.NAME);
                 
                 request.onsuccess = () => {
+                    console.log('[DBManager] Old DB opened successfully');
                     request.result.close();
                     resolve(true);
                 };
                 
                 request.onerror = () => {
+                    console.log('[DBManager] Old DB open failed');
                     resolve(false);
                 };
                 
                 request.onupgradeneeded = () => {
+                    console.log('[DBManager] Old DB onupgradeneeded - does not exist');
                     try {
                         request.transaction.abort();
                     } catch (e) {}
                     resolve(false);
                 };
             } catch (error) {
+                console.error('[DBManager] Exception opening old DB:', error);
                 resolve(false);
             }
         });
@@ -541,13 +720,16 @@ export class DBManager {
 
     static #readFromOldDB() {
         return new Promise((resolve, reject) => {
+            console.log('[DBManager] #readFromOldDB() starting...');
             const request = indexedDB.open(OLD_DB_CONFIG.NAME);
 
             request.onsuccess = (event) => {
                 const db = event.target.result;
+                console.log('[DBManager] Old DB opened for reading');
                 
                 try {
                     if (!db.objectStoreNames.contains(OLD_DB_CONFIG.STORE)) {
+                        console.log('[DBManager] Old DB store not found');
                         db.close();
                         resolve(null);
                         return;
@@ -561,23 +743,28 @@ export class DBManager {
                         db.close();
                         
                         if (getRequest.result && typeof getRequest.result.value !== 'undefined') {
+                            console.log('[DBManager] Old DB data read successfully');
                             resolve(getRequest.result.value);
                         } else {
+                            console.log('[DBManager] Old DB record not found');
                             resolve(null);
                         }
                     };
 
                     getRequest.onerror = () => {
+                        console.error('[DBManager] Error reading old DB record:', getRequest.error);
                         db.close();
                         reject(getRequest.error);
                     };
                 } catch (error) {
+                    console.error('[DBManager] Exception reading old DB:', error);
                     db.close();
                     reject(error);
                 }
             };
 
             request.onerror = () => {
+                console.error('[DBManager] Error opening old DB for reading:', request.error);
                 reject(request.error);
             };
         });
@@ -585,17 +772,21 @@ export class DBManager {
 
     static #deleteOldDB() {
         return new Promise((resolve) => {
+            console.log('[DBManager] #deleteOldDB() starting...');
             const request = indexedDB.deleteDatabase(OLD_DB_CONFIG.NAME);
 
             request.onsuccess = () => {
+                console.log('[DBManager] Old DB deleted successfully');
                 resolve();
             };
 
             request.onerror = () => {
+                console.error('[DBManager] Error deleting old DB');
                 resolve();
             };
 
             request.onblocked = () => {
+                console.warn('[DBManager] Old DB delete blocked');
                 resolve();
             };
         });
@@ -616,25 +807,36 @@ export class DBManager {
      * @returns {Promise<boolean>} true if migration was performed
      */
     static async migrateToMultiNoteFormat() {
+        console.log('[DBManager] migrateToMultiNoteFormat() starting...');
+        
         // Check if migration was already completed - but re-run if DB version changed
         const currentVersion = DB_CONFIG.VERSION.toString();
         const lastMigratedVersion = localStorage.getItem('multiNoteMigrationVersion');
 
+        console.log('[DBManager] Current DB version:', currentVersion);
+        console.log('[DBManager] Last migrated version:', lastMigratedVersion);
+        console.log('[DBManager] multiNoteMigrationComplete:', localStorage.getItem('multiNoteMigrationComplete'));
+
         if (localStorage.getItem('multiNoteMigrationComplete') === 'true' && lastMigratedVersion === currentVersion) {
+            console.log('[DBManager] Multi-note migration already complete for this version, skipping');
             return false;
         }
 
         try {
+            console.log('[DBManager] Initializing database...');
             await this.init();
 
             if (!this.#db.objectStoreNames.contains(DB_CONFIG.STORES.NOTES)) {
+                console.error('[DBManager] Notes store not found!');
                 localStorage.setItem('multiNoteMigrationComplete', 'true');
                 localStorage.setItem('multiNoteMigrationVersion', currentVersion);
                 return false;
             }
 
             // Get all notes
+            console.log('[DBManager] Getting all notes for migration...');
             const allNotes = await this.getAllNotes();
+            console.log('[DBManager] Found', allNotes.length, 'notes');
 
             // Find notes with numeric IDs (old format) OR notes with invalid string content
             const oldFormatNotes = allNotes.filter(note => {
@@ -645,28 +847,33 @@ export class DBManager {
                 return false;
             });
 
+            console.log('[DBManager] Found', oldFormatNotes.length, 'old-format notes to migrate');
+
             if (oldFormatNotes.length === 0) {
                 // No old-format notes to migrate
+                console.log('[DBManager] No old-format notes found, marking migration complete');
                 localStorage.setItem('multiNoteMigrationComplete', 'true');
                 localStorage.setItem('multiNoteMigrationVersion', currentVersion);
                 return false;
             }
 
-            console.log(`Migrating ${oldFormatNotes.length} old-format note(s) to multi-note format...`);
+            console.log(`[DBManager] Migrating ${oldFormatNotes.length} old-format note(s) to multi-note format...`);
 
             // Migrate each old-format note
             for (const oldNote of oldFormatNotes) {
+                console.log('[DBManager] Migrating note:', oldNote.id);
                 await this.#migrateSingleNote(oldNote);
             }
 
-            console.log('Multi-note migration completed successfully');
+            console.log('[DBManager] Multi-note migration completed successfully');
             localStorage.setItem('multiNoteMigrationComplete', 'true');
             localStorage.setItem('multiNoteMigrationVersion', currentVersion);
             return true;
 
         } catch (error) {
-            console.error('Multi-note migration failed:', error);
-            return false;
+            console.error('[DBManager] Multi-note migration failed:', error);
+            console.error('[DBManager] Error stack:', error.stack);
+            throw error;
         }
     }
 
@@ -707,7 +914,7 @@ export class DBManager {
         // Delete old note
         await this.deleteNote(oldNote.id);
 
-        console.log(`Migrated note ${oldNote.id} -> ${newId}`);
+        console.log(`[DBManager] Migrated note ${oldNote.id} -> ${newId}`);
     }
 
     /**
@@ -791,25 +998,34 @@ export class DBManager {
      * @returns {Promise<boolean>} true if any notes were repaired
      */
     static async repairCorruptedNotes() {
+        console.log('[DBManager] repairCorruptedNotes() starting...');
+        
         // Only run repair once per session
         if (localStorage.getItem('notesRepairComplete') === 'true') {
+            console.log('[DBManager] Notes repair already complete, skipping');
             return false;
         }
 
         try {
+            console.log('[DBManager] Initializing database...');
             await this.init();
 
             if (!this.#db.objectStoreNames.contains(DB_CONFIG.STORES.NOTES)) {
+                console.error('[DBManager] Notes store not found!');
                 localStorage.setItem('notesRepairComplete', 'true');
                 return false;
             }
 
+            console.log('[DBManager] Getting all notes for repair check...');
             const allNotes = await this.getAllNotes();
+            console.log('[DBManager] Found', allNotes.length, 'notes to check');
+            
             let fixedCount = 0;
 
             for (const note of allNotes) {
                 // Check if content is an object (corrupted by double-wrapping)
                 if (note.content && typeof note.content === 'object') {
+                    console.log('[DBManager] Found corrupted note:', note.id);
                     const fixedNote = {
                         id: note.id,
                         title: note.content.title || note.title || 'Untitled',
@@ -823,15 +1039,18 @@ export class DBManager {
             }
 
             if (fixedCount > 0) {
-                console.log(`Repaired ${fixedCount} corrupted note(s)`);
+                console.log(`[DBManager] Repaired ${fixedCount} corrupted note(s)`);
+            } else {
+                console.log('[DBManager] No corrupted notes found');
             }
 
             localStorage.setItem('notesRepairComplete', 'true');
             return fixedCount > 0;
 
         } catch (error) {
-            console.error('Notes repair failed:', error);
-            return false;
+            console.error('[DBManager] Notes repair failed:', error);
+            console.error('[DBManager] Error stack:', error.stack);
+            throw error;
         }
     }
 
@@ -840,6 +1059,7 @@ export class DBManager {
      * Clears the repair flag and runs repair again
      */
     static async forceRepairCorruptedNotes() {
+        console.log('[DBManager] forceRepairCorruptedNotes() called');
         localStorage.removeItem('notesRepairComplete');
         return this.repairCorruptedNotes();
     }

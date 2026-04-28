@@ -5,25 +5,69 @@ import { DBManager } from "./services/DBManager.js";
 
 navigator.serviceWorker.addEventListener("message", (event) => {
     if (event.data && event.data.type === "CACHE_UPDATED") {
-        console.log("Cache updated:", event.data.url);
+        console.log("[App] Cache updated:", event.data.url);
     }
 });
 
 window.addEventListener("DOMContentLoaded", async () => {
+    console.log('[App] DOMContentLoaded event fired');
+    
+    // Log debug status first
+    console.log('[App] Getting DBManager debug status...');
+    await DBManager.debugStatus();
+    
     // Run database migrations before initializing the router
     // Order matters: first migrate from oldest DB, then migrate to multi-note format, then repair
-    try {
-        await DBManager.migrateFromOldDB();
-        await DBManager.migrateToMultiNoteFormat();
-        await DBManager.repairCorruptedNotes();
-    } catch (err) {
-        console.error("Migration failed:", err);
-    }
-
-    app.Router.init();
+    console.log('[App] Starting database migrations...');
     
+    try {
+        console.log('[App] Step 1: Running migrateFromOldDB (textAreaDB -> pockist-db)...');
+        const oldDBResult = await DBManager.migrateFromOldDB();
+        console.log('[App] migrateFromOldDB result:', oldDBResult);
+    } catch (err) {
+        console.error("[App] migrateFromOldDB failed:", err);
+        console.error("[App] Error stack:", err.stack);
+        // Continue anyway - don't block the app
+    }
+    
+    try {
+        console.log('[App] Step 2: Running migrateToMultiNoteFormat (v2 -> v3)...');
+        const multiNoteResult = await DBManager.migrateToMultiNoteFormat();
+        console.log('[App] migrateToMultiNoteFormat result:', multiNoteResult);
+    } catch (err) {
+        console.error("[App] migrateToMultiNoteFormat failed:", err);
+        console.error("[App] Error stack:", err.stack);
+        // Continue anyway
+    }
+    
+    try {
+        console.log('[App] Step 3: Running repairCorruptedNotes...');
+        const repairResult = await DBManager.repairCorruptedNotes();
+        console.log('[App] repairCorruptedNotes result:', repairResult);
+    } catch (err) {
+        console.error("[App] repairCorruptedNotes failed:", err);
+        console.error("[App] Error stack:", err.stack);
+        // Continue anyway
+    }
+    
+    console.log('[App] All migrations completed');
+
+    // Now initialize the router
+    console.log('[App] Initializing router...');
+    try {
+        app.Router.init();
+        console.log('[App] Router initialized successfully');
+    } catch (err) {
+        console.error("[App] Router initialization failed:", err);
+    }
+    
+    // Register service worker
+    console.log('[App] Registering service worker...');
     navigator.serviceWorker.register("/sw.js").then(registration => {
+        console.log('[App] Service worker registered');
+        
         const showUpdatePrompt = () => {
+            console.log('[App] Showing update prompt');
             const banner = document.createElement("div");
             banner.id = "update-banner";
             banner.innerHTML = `
@@ -52,7 +96,11 @@ window.addEventListener("DOMContentLoaded", async () => {
                 }
             });
         });
+    }).catch(err => {
+        console.error('[App] Service worker registration failed:', err);
     });
+    
+    console.log('[App] DOMContentLoaded handler complete');
 });
 
 window.app = {
@@ -60,14 +108,17 @@ window.app = {
     API,
     Store,
     showError: (message="There was an error.", goToHome=true)=>{
+        console.log('[App] showError called:', message, goToHome);
         document.getElementById("alert-modal").showModal()
         document.querySelector("#alert-modal p").textContent = message;
         if (goToHome) app.Router.go("/");
     },
     closeError: ()=>{
+        console.log('[App] closeError called');
         document.getElementById("alert-modal").close()
     },
     login: async (event) => {
+        console.log('[App] login called');
         event.preventDefault();
         let errors = [];
         const email = document.getElementById("login-email").value;
@@ -88,7 +139,13 @@ window.app = {
         }
     },
     logout: () => {
+        console.log('[App] logout called');
         Store.jwt = null;
         app.Router.go("/");
     },
+    // Debug helpers exposed for console use
+    debug: {
+        dbStatus: () => DBManager.debugStatus(),
+        forceReset: () => DBManager.forceReset()
+    }
 }

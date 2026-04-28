@@ -5,6 +5,7 @@ export class TodoList extends HTMLElement {
 	#lists = [];
 	#currentListId = null;
 	#mode = "single"; // "single" for home page (one list), "all" for /list page
+	#initialized = false;
 
 	// DOM element references
 	#containerEl = null;
@@ -22,6 +23,7 @@ export class TodoList extends HTMLElement {
 	}
 
 	attributeChangedCallback(name, oldValue, newValue) {
+		console.log('[TodoList] attributeChangedCallback:', name, oldValue, '->', newValue);
 		if (name === "mode" && oldValue !== newValue) {
 			this.#mode = newValue || "single";
 			if (this.#containerEl) {
@@ -31,9 +33,10 @@ export class TodoList extends HTMLElement {
 	}
 
 	connectedCallback() {
+		console.log('[TodoList] connectedCallback called');
 		const template = document.getElementById("todo-list");
 		if (!template) {
-			console.error("Template with id 'todo-list' not found");
+			console.error("[TodoList] Template with id 'todo-list' not found");
 			return;
 		}
 		const content = template.content.cloneNode(true);
@@ -50,7 +53,20 @@ export class TodoList extends HTMLElement {
 		this.#newListInputEl = this.querySelector("#new-list-input");
 		this.#newListBtn = this.querySelector("#new-list-btn");
 
+		console.log('[TodoList] DOM elements cached:', {
+			container: !!this.#containerEl,
+			listSelector: !!this.#listSelectorEl,
+			listsContainer: !!this.#listsContainerEl,
+			input: !!this.#inputEl,
+			addBtn: !!this.#addBtn,
+			itemsLeft: !!this.#itemsLeftEl,
+			clearCompleted: !!this.#clearCompletedBtn,
+			newListInput: !!this.#newListInputEl,
+			newListBtn: !!this.#newListBtn
+		});
+
 		this.#mode = this.getAttribute("mode") || "single";
+		console.log('[TodoList] Mode set to:', this.#mode);
 
 		// Add click handler for heading link
 		const headingLink = this.querySelector(".todo-heading-link");
@@ -65,15 +81,32 @@ export class TodoList extends HTMLElement {
 	}
 
 	async #init() {
+		console.log('[TodoList] #init() starting...');
+		
+		if (this.#initialized) {
+			console.log('[TodoList] Already initialized, skipping');
+			return;
+		}
+
 		try {
+			// First, ensure DBManager is initialized
+			console.log('[TodoList] Initializing DBManager...');
+			await DBManager.init();
+			console.log('[TodoList] DBManager initialized successfully');
+
 			// Migrate from old TodoDB if needed
+			console.log('[TodoList] Running TodoDB migration...');
 			await DBManager.migrateFromTodoDB();
+			console.log('[TodoList] TodoDB migration completed');
 
 			// Load lists from pockist-db
+			console.log('[TodoList] Loading lists from pockist-db...');
 			this.#lists = await DBManager.getLists();
+			console.log('[TodoList] Loaded lists:', this.#lists.length, 'lists');
 
 			// Ensure at least one list exists
 			if (this.#lists.length === 0) {
+				console.log('[TodoList] No lists found, creating default list');
 				this.#lists.push({
 					id: "default",
 					name: "My Todos",
@@ -81,62 +114,103 @@ export class TodoList extends HTMLElement {
 					isDefault: true,
 					createdAt: Date.now(),
 				});
+				console.log('[TodoList] Saving default list...');
 				await DBManager.saveLists(this.#lists);
+				console.log('[TodoList] Default list saved');
 			}
+			
 			// Set current list to default if not set
 			if (!this.#currentListId) {
 				const defaultList = this.#lists.find((l) => l.isDefault);
 				this.#currentListId = defaultList?.id || this.#lists[0]?.id;
+				console.log('[TodoList] Current list ID set to:', this.#currentListId);
 			}
+
+			this.#initialized = true;
+			console.log('[TodoList] Initialization complete, rendering...');
 			this.#render();
+			console.log('[TodoList] Initial render complete');
 		} catch (error) {
-			console.error("Error loading todos from IndexedDB:", error);
+			console.error("[TodoList] CRITICAL ERROR in #init():", error);
+			console.error("[TodoList] Error stack:", error.stack);
+			// Show error in the UI
+			if (this.#containerEl) {
+				this.#containerEl.innerHTML = `
+					<div style="padding: 20px; color: red; border: 1px solid red; margin: 10px;">
+						<strong>Error loading todo lists:</strong><br>
+						${error.message}<br>
+						<small>Check browser console for details</small>
+					</div>
+				`;
+			}
+			throw error; // Re-throw so caller knows initialization failed
 		}
 
 		// Event listeners for single list mode
+		console.log('[TodoList] Setting up event listeners...');
 		if (this.#addBtn) {
 			this.#addBtn.addEventListener("click", () => this.#handleAdd());
+			console.log('[TodoList] Add button listener attached');
 		}
 		if (this.#inputEl) {
 			this.#inputEl.addEventListener("keydown", (e) => {
 				if (e.key === "Enter") this.#handleAdd();
 			});
+			console.log('[TodoList] Input keydown listener attached');
 		}
 		if (this.#clearCompletedBtn) {
 			this.#clearCompletedBtn.addEventListener("click", () =>
 				this.#clearCompleted()
 			);
+			console.log('[TodoList] Clear completed listener attached');
 		}
 
 		// Event listeners for new list creation
 		if (this.#newListBtn) {
 			this.#newListBtn.addEventListener("click", () => this.#handleNewList());
+			console.log('[TodoList] New list button listener attached');
 		}
 		if (this.#newListInputEl) {
 			this.#newListInputEl.addEventListener("keydown", (e) => {
 				if (e.key === "Enter") this.#handleNewList();
 			});
+			console.log('[TodoList] New list input listener attached');
 		}
 
 		// Event listener for list selector
 		if (this.#listSelectorEl) {
 			this.#listSelectorEl.addEventListener("change", (e) => {
 				this.#currentListId = e.target.value;
+				console.log('[TodoList] List selector changed to:', this.#currentListId);
 				this.#render();
 			});
+			console.log('[TodoList] List selector listener attached');
 		}
+		
+		console.log('[TodoList] #init() finished');
 	}
 
 	#getCurrentList() {
-		return this.#lists.find((l) => l.id === this.#currentListId);
+		const list = this.#lists.find((l) => l.id === this.#currentListId);
+		if (!list) {
+			console.warn('[TodoList] getCurrentList() - no list found for ID:', this.#currentListId);
+		}
+		return list;
 	}
 
 	async #handleAdd() {
+		console.log('[TodoList] #handleAdd() called');
 		const text = this.#inputEl?.value.trim();
-		if (!text) return;
+		if (!text) {
+			console.log('[TodoList] No text entered, ignoring');
+			return;
+		}
 
 		const list = this.#getCurrentList();
-		if (!list) return;
+		if (!list) {
+			console.error('[TodoList] No current list found!');
+			return;
+		}
 
 		const todo = {
 			id: Date.now().toString(),
@@ -145,57 +219,115 @@ export class TodoList extends HTMLElement {
 			createdAt: Date.now(),
 		};
 
+		console.log('[TodoList] Adding todo:', todo);
 		list.todos.push(todo);
 		this.#inputEl.value = "";
-		await DBManager.saveLists(this.#lists);
-		this.#render();
+		
+		try {
+			console.log('[TodoList] Saving lists...');
+			await DBManager.saveLists(this.#lists);
+			console.log('[TodoList] Lists saved successfully');
+			this.#render();
+		} catch (error) {
+			console.error('[TodoList] Error saving lists:', error);
+		}
 	}
 
 	async #toggleTodo(listId, todoId) {
+		console.log('[TodoList] #toggleTodo() called:', listId, todoId);
 		const list = this.#lists.find((l) => l.id === listId);
-		if (!list) return;
+		if (!list) {
+			console.error('[TodoList] List not found:', listId);
+			return;
+		}
 
 		const todo = list.todos.find((t) => t.id === todoId);
 		if (todo) {
 			todo.completed = !todo.completed;
-			await DBManager.saveLists(this.#lists);
-			this.#render();
+			console.log('[TodoList] Todo toggled, new state:', todo.completed);
+			try {
+				await DBManager.saveLists(this.#lists);
+				console.log('[TodoList] Lists saved after toggle');
+				this.#render();
+			} catch (error) {
+				console.error('[TodoList] Error saving after toggle:', error);
+			}
+		} else {
+			console.warn('[TodoList] Todo not found:', todoId);
 		}
 	}
 
 	async #editTodo(listId, todoId, newText) {
+		console.log('[TodoList] #editTodo() called:', listId, todoId, newText);
 		const list = this.#lists.find((l) => l.id === listId);
-		if (!list) return;
+		if (!list) {
+			console.error('[TodoList] List not found:', listId);
+			return;
+		}
 
 		const todo = list.todos.find((t) => t.id === todoId);
 		if (todo && newText.trim()) {
 			todo.text = newText.trim();
-			await DBManager.saveLists(this.#lists);
-			this.#render();
+			console.log('[TodoList] Todo text updated');
+			try {
+				await DBManager.saveLists(this.#lists);
+				console.log('[TodoList] Lists saved after edit');
+				this.#render();
+			} catch (error) {
+				console.error('[TodoList] Error saving after edit:', error);
+			}
 		}
 	}
 
 	async #deleteTodo(listId, todoId) {
+		console.log('[TodoList] #deleteTodo() called:', listId, todoId);
 		const list = this.#lists.find((l) => l.id === listId);
-		if (!list) return;
+		if (!list) {
+			console.error('[TodoList] List not found:', listId);
+			return;
+		}
 
+		const originalLength = list.todos.length;
 		list.todos = list.todos.filter((t) => t.id !== todoId);
-		await DBManager.saveLists(this.#lists);
-		this.#render();
+		console.log('[TodoList] Todos filtered, removed:', originalLength - list.todos.length);
+		
+		try {
+			await DBManager.saveLists(this.#lists);
+			console.log('[TodoList] Lists saved after delete');
+			this.#render();
+		} catch (error) {
+			console.error('[TodoList] Error saving after delete:', error);
+		}
 	}
 
 	async #clearCompleted() {
+		console.log('[TodoList] #clearCompleted() called');
 		const list = this.#getCurrentList();
-		if (!list) return;
+		if (!list) {
+			console.error('[TodoList] No current list found');
+			return;
+		}
 
+		const originalLength = list.todos.length;
 		list.todos = list.todos.filter((t) => !t.completed);
-		await DBManager.saveLists(this.#lists);
-		this.#render();
+		console.log('[TodoList] Cleared completed todos, removed:', originalLength - list.todos.length);
+		
+		try {
+			await DBManager.saveLists(this.#lists);
+			console.log('[TodoList] Lists saved after clear completed');
+			this.#render();
+		} catch (error) {
+			console.error('[TodoList] Error saving after clear:', error);
+		}
 	}
 
 	async #handleNewList() {
+		console.log('[TodoList] #handleNewList() called');
 		const name = this.#newListInputEl?.value.trim();
-		if (!name) return;
+		if (!name) {
+			console.log('[TodoList] No list name entered');
+			return;
+		}
 
 		const newList = {
 			id: Date.now().toString(),
@@ -205,51 +337,91 @@ export class TodoList extends HTMLElement {
 			createdAt: Date.now(),
 		};
 
+		console.log('[TodoList] Creating new list:', newList);
 		this.#lists.push(newList);
 		this.#currentListId = newList.id;
 		this.#newListInputEl.value = "";
-		await DBManager.saveLists(this.#lists);
-		this.#render();
+		
+		try {
+			await DBManager.saveLists(this.#lists);
+			console.log('[TodoList] New list saved');
+			this.#render();
+		} catch (error) {
+			console.error('[TodoList] Error saving new list:', error);
+		}
 	}
 
 	async #setDefaultList(listId) {
+		console.log('[TodoList] #setDefaultList() called:', listId);
 		this.#lists.forEach((l) => {
 			l.isDefault = l.id === listId;
 		});
-		await DBManager.saveLists(this.#lists);
-		this.#render();
+		
+		try {
+			await DBManager.saveLists(this.#lists);
+			console.log('[TodoList] Default list set and saved');
+			this.#render();
+		} catch (error) {
+			console.error('[TodoList] Error saving default list:', error);
+		}
 	}
 
 	async #deleteList(listId) {
+		console.log('[TodoList] #deleteList() called:', listId);
 		if (this.#lists.length <= 1) {
 			alert("Cannot delete the last list");
+			console.log('[TodoList] Cannot delete last list');
 			return;
 		}
 
 		this.#lists = this.#lists.filter((l) => l.id !== listId);
+		console.log('[TodoList] List removed, remaining:', this.#lists.length);
 
 		// If we deleted the current list, switch to default or first
 		if (this.#currentListId === listId) {
 			const defaultList = this.#lists.find((l) => l.isDefault);
 			this.#currentListId = defaultList?.id || this.#lists[0]?.id;
+			console.log('[TodoList] Switched to list:', this.#currentListId);
 		}
 
-		await DBManager.saveLists(this.#lists);
-		this.#render();
+		try {
+			await DBManager.saveLists(this.#lists);
+			console.log('[TodoList] Lists saved after delete');
+			this.#render();
+		} catch (error) {
+			console.error('[TodoList] Error saving after list delete:', error);
+		}
 	}
 
 	async #editListName(listId, newName) {
+		console.log('[TodoList] #editListName() called:', listId, newName);
 		const list = this.#lists.find((l) => l.id === listId);
-		if (!list || !newName) return;
+		if (!list || !newName) {
+			console.log('[TodoList] List not found or no name provided');
+			return;
+		}
 
 		if (newName.trim() && newName.trim() !== list.name) {
 			list.name = newName.trim();
-			await DBManager.saveLists(this.#lists);
-			this.#render();
+			console.log('[TodoList] List name updated to:', list.name);
+			
+			try {
+				await DBManager.saveLists(this.#lists);
+				console.log('[TodoList] Lists saved after name edit');
+				this.#render();
+			} catch (error) {
+				console.error('[TodoList] Error saving after name edit:', error);
+			}
 		}
 	}
 
 	#render() {
+		console.log('[TodoList] #render() called, mode:', this.#mode);
+		if (!this.#containerEl) {
+			console.error('[TodoList] Cannot render - container element not found');
+			return;
+		}
+		
 		if (this.#mode === "single") {
 			this.#renderSingleMode();
 		} else {
@@ -258,6 +430,8 @@ export class TodoList extends HTMLElement {
 	}
 
 	#renderSingleMode() {
+		console.log('[TodoList] #renderSingleMode() called, lists:', this.#lists.length);
+		
 		// Show list selector dropdown
 		if (this.#listSelectorEl) {
 			this.#listSelectorEl.innerHTML = this.#lists
@@ -288,6 +462,8 @@ export class TodoList extends HTMLElement {
 	}
 
 	#renderAllMode() {
+		console.log('[TodoList] #renderAllMode() called, lists:', this.#lists.length);
+		
 		// Hide list selector in all mode
 		if (this.#listSelectorEl) {
 			this.#listSelectorEl.style.display = "none";
@@ -426,8 +602,12 @@ export class TodoList extends HTMLElement {
 	}
 
 	#renderTodoList(listId, container) {
+		console.log('[TodoList] #renderTodoList() called:', listId);
 		const list = this.#lists.find((l) => l.id === listId);
-		if (!container) return;
+		if (!container) {
+			console.error('[TodoList] No container provided for renderTodoList');
+			return;
+		}
 
 		container.innerHTML = "";
 
@@ -456,6 +636,7 @@ export class TodoList extends HTMLElement {
 	}
 
 	#renderTodosForList(list, container) {
+		console.log('[TodoList] #renderTodosForList() called:', list.name, 'todos:', list.todos.length);
 		container.innerHTML = "";
 
 		if (list.todos.length === 0) {
@@ -508,10 +689,17 @@ export class TodoList extends HTMLElement {
 	}
 
 	async #addTodoToList(listId, text) {
-		if (!text.trim()) return;
+		console.log('[TodoList] #addTodoToList() called:', listId, text);
+		if (!text.trim()) {
+			console.log('[TodoList] Empty text, ignoring');
+			return;
+		}
 
 		const list = this.#lists.find((l) => l.id === listId);
-		if (!list) return;
+		if (!list) {
+			console.error('[TodoList] List not found:', listId);
+			return;
+		}
 
 		const todo = {
 			id: Date.now().toString(),
@@ -520,18 +708,37 @@ export class TodoList extends HTMLElement {
 			createdAt: Date.now(),
 		};
 
+		console.log('[TodoList] Adding todo to list:', todo);
 		list.todos.push(todo);
-		await DBManager.saveLists(this.#lists);
-		this.#render();
+		
+		try {
+			await DBManager.saveLists(this.#lists);
+			console.log('[TodoList] Lists saved after adding todo');
+			this.#render();
+		} catch (error) {
+			console.error('[TodoList] Error saving after adding todo:', error);
+		}
 	}
 
 	async #clearCompletedForList(listId) {
+		console.log('[TodoList] #clearCompletedForList() called:', listId);
 		const list = this.#lists.find((l) => l.id === listId);
-		if (!list) return;
+		if (!list) {
+			console.error('[TodoList] List not found:', listId);
+			return;
+		}
 
+		const originalLength = list.todos.length;
 		list.todos = list.todos.filter((t) => !t.completed);
-		await DBManager.saveLists(this.#lists);
-		this.#render();
+		console.log('[TodoList] Cleared completed for list, removed:', originalLength - list.todos.length);
+		
+		try {
+			await DBManager.saveLists(this.#lists);
+			console.log('[TodoList] Lists saved after clear completed for list');
+			this.#render();
+		} catch (error) {
+			console.error('[TodoList] Error saving after clear list completed:', error);
+		}
 	}
 
 	#escapeHtml(text) {
@@ -542,3 +749,4 @@ export class TodoList extends HTMLElement {
 }
 
 customElements.define("todo-list", TodoList);
+console.log('[TodoList] Custom element registered');
