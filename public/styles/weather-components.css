@@ -93,7 +93,9 @@ weather-current {
     display: flex;
     justify-content: space-between;
     padding: 8px 12px;
-    background: var(--bg-3);
+    /* color: var(--bg); */
+	/* background-color: var(--accent); */
+    background: var(--bg-light);
     border-radius: 8px;
 }
 
