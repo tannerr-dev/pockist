@@ -15,26 +15,7 @@ export class HomePage extends HTMLElement {  // <home-page>
                 Router.go(href);
             })
         });
-
-        // this.render();
     }
-    // async render() {
-    //     const topMovies = await API.getTopMovies()
-    //     renderMoviesInList(topMovies, document.querySelector("#top-10 ul"));
-    //
-    //     const randomMovies = await API.getRandomMovies()
-    //     renderMoviesInList(randomMovies, document.querySelector("#random ul"));
-    //
-    //     function renderMoviesInList(movies, ul) {
-    //         ul.innerHTML = "";
-    //         movies.forEach(movie => {
-    //             const li = document.createElement("li");
-    //             li.appendChild(new MovieItemComponent(movie));
-    //             ul.appendChild(li);
-    //         });
-    //     }
-    // }
-
 }
 
 customElements.define("home-page", HomePage);
