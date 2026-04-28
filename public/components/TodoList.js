@@ -104,6 +104,13 @@ export class TodoList extends HTMLElement {
 			this.#lists = await DBManager.getLists();
 			console.log('[TodoList] Loaded lists:', this.#lists.length, 'lists');
 
+			// Migrate lists to add order field (backward compatibility)
+			this.#lists.forEach((list, index) => {
+				if (typeof list.order !== 'number') {
+					list.order = index;
+				}
+			});
+
 			// Ensure at least one list exists
 			if (this.#lists.length === 0) {
 				console.log('[TodoList] No lists found, creating default list');
@@ -113,6 +120,7 @@ export class TodoList extends HTMLElement {
 					todos: [],
 					isDefault: true,
 					createdAt: Date.now(),
+					order: 0,
 				});
 				console.log('[TodoList] Saving default list...');
 				await DBManager.saveLists(this.#lists);
@@ -400,6 +408,7 @@ export class TodoList extends HTMLElement {
 			todos: [],
 			isDefault: false,
 			createdAt: Date.now(),
+			order: this.#lists.length,
 		};
 
 		console.log('[TodoList] Creating new list:', newList);
@@ -442,6 +451,11 @@ export class TodoList extends HTMLElement {
 		this.#lists = this.#lists.filter((l) => l.id !== listId);
 		console.log('[TodoList] List removed, remaining:', this.#lists.length);
 
+		// Reorder remaining lists
+		this.#lists.forEach((list, index) => {
+			list.order = index;
+		});
+
 		// If we deleted the current list, switch to default or first
 		if (this.#currentListId === listId) {
 			const defaultList = this.#lists.find((l) => l.isDefault);
@@ -480,6 +494,47 @@ export class TodoList extends HTMLElement {
 		}
 	}
 
+	async #moveList(listId, direction) {
+		console.log('[TodoList] #moveList() called:', listId, direction);
+		
+		// Ensure all lists have order field
+		this.#lists.forEach((list, index) => {
+			if (typeof list.order !== 'number') {
+				list.order = index;
+			}
+		});
+
+		const listIndex = this.#lists.findIndex((l) => l.id === listId);
+		if (listIndex === -1) {
+			console.warn('[TodoList] List not found:', listId);
+			return;
+		}
+
+		const newIndex = listIndex + direction;
+		if (newIndex < 0 || newIndex >= this.#lists.length) {
+			console.log('[TodoList] Cannot move list, already at boundary');
+			return;
+		}
+
+		// Swap order values
+		const tempOrder = this.#lists[listIndex].order;
+		this.#lists[listIndex].order = this.#lists[newIndex].order;
+		this.#lists[newIndex].order = tempOrder;
+
+		// Sort lists by order
+		this.#lists.sort((a, b) => a.order - b.order);
+
+		console.log('[TodoList] List moved from', listIndex, 'to', newIndex);
+		
+		try {
+			await DBManager.saveLists(this.#lists);
+			console.log('[TodoList] Lists saved after move');
+			this.#renderWithTransition();
+		} catch (error) {
+			console.error('[TodoList] Error saving after list move:', error);
+		}
+	}
+
 	#render() {
 		console.log('[TodoList] #render() called, mode:', this.#mode);
 		if (!this.#containerEl) {
@@ -497,9 +552,16 @@ export class TodoList extends HTMLElement {
 	#renderSingleMode() {
 		console.log('[TodoList] #renderSingleMode() called, lists:', this.#lists.length);
 		
+		// Sort lists by order for the dropdown
+		const sortedLists = [...this.#lists].sort((a, b) => {
+			const orderA = typeof a.order === 'number' ? a.order : 0;
+			const orderB = typeof b.order === 'number' ? b.order : 0;
+			return orderA - orderB;
+		});
+		
 		// Show list selector dropdown
 		if (this.#listSelectorEl) {
-			this.#listSelectorEl.innerHTML = this.#lists
+			this.#listSelectorEl.innerHTML = sortedLists
 				.map(
 					(l) =>
 						`<option value="${l.id}" ${
@@ -552,19 +614,34 @@ export class TodoList extends HTMLElement {
 		if (this.#newListInputEl)
 			this.#newListInputEl.parentElement.style.display = "flex";
 
-		// Render all lists
+		// Render all lists (sorted by order)
 		if (this.#listsContainerEl) {
 			this.#listsContainerEl.innerHTML = "";
 
-			this.#lists.forEach((list) => {
+			// Sort lists by order
+			const sortedLists = [...this.#lists].sort((a, b) => {
+				const orderA = typeof a.order === 'number' ? a.order : 0;
+				const orderB = typeof b.order === 'number' ? b.order : 0;
+				return orderA - orderB;
+			});
+
+			sortedLists.forEach((list, index) => {
 				const listSection = document.createElement("div");
 				listSection.className = "todo-list-section";
+				listSection.style.viewTransitionName = `list-${list.id}`;
 
 				const isDefault = list.isDefault;
+				const isFirst = index === 0;
+				const isLast = index === sortedLists.length - 1;
+
 				listSection.innerHTML = `
 					<div class="todo-list-header">
 						<h3 class="list-title" contenteditable="true" data-list-id="${list.id}">${this.#escapeHtml(list.name)}</h3> ${isDefault ? '<span class="default-badge">default</span>' : ""}
 						<div class="todo-list-actions">
+							<div class="list-reorder">
+								<button class="list-move-up ${isFirst ? 'disabled' : ''}" data-list-id="${list.id}" aria-label="Move list up" ${isFirst ? 'disabled' : ''}>▲</button>
+								<button class="list-move-down ${isLast ? 'disabled' : ''}" data-list-id="${list.id}" aria-label="Move list down" ${isLast ? 'disabled' : ''}>▼</button>
+							</div>
 							${!isDefault ? `<button class="button-link set-default-btn" data-list-id="${list.id}">Set as default</button>` : ""}
 							<button class="button-link delete-list-btn" data-list-id="${list.id}">Delete</button>
 						</div>
@@ -662,6 +739,26 @@ export class TodoList extends HTMLElement {
 						}
 					});
 				}
+
+				// Move list up/down buttons
+				const moveUpBtn = listSection.querySelector(
+					`.list-move-up[data-list-id="${list.id}"]`
+				);
+				const moveDownBtn = listSection.querySelector(
+					`.list-move-down[data-list-id="${list.id}"]`
+				);
+
+				if (moveUpBtn && !isFirst) {
+					moveUpBtn.addEventListener("click", () => {
+						this.#moveList(list.id, -1);
+					});
+				}
+
+				if (moveDownBtn && !isLast) {
+					moveDownBtn.addEventListener("click", () => {
+						this.#moveList(list.id, 1);
+					});
+				}
 			});
 		}
 	}
@@ -710,10 +807,15 @@ export class TodoList extends HTMLElement {
 			return;
 		}
 
-		// Sort todos by order (backward compatibility: use array index if no order field)
+		// Sort: active items first (by order), then completed items (by order)
 		const sortedTodos = [...list.todos].sort((a, b) => {
-			const orderA = typeof a.order === 'number' ? a.order : list.todos.indexOf(a);
-			const orderB = typeof b.order === 'number' ? b.order : list.todos.indexOf(b);
+			// Completed items go to the bottom
+			if (a.completed !== b.completed) {
+				return a.completed ? 1 : -1;
+			}
+			// Within same completion status, sort by order
+			const orderA = typeof a.order === 'number' ? a.order : 0;
+			const orderB = typeof b.order === 'number' ? b.order : 0;
 			return orderA - orderB;
 		});
 
