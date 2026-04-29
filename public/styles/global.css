@@ -169,3 +169,114 @@ home-page{
     font-size: 1.3rem;
 }
 
+/* Dialog Component Styles */
+.app-dialog {
+	padding: 0;
+	border: none;
+	border-radius: 12px;
+	background: var(--bg-2);
+	color: var(--text);
+	/* max-width: 400px; */
+	/* width: 90%; */
+	box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+	animation: dialog-fade-in 0.2s ease-out;
+}
+
+.app-dialog::backdrop {
+	background: rgba(0, 0, 0, 0.6);
+	backdrop-filter: blur(2px);
+	animation: backdrop-fade-in 0.2s ease-out;
+}
+
+@keyframes dialog-fade-in {
+	from {
+		opacity: 0;
+		transform: translateY(-10px) scale(0.98);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0) scale(1);
+	}
+}
+
+@keyframes backdrop-fade-in {
+	from {
+		opacity: 0;
+	}
+	to {
+		opacity: 1;
+	}
+}
+
+.app-dialog-content {
+	padding: 1.5rem;
+}
+
+.app-dialog-message {
+	margin: 0 0 1.5rem 0;
+	font-size: 1rem;
+	line-height: 1.5;
+	color: var(--text);
+}
+
+.app-dialog-actions {
+	display: flex;
+	gap: 0.75rem;
+	justify-content: flex-end;
+}
+
+.app-dialog-btn {
+	padding: 0.6rem 1.2rem;
+	border: none;
+	border-radius: 8px;
+	font-size: 0.95rem;
+	cursor: pointer;
+	transition: opacity 0.2s, transform 0.1s;
+}
+
+.app-dialog-btn:hover {
+	opacity: 0.9;
+}
+
+.app-dialog-btn:active {
+	transform: scale(0.98);
+}
+
+.app-dialog-btn--cancel {
+	background: transparent;
+	color: var(--text);
+	border: 1px solid var(--border-color);
+}
+
+.app-dialog-btn--cancel:hover {
+	background: hsl(0 0% 50% / 0.1);
+}
+
+.app-dialog-btn--confirm {
+	background: var(--accent);
+	color: var(--bg);
+	font-weight: bold;
+}
+
+.app-dialog-btn--confirm:hover {
+	background: var(--bg-3);
+	color: var(--text);
+}
+
+/* Mobile adjustments */
+@media (max-width: 480px) {
+	.app-dialog {
+		/* width: 95%; */
+		/* max-width: none; */
+		margin: 1rem;
+	}
+	
+	.app-dialog-actions {
+		flex-direction: column;
+	}
+	
+	.app-dialog-btn {
+		width: 100%;
+	}
+}
+

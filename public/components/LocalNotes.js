@@ -7,6 +7,7 @@
  */
 
 import { DBManager } from '../services/DBManager.js';
+import { DialogService } from '../services/DialogService.js';
 
 export class LocalNotes extends HTMLElement {
 	constructor() {
@@ -388,7 +389,8 @@ export class LocalNotes extends HTMLElement {
 		const note = this.notes.find(n => n.id === this.currentNoteId);
 		const title = note ? (note.title || 'this note') : 'this note';
 		
-		if (!confirm(`Delete "${title}"?`)) {
+		const confirmed = await DialogService.confirm(`Delete "${title}"?`, "Delete");
+		if (!confirmed) {
 			return;
 		}
 		
