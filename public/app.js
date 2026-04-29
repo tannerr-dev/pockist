@@ -2,6 +2,7 @@ import {API} from "./services/API.js";
 import Store from "./services/Store.js";
 import { Router } from "./services/Router.js";
 import { DBManager } from "./services/DBManager.js";
+import { ImportExportService } from "./services/ImportExportService.js";
 
 navigator.serviceWorker.addEventListener("message", (event) => {
     if (event.data && event.data.type === "CACHE_UPDATED") {
@@ -99,9 +100,66 @@ window.addEventListener("DOMContentLoaded", async () => {
     }).catch(err => {
         console.error('[App] Service worker registration failed:', err);
     });
-    
+
+    // Setup import/export handlers
+    console.log('[App] Setting up import/export handlers...');
+    setupImportExportHandlers();
+
     console.log('[App] DOMContentLoaded handler complete');
 });
+
+/**
+ * Setup import/export button event handlers
+ */
+function setupImportExportHandlers() {
+    const exportBtn = document.getElementById('drawer-export-btn');
+    const importBtn = document.getElementById('drawer-import-btn');
+    const importInput = document.getElementById('drawer-import-input');
+
+    if (exportBtn) {
+        exportBtn.addEventListener('click', async () => {
+            console.log('[App] Export button clicked');
+            try {
+                const result = await ImportExportService.exportAll();
+                console.log('[App] Export successful:', result);
+            } catch (error) {
+                console.error('[App] Export failed:', error);
+                app.showError(`Export failed: ${error.message}`, false);
+            }
+        });
+    }
+
+    if (importBtn && importInput) {
+        importBtn.addEventListener('click', () => {
+            console.log('[App] Import button clicked');
+            importInput.click();
+        });
+
+        importInput.addEventListener('change', async (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            console.log('[App] Import file selected:', file.name);
+            try {
+                const result = await ImportExportService.importFromFile(file);
+                console.log('[App] Import result:', result);
+
+                if (result.cancelled) {
+                    console.log('[App] Import was cancelled by user');
+                } else if (result.success) {
+                    // Reload the page to show imported data
+                    window.location.reload();
+                }
+            } catch (error) {
+                console.error('[App] Import failed:', error);
+                app.showError(`Import failed: ${error.message}`, false);
+            } finally {
+                // Reset input so same file can be selected again
+                importInput.value = '';
+            }
+        });
+    }
+}
 
 window.app = {
     Router,

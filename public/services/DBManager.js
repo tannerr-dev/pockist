@@ -7,10 +7,11 @@
  * 
  * Current structure:
  * - Database: pockist-db
- * - Version: 4 (added lists object store)
+ * - Version: 5 (added imports object store for tracking)
  * - Object Stores:
  *   - notes: Stores note content with id as keyPath
  *   - lists: Stores todo lists
+ *   - imports: Tracks imported files to prevent duplicates
  * 
  * Future expansion:
  * - Additional object stores can be added by incrementing DB_VERSION
@@ -30,14 +31,15 @@ const DB_CONFIG = {
     // The shared database name used by all Pockist mini-apps
     NAME: 'pockist-db',
 
-    // Current database version. Incremented to 4 to add lists object store.
+    // Current database version. Incremented to 5 to add imports object store.
     // Increment this when adding new object stores or changing structures.
-    VERSION: 4,
+    VERSION: 5,
 
     // Object store names - each mini-app should have its own store
     STORES: {
         NOTES: 'notes',
         LISTS: 'lists',
+        IMPORTS: 'imports',
     }
 };
 
@@ -306,6 +308,114 @@ export class DBManager {
     }
 
     // ============================================================================
+    // IMPORT TRACKING METHODS
+    // Tracks imports to prevent accidental duplicate imports
+    // ============================================================================
+
+    /**
+     * Check if an import with the given exportId has already been processed
+     * @param {string} exportId - The exportId from the import file
+     * @returns {Promise<Object|null>} The import record if found, null otherwise
+     */
+    static async hasImportBeenProcessed(exportId) {
+        console.log(`[DBManager] hasImportBeenProcessed(${exportId}) called`);
+        await this.init();
+
+        return new Promise((resolve, reject) => {
+            if (!this.#db.objectStoreNames.contains(DB_CONFIG.STORES.IMPORTS)) {
+                console.error('[DBManager] Imports object store not found');
+                reject(new Error('Imports object store not found'));
+                return;
+            }
+
+            const transaction = this.#db.transaction([DB_CONFIG.STORES.IMPORTS], 'readonly');
+            const store = transaction.objectStore(DB_CONFIG.STORES.IMPORTS);
+            const request = store.get(exportId);
+
+            request.onsuccess = () => {
+                console.log(`[DBManager] hasImportBeenProcessed(${exportId}) success:`, request.result ? 'found' : 'not found');
+                resolve(request.result || null);
+            };
+
+            request.onerror = () => {
+                console.error(`[DBManager] hasImportBeenProcessed(${exportId}) error:`, request.error);
+                reject(request.error);
+            };
+        });
+    }
+
+    /**
+     * Record an import in the database
+     * @param {Object} importRecord - The import record to save
+     * @param {string} importRecord.id - The exportId from the imported file
+     * @param {string} importRecord.importedAt - ISO timestamp of when imported
+     * @param {string} importRecord.fileName - Original filename
+     * @param {string} importRecord.scope - 'full', 'note', or 'list'
+     * @param {Object} importRecord.summary - Summary of what was imported
+     */
+    static async recordImport(importRecord) {
+        console.log(`[DBManager] recordImport(${importRecord.id}) called`);
+        await this.init();
+
+        return new Promise((resolve, reject) => {
+            if (!this.#db.objectStoreNames.contains(DB_CONFIG.STORES.IMPORTS)) {
+                console.error('[DBManager] Imports object store not found');
+                reject(new Error('Imports object store not found'));
+                return;
+            }
+
+            const transaction = this.#db.transaction([DB_CONFIG.STORES.IMPORTS], 'readwrite');
+            const store = transaction.objectStore(DB_CONFIG.STORES.IMPORTS);
+            const request = store.put(importRecord);
+
+            request.onsuccess = () => {
+                console.log(`[DBManager] recordImport(${importRecord.id}) success`);
+                resolve();
+            };
+
+            request.onerror = () => {
+                console.error(`[DBManager] recordImport(${importRecord.id}) error:`, request.error);
+                reject(request.error);
+            };
+        });
+    }
+
+    /**
+     * Get all import history (for future use)
+     * @returns {Promise<Array>} Array of import records
+     */
+    static async getImportHistory() {
+        console.log('[DBManager] getImportHistory() called');
+        await this.init();
+
+        return new Promise((resolve, reject) => {
+            if (!this.#db.objectStoreNames.contains(DB_CONFIG.STORES.IMPORTS)) {
+                console.error('[DBManager] Imports object store not found');
+                reject(new Error('Imports object store not found'));
+                return;
+            }
+
+            const transaction = this.#db.transaction([DB_CONFIG.STORES.IMPORTS], 'readonly');
+            const store = transaction.objectStore(DB_CONFIG.STORES.IMPORTS);
+            const request = store.getAll();
+
+            request.onsuccess = () => {
+                console.log(`[DBManager] getImportHistory() success, found ${request.result.length} records`);
+                resolve(request.result);
+            };
+
+            request.onerror = () => {
+                console.error('[DBManager] getImportHistory() error:', request.error);
+                reject(request.error);
+            };
+        });
+    }
+
+    // ============================================================================
+    // END OF IMPORT TRACKING METHODS
+    // ============================================================================
+
+    // ============================================================================
     // TODODB MIGRATION
     // Migrates data from old 'TodoDB' to 'pockist-db' lists store
     // ============================================================================
@@ -502,7 +612,17 @@ export class DBManager {
                 } else {
                     console.log('[DBManager] Lists store already exists');
                 }
-                
+
+                if (!db.objectStoreNames.contains(DB_CONFIG.STORES.IMPORTS)) {
+                    console.log('[DBManager] Creating imports store...');
+                    db.createObjectStore(DB_CONFIG.STORES.IMPORTS, {
+                        keyPath: 'id'
+                    });
+                    console.log('[DBManager] Imports store created');
+                } else {
+                    console.log('[DBManager] Imports store already exists');
+                }
+
                 console.log('[DBManager] Stores after upgrade:', Array.from(db.objectStoreNames));
             };
 
@@ -515,14 +635,18 @@ export class DBManager {
                 // Verify stores exist
                 const hasNotes = this.#db.objectStoreNames.contains(DB_CONFIG.STORES.NOTES);
                 const hasLists = this.#db.objectStoreNames.contains(DB_CONFIG.STORES.LISTS);
-                
+                const hasImports = this.#db.objectStoreNames.contains(DB_CONFIG.STORES.IMPORTS);
+
                 if (!hasNotes) {
                     console.error('[DBManager] CRITICAL: Notes store missing after open!');
                 }
                 if (!hasLists) {
                     console.error('[DBManager] CRITICAL: Lists store missing after open!');
                 }
-                
+                if (!hasImports) {
+                    console.error('[DBManager] CRITICAL: Imports store missing after open!');
+                }
+
                 resolve(this.#db);
             };
 
