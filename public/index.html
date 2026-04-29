@@ -342,7 +342,10 @@
           <input type="text" id="new-list-input" placeholder="New list name..." autocomplete="off">
           <button id="new-list-btn">Create</button>
         </div>
-        <div id="lists-container"></div>
+        <div class="todo-scroll-container">
+          <div id="lists-container"></div>
+          <div class="todo-more-indicator" id="more-indicator" style="display: none;"></div>
+        </div>
         <div class="todo-footer" id="single-list-footer">
           <span id="items-left">0 items left</span>
           <div class="todo-footer-actions">

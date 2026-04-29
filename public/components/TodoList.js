@@ -203,6 +203,15 @@ export class TodoList extends HTMLElement {
 			});
 			console.log('[TodoList] List selector listener attached');
 		}
+
+		// Scroll listener for more indicator
+		const scrollContainer = this.querySelector(".todo-scroll-container");
+		if (scrollContainer) {
+			scrollContainer.addEventListener("scroll", () => {
+				const list = this.#getCurrentList();
+				this.#updateMoreIndicator(list);
+			});
+		}
 		
 		console.log('[TodoList] #init() finished');
 	}
@@ -245,7 +254,7 @@ export class TodoList extends HTMLElement {
 			console.log('[TodoList] Saving lists...');
 			await DBManager.saveLists(this.#lists);
 			console.log('[TodoList] Lists saved successfully');
-			this.#renderWithTransition();
+			this.#render();
 		} catch (error) {
 			console.error('[TodoList] Error saving lists:', error);
 		}
@@ -882,7 +891,47 @@ export class TodoList extends HTMLElement {
 					? "inline"
 					: "none";
 			}
+			// Update "more items" indicator
+			this.#updateMoreIndicator(list);
 		}
+	}
+
+	#updateMoreIndicator(list) {
+		const moreIndicator = this.querySelector("#more-indicator");
+		const scrollContainer = this.querySelector(".todo-scroll-container");
+		if (!moreIndicator || !scrollContainer || !list) return;
+
+		// Use requestAnimationFrame to check after render
+		requestAnimationFrame(() => {
+			const visibleHeight = scrollContainer.clientHeight;
+			const scrollHeight = scrollContainer.scrollHeight;
+			const hiddenCount = list.todos.length - this.#countVisibleItems(scrollContainer);
+
+			if (hiddenCount > 0) {
+				const itemText = hiddenCount === 1 ? 'item' : 'items';
+				moreIndicator.textContent = `${hiddenCount} more ${itemText}`;
+				moreIndicator.style.display = "block";
+			} else {
+				moreIndicator.style.display = "none";
+			}
+		});
+	}
+
+	#countVisibleItems(container) {
+		if (!container) return 0;
+		const items = container.querySelectorAll('.todo-item');
+		let visibleCount = 0;
+		const containerRect = container.getBoundingClientRect();
+
+		items.forEach(item => {
+			const itemRect = item.getBoundingClientRect();
+			// Item is visible if its top is within the container's visible area
+			if (itemRect.top >= containerRect.top && itemRect.top < containerRect.bottom) {
+				visibleCount++;
+			}
+		});
+
+		return visibleCount;
 	}
 
 	#renderTodosForList(list, container) {

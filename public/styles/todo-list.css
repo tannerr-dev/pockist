@@ -9,6 +9,36 @@
 	border-radius: 12px;
 	padding: 1rem;
 	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+	display: flex;
+	flex-direction: column;
+}
+
+/* Fixed height scrollable container for compact view */
+.todo-list-container:not(:has(#new-list-row[style*="flex"])) .todo-scroll-container {
+	max-height: 500px;
+	overflow-y: auto;
+	overflow-x: hidden;
+	scrollbar-color: hsl(0 0% 100% /0.2) hsl(0 0% 0% /0);
+	scrollbar-gutter: stable both-edges;
+	flex: 1;
+	min-height: 0;
+}
+
+@media (max-width: 480px) {
+	.todo-list-container:not(:has(#new-list-row[style*="flex"])) .todo-scroll-container {
+		max-height: 60svh;
+	}
+}
+
+/* "X more items" indicator */
+.todo-more-indicator {
+	text-align: center;
+	padding: 0.5rem;
+	font-size: 0.8rem;
+	color: var(--text-muted);
+	background: linear-gradient(to bottom, transparent, var(--bg-2));
+	margin-top: -1.5rem;
+	pointer-events: none;
 }
 
 .todo-list-selector-row {
