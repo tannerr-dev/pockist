@@ -204,15 +204,6 @@ export class TodoList extends HTMLElement {
 			console.log('[TodoList] List selector listener attached');
 		}
 
-		// Scroll listener for more indicator
-		const scrollContainer = this.querySelector(".todo-scroll-container");
-		if (scrollContainer) {
-			scrollContainer.addEventListener("scroll", () => {
-				const list = this.#getCurrentList();
-				this.#updateMoreIndicator(list);
-			});
-		}
-		
 		console.log('[TodoList] #init() finished');
 	}
 
@@ -418,7 +409,14 @@ export class TodoList extends HTMLElement {
 		list.todos = list.todos.filter((t) => !t.completed);
 		console.log('[TodoList] Cleared completed todos, removed:', originalLength - list.todos.length);
 
-		// Reorder remaining todos with descending order (newest/highest on top)
+		// Sort by order descending (newest first) before reassigning
+		list.todos.sort((a, b) => {
+			const orderA = typeof a.order === 'number' ? a.order : 0;
+			const orderB = typeof b.order === 'number' ? b.order : 0;
+			return orderB - orderA;
+		});
+
+		// Reassign order values to maintain descending order
 		list.todos.forEach((todo, index) => {
 			todo.order = list.todos.length - 1 - index;
 		});
@@ -897,41 +895,40 @@ export class TodoList extends HTMLElement {
 	}
 
 	#updateMoreIndicator(list) {
-		const moreIndicator = this.querySelector("#more-indicator");
 		const scrollContainer = this.querySelector(".todo-scroll-container");
-		if (!moreIndicator || !scrollContainer || !list) return;
+		if (!scrollContainer || !list) return;
 
 		// Use requestAnimationFrame to check after render
 		requestAnimationFrame(() => {
-			const visibleHeight = scrollContainer.clientHeight;
-			const scrollHeight = scrollContainer.scrollHeight;
-			const hiddenCount = list.todos.length - this.#countVisibleItems(scrollContainer);
+			// Clear previous indicators
+			const allItems = scrollContainer.querySelectorAll('.todo-item');
+			allItems.forEach(item => {
+				item.classList.remove('has-more');
+				item.removeAttribute('data-more-count');
+			});
 
-			if (hiddenCount > 0) {
+			const containerRect = scrollContainer.getBoundingClientRect();
+			let lastVisibleItem = null;
+			let visibleCount = 0;
+
+			allItems.forEach(item => {
+				const itemRect = item.getBoundingClientRect();
+				// Item is visible if its top is within the container's visible area
+				if (itemRect.top >= containerRect.top && itemRect.top < containerRect.bottom) {
+					visibleCount++;
+					lastVisibleItem = item;
+				}
+			});
+
+			const hiddenCount = list.todos.length - visibleCount;
+
+			// Add indicator to last visible item if there are hidden items
+			if (hiddenCount > 0 && lastVisibleItem) {
 				const itemText = hiddenCount === 1 ? 'item' : 'items';
-				moreIndicator.textContent = `${hiddenCount} more ${itemText}`;
-				moreIndicator.style.display = "block";
-			} else {
-				moreIndicator.style.display = "none";
+				lastVisibleItem.classList.add('has-more');
+				lastVisibleItem.setAttribute('data-more-count', `${hiddenCount} more ${itemText}`);
 			}
 		});
-	}
-
-	#countVisibleItems(container) {
-		if (!container) return 0;
-		const items = container.querySelectorAll('.todo-item');
-		let visibleCount = 0;
-		const containerRect = container.getBoundingClientRect();
-
-		items.forEach(item => {
-			const itemRect = item.getBoundingClientRect();
-			// Item is visible if its top is within the container's visible area
-			if (itemRect.top >= containerRect.top && itemRect.top < containerRect.bottom) {
-				visibleCount++;
-			}
-		});
-
-		return visibleCount;
 	}
 
 	#renderTodosForList(list, container) {
@@ -1079,7 +1076,14 @@ export class TodoList extends HTMLElement {
 		list.todos = list.todos.filter((t) => !t.completed);
 		console.log('[TodoList] Cleared completed for list, removed:', originalLength - list.todos.length);
 
-		// Reorder remaining todos with descending order (newest/highest on top)
+		// Sort by order descending (newest first) before reassigning
+		list.todos.sort((a, b) => {
+			const orderA = typeof a.order === 'number' ? a.order : 0;
+			const orderB = typeof b.order === 'number' ? b.order : 0;
+			return orderB - orderA;
+		});
+
+		// Reassign order values to maintain descending order
 		list.todos.forEach((todo, index) => {
 			todo.order = list.todos.length - 1 - index;
 		});

@@ -15,7 +15,7 @@
 
 /* Fixed height scrollable container for compact view */
 .todo-list-container:not(:has(#new-list-row[style*="flex"])) .todo-scroll-container {
-	max-height: 500px;
+	max-height: 400px;
 	overflow-y: auto;
 	overflow-x: hidden;
 	scrollbar-color: hsl(0 0% 100% /0.2) hsl(0 0% 0% /0);
@@ -30,14 +30,22 @@
 	}
 }
 
-/* "X more items" indicator */
-.todo-more-indicator {
-	text-align: center;
-	padding: 0.5rem;
+/* "X more items" indicator on last visible todo item */
+.todo-item.has-more {
+	position: relative;
+}
+
+.todo-item.has-more::after {
+	content: attr(data-more-count);
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	background: linear-gradient(to top, var(--bg-2) 60%, transparent);
+	padding: 1.5rem 0.5rem 0.5rem;
 	font-size: 0.8rem;
 	color: var(--text-muted);
-	background: linear-gradient(to bottom, transparent, var(--bg-2));
-	margin-top: -1.5rem;
+	text-align: center;
 	pointer-events: none;
 }
 
