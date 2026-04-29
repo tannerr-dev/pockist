@@ -394,15 +394,26 @@ export class TodoList extends HTMLElement {
 			return;
 		}
 
+		const completedCount = list.todos.filter((t) => t.completed).length;
+		if (completedCount === 0) return;
+
+		const itemText = completedCount === 1 ? 'item' : 'items';
+		const confirmed = await DialogService.confirm(
+			`Clear ${completedCount} completed ${itemText}? This cannot be undone.`,
+			'Clear'
+		);
+
+		if (!confirmed) return;
+
 		const originalLength = list.todos.length;
 		list.todos = list.todos.filter((t) => !t.completed);
 		console.log('[TodoList] Cleared completed todos, removed:', originalLength - list.todos.length);
-		
+
 		// Reorder remaining todos with descending order (newest/highest on top)
 		list.todos.forEach((todo, index) => {
 			todo.order = list.todos.length - 1 - index;
 		});
-		
+
 		try {
 			await DBManager.saveLists(this.#lists);
 			console.log('[TodoList] Lists saved after clear completed');
@@ -1004,15 +1015,26 @@ export class TodoList extends HTMLElement {
 			return;
 		}
 
+		const completedCount = list.todos.filter((t) => t.completed).length;
+		if (completedCount === 0) return;
+
+		const itemText = completedCount === 1 ? 'item' : 'items';
+		const confirmed = await DialogService.confirm(
+			`Clear ${completedCount} completed ${itemText}? This cannot be undone.`,
+			'Clear'
+		);
+
+		if (!confirmed) return;
+
 		const originalLength = list.todos.length;
 		list.todos = list.todos.filter((t) => !t.completed);
 		console.log('[TodoList] Cleared completed for list, removed:', originalLength - list.todos.length);
-		
+
 		// Reorder remaining todos with descending order (newest/highest on top)
 		list.todos.forEach((todo, index) => {
 			todo.order = list.todos.length - 1 - index;
 		});
-		
+
 		try {
 			await DBManager.saveLists(this.#lists);
 			console.log('[TodoList] Lists saved after clear completed for list');
