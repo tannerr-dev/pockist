@@ -325,10 +325,10 @@ export class TodoList extends HTMLElement {
 			list.todos = list.todos.filter((t) => t.id !== todoId);
 			console.log('[TodoList] Todos filtered, removed:', originalLength - list.todos.length);
 			
-			// Reorder remaining todos
-			list.todos.forEach((todo, index) => {
-				todo.order = index;
-			});
+		// Reorder remaining todos with descending order (newest/highest on top)
+		list.todos.forEach((todo, index) => {
+			todo.order = list.todos.length - 1 - index;
+		});
 			
 			try {
 				await DBManager.saveLists(this.#lists);
@@ -372,8 +372,8 @@ export class TodoList extends HTMLElement {
 		list.todos[todoIndex].order = list.todos[newIndex].order;
 		list.todos[newIndex].order = tempOrder;
 
-		// Sort todos by order
-		list.todos.sort((a, b) => a.order - b.order);
+		// Sort todos by order descending (highest first for newest-on-top)
+		list.todos.sort((a, b) => b.order - a.order);
 
 		console.log('[TodoList] Todo moved from', todoIndex, 'to', newIndex);
 		
@@ -398,9 +398,9 @@ export class TodoList extends HTMLElement {
 		list.todos = list.todos.filter((t) => !t.completed);
 		console.log('[TodoList] Cleared completed todos, removed:', originalLength - list.todos.length);
 		
-		// Reorder remaining todos
+		// Reorder remaining todos with descending order (newest/highest on top)
 		list.todos.forEach((todo, index) => {
-			todo.order = index;
+			todo.order = list.todos.length - 1 - index;
 		});
 		
 		try {
@@ -421,21 +421,22 @@ export class TodoList extends HTMLElement {
 		}
 
 		// Sort: active items first, then completed items
-		// Within each group, maintain current order
+		// Within each group, sort by order descending (newest first within each group)
 		list.todos.sort((a, b) => {
 			// Completed items go to the bottom
 			if (a.completed !== b.completed) {
 				return a.completed ? 1 : -1;
 			}
-			// Within same completion status, sort by existing order
+			// Within same completion status, sort by order descending (highest/newest first)
 			const orderA = typeof a.order === 'number' ? a.order : 0;
 			const orderB = typeof b.order === 'number' ? b.order : 0;
-			return orderA - orderB;
+			return orderB - orderA;
 		});
 
 		// Reassign order values to reflect new positions
+		// After sorting, highest order should be at index 0 (top)
 		list.todos.forEach((todo, index) => {
-			todo.order = index;
+			todo.order = list.todos.length - 1 - index;
 		});
 
 		console.log('[TodoList] Todos sorted for list:', listId);
@@ -883,12 +884,12 @@ export class TodoList extends HTMLElement {
 			return;
 		}
 
-		// Render todos in their current order (respecting manual order field)
+		// Render todos in descending order (newest/highest order on top)
 		// No auto-sorting - todos stay where they are until manually sorted
 		const orderedTodos = [...list.todos].sort((a, b) => {
 			const orderA = typeof a.order === 'number' ? a.order : 0;
 			const orderB = typeof b.order === 'number' ? b.order : 0;
-			return orderA - orderB;
+			return orderB - orderA; // Descending: highest order first (newest on top)
 		});
 
 		orderedTodos.forEach((todo, index) => {
@@ -898,8 +899,11 @@ export class TodoList extends HTMLElement {
 			li.dataset.listId = list.id;
 			li.style.viewTransitionName = `todo-${todo.id}`;
 
-			const isFirst = index === 0;
-			const isLast = index === orderedTodos.length - 1;
+			// With descending order: index 0 = top = highest order number
+			// "Up" means increasing order number (toward top)
+			// "Down" means decreasing order number (toward bottom)
+			const isAtTop = index === 0;
+			const isAtBottom = index === orderedTodos.length - 1;
 
 			li.innerHTML = `
 				<input type="checkbox" class="todo-checkbox" ${
@@ -909,8 +913,8 @@ export class TodoList extends HTMLElement {
 					todo.text
 				)}</span>
 				<div class="todo-reorder">
-					<button class="todo-move-up ${isFirst ? 'disabled' : ''}" aria-label="Move up" ${isFirst ? 'disabled' : ''}>▲</button>
-					<button class="todo-move-down ${isLast ? 'disabled' : ''}" aria-label="Move down" ${isLast ? 'disabled' : ''}>▼</button>
+					<button class="todo-move-up ${isAtTop ? 'disabled' : ''}" aria-label="Move up" ${isAtTop ? 'disabled' : ''}>▲</button>
+					<button class="todo-move-down ${isAtBottom ? 'disabled' : ''}" aria-label="Move down" ${isAtBottom ? 'disabled' : ''}>▼</button>
 				</div>
 				<button class="todo-delete" aria-label="Delete todo">×</button>
 			`;
@@ -940,15 +944,18 @@ export class TodoList extends HTMLElement {
 				this.#deleteTodo(list.id, todo.id);
 			});
 
-			if (!isFirst) {
+			// With descending order: 
+			// "Up" (toward top) = increase order number
+			// "Down" (toward bottom) = decrease order number
+			if (!isAtTop) {
 				moveUpBtn.addEventListener("click", () => {
-					this.#moveTodo(list.id, todo.id, -1);
+					this.#moveTodo(list.id, todo.id, 1);
 				});
 			}
 
-			if (!isLast) {
+			if (!isAtBottom) {
 				moveDownBtn.addEventListener("click", () => {
-					this.#moveTodo(list.id, todo.id, 1);
+					this.#moveTodo(list.id, todo.id, -1);
 				});
 			}
 
@@ -1001,9 +1008,9 @@ export class TodoList extends HTMLElement {
 		list.todos = list.todos.filter((t) => !t.completed);
 		console.log('[TodoList] Cleared completed for list, removed:', originalLength - list.todos.length);
 		
-		// Reorder remaining todos
+		// Reorder remaining todos with descending order (newest/highest on top)
 		list.todos.forEach((todo, index) => {
-			todo.order = index;
+			todo.order = list.todos.length - 1 - index;
 		});
 		
 		try {
