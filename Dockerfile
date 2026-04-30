@@ -33,6 +33,9 @@ COPY --from=builder /app/public ./public
 # Create a directory for the SQLite database
 RUN mkdir -p /app/data
 
+# Declare volume for persistent data (shares, imports)
+VOLUME ["/app/data"]
+
 EXPOSE 4242
 
 CMD ["./pockist"]

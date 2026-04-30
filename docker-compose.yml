@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  pockist:
+    build: .
+    container_name: pockist
+    ports:
+      - "4242:4242"
+    volumes:
+      - pockist-data:/app/data
+    environment:
+      - DATABASE_PATH=/app/data/pockist.db
+    restart: unless-stopped
+    # Health check to ensure the service is running
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:4242/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  pockist-data:
+    driver: local
