@@ -31,15 +31,16 @@ const DB_CONFIG = {
     // The shared database name used by all Pockist mini-apps
     NAME: 'pockist-db',
 
-    // Current database version. Incremented to 5 to add imports object store.
+    // Current database version. Incremented to 6 to add deletion_tokens object store.
     // Increment this when adding new object stores or changing structures.
-    VERSION: 5,
+    VERSION: 6,
 
     // Object store names - each mini-app should have its own store
     STORES: {
         NOTES: 'notes',
         LISTS: 'lists',
         IMPORTS: 'imports',
+        DELETION_TOKENS: 'deletionTokens',
     }
 };
 
@@ -416,6 +417,135 @@ export class DBManager {
     // ============================================================================
 
     // ============================================================================
+    // DELETION TOKEN METHODS (for share functionality)
+    // ============================================================================
+
+    /**
+     * Save a deletion token for a share
+     * @param {string} shareId - The share ID
+     * @param {string} token - The deletion token
+     * @param {string} expiresAt - ISO timestamp when share expires
+     * @returns {Promise<void>}
+     */
+    static async saveDeletionToken(shareId, token, expiresAt) {
+        console.log(`[DBManager] saveDeletionToken(${shareId}) called`);
+        await this.init();
+
+        return new Promise((resolve, reject) => {
+            if (!this.#db.objectStoreNames.contains(DB_CONFIG.STORES.DELETION_TOKENS)) {
+                console.error('[DBManager] DeletionTokens object store not found');
+                reject(new Error('DeletionTokens object store not found'));
+                return;
+            }
+
+            const transaction = this.#db.transaction([DB_CONFIG.STORES.DELETION_TOKENS], 'readwrite');
+            const store = transaction.objectStore(DB_CONFIG.STORES.DELETION_TOKENS);
+
+            const record = {
+                id: shareId,
+                token: token,
+                expiresAt: expiresAt,
+                createdAt: new Date().toISOString()
+            };
+
+            const request = store.put(record);
+
+            request.onsuccess = () => {
+                console.log(`[DBManager] saveDeletionToken(${shareId}) success`);
+                resolve();
+            };
+
+            request.onerror = () => {
+                console.error(`[DBManager] saveDeletionToken(${shareId}) error:`, request.error);
+                reject(request.error);
+            };
+        });
+    }
+
+    /**
+     * Get a deletion token for a share
+     * @param {string} shareId - The share ID
+     * @returns {Promise<string|null>} The deletion token or null if not found
+     */
+    static async getDeletionToken(shareId) {
+        console.log(`[DBManager] getDeletionToken(${shareId}) called`);
+        await this.init();
+
+        return new Promise((resolve, reject) => {
+            if (!this.#db.objectStoreNames.contains(DB_CONFIG.STORES.DELETION_TOKENS)) {
+                console.error('[DBManager] DeletionTokens object store not found');
+                reject(new Error('DeletionTokens object store not found'));
+                return;
+            }
+
+            const transaction = this.#db.transaction([DB_CONFIG.STORES.DELETION_TOKENS], 'readonly');
+            const store = transaction.objectStore(DB_CONFIG.STORES.DELETION_TOKENS);
+            const request = store.get(shareId);
+
+            request.onsuccess = () => {
+                const result = request.result;
+                if (result) {
+                    // Check if expired
+                    const expiresAt = new Date(result.expiresAt);
+                    if (expiresAt < new Date()) {
+                        console.log(`[DBManager] getDeletionToken(${shareId}) found but expired`);
+                        // Clean up expired token
+                        this.deleteDeletionToken(shareId);
+                        resolve(null);
+                    } else {
+                        console.log(`[DBManager] getDeletionToken(${shareId}) success`);
+                        resolve(result.token);
+                    }
+                } else {
+                    console.log(`[DBManager] getDeletionToken(${shareId}) not found`);
+                    resolve(null);
+                }
+            };
+
+            request.onerror = () => {
+                console.error(`[DBManager] getDeletionToken(${shareId}) error:`, request.error);
+                reject(request.error);
+            };
+        });
+    }
+
+    /**
+     * Delete a deletion token
+     * @param {string} shareId - The share ID
+     * @returns {Promise<void>}
+     */
+    static async deleteDeletionToken(shareId) {
+        console.log(`[DBManager] deleteDeletionToken(${shareId}) called`);
+        await this.init();
+
+        return new Promise((resolve, reject) => {
+            if (!this.#db.objectStoreNames.contains(DB_CONFIG.STORES.DELETION_TOKENS)) {
+                console.error('[DBManager] DeletionTokens object store not found');
+                reject(new Error('DeletionTokens object store not found'));
+                return;
+            }
+
+            const transaction = this.#db.transaction([DB_CONFIG.STORES.DELETION_TOKENS], 'readwrite');
+            const store = transaction.objectStore(DB_CONFIG.STORES.DELETION_TOKENS);
+            const request = store.delete(shareId);
+
+            request.onsuccess = () => {
+                console.log(`[DBManager] deleteDeletionToken(${shareId}) success`);
+                resolve();
+            };
+
+            request.onerror = () => {
+                console.error(`[DBManager] deleteDeletionToken(${shareId}) error:`, request.error);
+                reject(request.error);
+            };
+        });
+    }
+
+    // ============================================================================
+    // END OF DELETION TOKEN METHODS
+    // ============================================================================
+
+    // ============================================================================
     // TODODB MIGRATION
     // Migrates data from old 'TodoDB' to 'pockist-db' lists store
     // ============================================================================
@@ -623,6 +753,16 @@ export class DBManager {
                     console.log('[DBManager] Imports store already exists');
                 }
 
+                if (!db.objectStoreNames.contains(DB_CONFIG.STORES.DELETION_TOKENS)) {
+                    console.log('[DBManager] Creating deletionTokens store...');
+                    db.createObjectStore(DB_CONFIG.STORES.DELETION_TOKENS, {
+                        keyPath: 'id'
+                    });
+                    console.log('[DBManager] DeletionTokens store created');
+                } else {
+                    console.log('[DBManager] DeletionTokens store already exists');
+                }
+
                 console.log('[DBManager] Stores after upgrade:', Array.from(db.objectStoreNames));
             };
 
@@ -678,7 +818,7 @@ export class DBManager {
         console.log('  - multiNoteMigrationVersion:', localStorage.getItem('multiNoteMigrationVersion'));
         console.log('  - notesRepairComplete:', localStorage.getItem('notesRepairComplete'));
         console.log('  - todoDBMigrationComplete:', localStorage.getItem('todoDBMigrationComplete'));
-        
+
         try {
             await this.init();
             console.log('Database connected: yes');

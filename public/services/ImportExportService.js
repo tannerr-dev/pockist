@@ -167,6 +167,42 @@ export class ImportExportService {
         }
     }
     
+    /**
+     * Import data from a shared item (from ShareService)
+     * @param {Object} sharePayload - The share payload matching pockist-backup format
+     */
+    static async importFromShare(sharePayload) {
+        console.log('[ImportExportService] importFromShare() starting...');
+        
+        try {
+            // Validate structure (similar to file import)
+            this.#validateImport(sharePayload);
+            
+            // Perform import
+            const result = await this.#performImport(sharePayload);
+            
+            // Record import (optional - could skip for shares)
+            await DBManager.recordImport({
+                id: sharePayload.exportId,
+                importedAt: new Date().toISOString(),
+                fileName: `shared-${sharePayload.exportId}`,
+                scope: sharePayload.scope,
+                summary: result.summary
+            });
+            
+            console.log('[ImportExportService] Share import completed successfully');
+            return { 
+                success: true, 
+                summary: result.summary,
+                scope: sharePayload.scope 
+            };
+            
+        } catch (error) {
+            console.error('[ImportExportService] Share import failed:', error);
+            throw error;
+        }
+    }
+    
     // ============================================================================
     // PRIVATE HELPERS
     // ============================================================================

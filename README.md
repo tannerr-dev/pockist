@@ -72,6 +72,107 @@ or
 - weather api 20 min on server
 - geolocation like 7 days?
 
+---
 
+## Share Feature
+
+Pockist now supports sharing notes and lists via temporary, self-destructing links.
+
+### Overview
+
+The share feature allows users to create temporary shareable links for individual notes, todo lists, or full backups. These links are active for **24 hours** and are automatically deleted from the server after expiration.
+
+### Features
+
+- **Temporary Shares**: All shared content expires after 24 hours
+- **Self-Deletion**: Only the creator can delete a share before it expires
+- **Import/Download**: Recipients can import shared content directly into their local IndexedDB or download as a JSON file
+- **Rate Limiting**: 5 shares per hour per IP address
+- **Security**: HTML sanitization removes all script tags and potentially harmful content
+
+### How It Works
+
+1. **Creating a Share**: User clicks the "Share" button on a note or list
+2. **Deletion Token**: When a share is created, a unique deletion token is stored in the creator's browser (IndexedDB)
+3. **Sharing**: Creator copies the share URL and sends it to recipients
+4. **Viewing**: Recipients open the URL to view the shared content
+5. **Import**: Recipients can import the content into their local database
+6. **Deletion**: Creator can delete the share at any time using their deletion token
+
+### API Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/share` | POST | Create a new share |
+| `/api/share/{id}` | GET | Retrieve shared content |
+| `/api/share/{id}` | DELETE | Delete a share (requires deletion token) |
+
+### Technical Details
+
+- **Storage**: SQLite database with automatic cleanup of expired shares
+- **Size Limit**: Maximum 500KB per share
+- **Background Cleanup**: Expired shares are removed every 10 minutes
+- **Creator Identification**: Determined by presence of deletion token in IndexedDB (no account required)
+
+### Docker Volume
+
+To persist shared data across container restarts, mount a volume:
+
+```yaml
+volumes:
+  pockist-data:
+services:
+  app:
+    volumes:
+      - pockist-data:/app/data
+```
+
+The SQLite database is stored at `/app/data/pockist.db`.
+
+---
+
+## Import/Export Feature
+
+Pockist supports importing and exporting data for backup and migration purposes.
+
+### Features
+
+- **Full Backup**: Export all notes and lists as a single JSON file
+- **Individual Export**: Export specific notes or lists
+- **Import**: Import data from JSON files (merges with existing data)
+- **Duplicate Detection**: Tracks imported files to prevent accidental re-imports
+- **Version Tracking**: Export format versioning for future compatibility
+
+### File Format
+
+```json
+{
+  "version": "1.0",
+  "type": "pockist-backup",
+  "scope": "full|note|list",
+  "exportId": "uuid-timestamp",
+  "exportedAt": "2026-04-28T10:30:00Z",
+  "appVersion": "1.0.0",
+  "data": {
+    "notes": [...],
+    "lists": [...]
+  }
+}
+```
+
+### Usage
+
+Access import/export via the hamburger menu ( drawer ):
+- **Export All**: Creates a timestamped backup file
+- **Import Data**: Select a JSON file to import (merges with existing data)
+
+### Merge Strategy
+
+When importing:
+- **Conflicts**: Items with duplicate IDs are renamed with "(Imported)" suffix
+- **No Overwrites**: Existing data is never deleted or replaced
+- **Safe Import**: All imports are non-destructive
+
+---
 
 

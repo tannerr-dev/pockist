@@ -19,7 +19,13 @@ func CacheControlMiddleware(maxAgeSeconds int) func(http.Handler) http.Handler {
 }
 
 func main() {
-	var err error
+	// Initialize database
+	db, err := handlers.InitDatabase()
+	if err != nil {
+		log.Printf("[Main] Database initialization failed: %v", err)
+		log.Println("[Main] Continuing without database (sharing features disabled)")
+		db = nil
+	}
 
 	server := http.NewServeMux()
 
@@ -30,6 +36,8 @@ func main() {
 	server.HandleFunc("/list", catchAllClientRoutesHandler)
 	server.HandleFunc("/weather", catchAllClientRoutesHandler)
 	server.HandleFunc("/about", catchAllClientRoutesHandler)
+	// Share view route (client-side route)
+	server.HandleFunc("/share/", catchAllClientRoutesHandler)
 
 	// Weather API endpoint with caching
 	weatherHandler := handlers.NewWeatherHandler()
@@ -38,6 +46,29 @@ func main() {
 	// Geocode API endpoint with caching
 	geocodeHandler := handlers.NewGeocodeHandler()
 	server.HandleFunc("/api/geocode", geocodeHandler.Geocode)
+
+	// Share API endpoints (only if database is available)
+	if db != nil {
+		shareHandler := handlers.NewShareHandler(db)
+		server.HandleFunc("/api/share", func(w http.ResponseWriter, r *http.Request) {
+			if r.Method == http.MethodPost {
+				shareHandler.CreateShare(w, r)
+			} else {
+				http.Error(w, `{"error": "Method not allowed"}`, http.StatusMethodNotAllowed)
+			}
+		})
+		server.HandleFunc("/api/share/", func(w http.ResponseWriter, r *http.Request) {
+			switch r.Method {
+			case http.MethodGet:
+				shareHandler.GetShare(w, r)
+			case http.MethodDelete:
+				shareHandler.DeleteShare(w, r)
+			default:
+				http.Error(w, `{"error": "Method not allowed"}`, http.StatusMethodNotAllowed)
+			}
+		})
+		log.Println("[Main] Share API endpoints registered")
+	}
 
 	fileCache := CacheControlMiddleware(30) // 30 seconds for all files
 

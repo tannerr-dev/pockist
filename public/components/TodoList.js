@@ -1,6 +1,8 @@
 import { Router } from "../services/Router.js";
 import { DBManager } from "../services/DBManager.js";
 import { DialogService } from "../services/DialogService.js";
+import { ShareService } from "../services/ShareService.js";
+import './ShareButton.js';
 
 export class TodoList extends HTMLElement {
 	#lists = [];
@@ -716,6 +718,7 @@ export class TodoList extends HTMLElement {
 								<button class="list-move-up ${isFirst ? 'disabled' : ''}" data-list-id="${list.id}" aria-label="Move list up" ${isFirst ? 'disabled' : ''}>▲</button>
 								<button class="list-move-down ${isLast ? 'disabled' : ''}" data-list-id="${list.id}" aria-label="Move list down" ${isLast ? 'disabled' : ''}>▼</button>
 							</div>
+							<button class="button-link share-list-btn" data-list-id="${list.id}">Share</button>
 							${!isDefault ? `<button class="button-link set-default-btn" data-list-id="${list.id}">Set as default</button>` : ""}
 							<button class="button-link delete-list-btn" data-list-id="${list.id}">Delete</button>
 						</div>
@@ -810,6 +813,14 @@ export class TodoList extends HTMLElement {
 					if (confirmed) {
 						this.#deleteList(list.id);
 					}
+				});
+
+				// Share list button
+				const shareListBtn = listSection.querySelector(
+					`.share-list-btn[data-list-id="${list.id}"]`
+				);
+				shareListBtn.addEventListener("click", async () => {
+					await this.#shareList(list);
 				});
 
 				// Edit list title
@@ -1094,6 +1105,79 @@ export class TodoList extends HTMLElement {
 			this.#renderWithTransition();
 		} catch (error) {
 			console.error('[TodoList] Error saving after clear list completed:', error);
+		}
+	}
+
+	async #shareList(list) {
+		console.log('[TodoList] #shareList() called:', list.id);
+		
+		try {
+			// Prepare share data
+			const shareData = {
+				notes: [],
+				lists: [list]
+			};
+
+			// Create the share
+			const result = await ShareService.createShare('list', shareData, list.name || 'Untitled List');
+			
+			// Show success with URL
+			const fullUrl = `${window.location.origin}${result.url}`;
+			
+			// Create a temporary dialog to show the URL
+			const dialog = document.createElement('dialog');
+			dialog.className = 'share-dialog';
+			dialog.innerHTML = `
+				<div class="share-dialog-content">
+					<h3>List Shared!</h3>
+					<p>"${this.#escapeHtml(list.name || 'Untitled List')}"</p>
+					<div class="share-info">
+						<span class="share-expiry">⏰ Link expires in ${result.expiresIn}</span>
+					</div>
+					<div class="share-result">
+						<input type="text" class="share-url" value="${fullUrl}" readonly />
+						<button class="share-copy-btn" type="button">Copy</button>
+						<p class="share-success">✓ Share link created!</p>
+					</div>
+					<div class="share-actions">
+						<button class="share-close-btn" type="button">Close</button>
+					</div>
+				</div>
+			`;
+
+			document.body.appendChild(dialog);
+			dialog.showModal();
+
+			// Copy button
+			const copyBtn = dialog.querySelector('.share-copy-btn');
+			const urlInput = dialog.querySelector('.share-url');
+			copyBtn.addEventListener('click', () => {
+				urlInput.select();
+				document.execCommand('copy');
+				copyBtn.textContent = 'Copied!';
+				setTimeout(() => {
+					copyBtn.textContent = 'Copy';
+				}, 2000);
+			});
+
+			// Close button
+			const closeBtn = dialog.querySelector('.share-close-btn');
+			closeBtn.addEventListener('click', () => {
+				dialog.close();
+				document.body.removeChild(dialog);
+			});
+
+			// Close on backdrop click
+			dialog.addEventListener('click', (e) => {
+				if (e.target === dialog) {
+					dialog.close();
+					document.body.removeChild(dialog);
+				}
+			});
+
+		} catch (error) {
+			console.error('[TodoList] Share failed:', error);
+			alert(`Failed to share list: ${error.message}`);
 		}
 	}
 

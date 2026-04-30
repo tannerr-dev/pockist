@@ -1,6 +1,6 @@
 console.log("Service Worker loaded.");
 
-const CACHE_NAME = "pockist-v9";
+const CACHE_NAME = "pockist-v10";
 
 self.addEventListener("install", function (event) {
 	event.waitUntil(
@@ -48,6 +48,18 @@ self.addEventListener("activate", function (event) {
 });
 
 self.addEventListener("fetch", (event) => {
+	// Only cache GET requests - skip POST, PUT, DELETE, etc.
+	if (event.request.method !== 'GET') {
+		event.respondWith(fetch(event.request));
+		return;
+	}
+
+	// Skip API requests from cache
+	if (event.request.url.includes('/api/')) {
+		event.respondWith(fetch(event.request));
+		return;
+	}
+
 	event.respondWith(
 		caches.open(CACHE_NAME).then((cache) => {
 			return cache.match(event.request).then((cachedResponse) => {

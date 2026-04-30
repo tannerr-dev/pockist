@@ -8,6 +8,7 @@
 
 import { DBManager } from '../services/DBManager.js';
 import { DialogService } from '../services/DialogService.js';
+import './ShareButton.js';
 
 export class LocalNotes extends HTMLElement {
 	constructor() {
@@ -303,14 +304,31 @@ export class LocalNotes extends HTMLElement {
 			const preview = this.#getNotePreview(normalizedNote.content);
 			const date = this.#formatDate(normalizedNote.updatedAt || normalizedNote.createdAt);
 
-			noteEl.innerHTML = `
+			// Create note content wrapper
+			const contentWrapper = document.createElement('div');
+			contentWrapper.className = 'note-item-content';
+			contentWrapper.innerHTML = `
 				<div class="note-item-title">${this.#escapeHtml(title)}</div>
 				<div class="note-item-preview">${this.#escapeHtml(preview)}</div>
 				<div class="note-item-date">${date}</div>
 			`;
 
-			noteEl.addEventListener('click', () => this.#openNote(normalizedNote.id));
+			// Create share button
+			const shareBtn = document.createElement('share-button');
+			shareBtn.setAttribute('type', 'note');
+			shareBtn.setAttribute('data-id', normalizedNote.id);
+			shareBtn.setAttribute('title', title);
 
+			// Prevent share button click from opening note
+			shareBtn.addEventListener('click', (e) => {
+				e.stopPropagation();
+			});
+
+			// Add click handler for opening note (only on content)
+			contentWrapper.addEventListener('click', () => this.#openNote(normalizedNote.id));
+
+			noteEl.appendChild(contentWrapper);
+			noteEl.appendChild(shareBtn);
 			notesListEl.appendChild(noteEl);
 		});
 	}

@@ -80,13 +80,22 @@
     background-color: var(--bg-2);
     border-radius: 8px;
     padding: 1rem;
-    cursor: pointer;
     transition: transform 0.1s, box-shadow 0.1s;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
 }
 
 .note-item:hover {
     transform: translateY(-1px);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.note-item-content {
+    flex: 1;
+    cursor: pointer;
+    min-width: 0;
 }
 
 .note-item-title {

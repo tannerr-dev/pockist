@@ -3,6 +3,7 @@ import Store from "./services/Store.js";
 import { Router } from "./services/Router.js";
 import { DBManager } from "./services/DBManager.js";
 import { ImportExportService } from "./services/ImportExportService.js";
+import './components/ShareView.js';
 
 navigator.serviceWorker.addEventListener("message", (event) => {
     if (event.data && event.data.type === "CACHE_UPDATED") {
