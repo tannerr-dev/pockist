@@ -169,15 +169,19 @@ home-page{
     font-size: 1.3rem;
 }
 
+dialog {
+    margin:0px;
+	width: 100%;
+}
+
 /* Dialog Component Styles */
 .app-dialog {
+    /* max-width:500px; */
 	padding: 0;
 	border: none;
 	border-radius: 12px;
 	background: var(--bg-2);
 	color: var(--text);
-	/* max-width: 400px; */
-	/* width: 90%; */
 	box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
 	animation: dialog-fade-in 0.2s ease-out;
 }
@@ -210,7 +214,6 @@ home-page{
 
 .app-dialog-content {
 	padding: 1.5rem;
-	width: 100%;
 }
 
 .app-dialog-message {
@@ -267,9 +270,7 @@ home-page{
 /* Mobile adjustments */
 @media (max-width: 480px) {
 	.app-dialog {
-		/* width: 95%; */
-		/* max-width: none; */
-		margin: 1rem;
+        margin:auto;
 	}
 	
 	.app-dialog-actions {
