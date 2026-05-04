@@ -14,10 +14,6 @@ navigator.serviceWorker.addEventListener("message", (event) => {
 window.addEventListener("DOMContentLoaded", async () => {
     console.log('[App] DOMContentLoaded event fired');
     
-    // Log debug status first
-    console.log('[App] Getting DBManager debug status...');
-    await DBManager.debugStatus();
-    
     // Run database migrations before initializing the router
     // Order matters: first migrate from oldest DB, then migrate to multi-note format, then repair
     console.log('[App] Starting database migrations...');
@@ -54,6 +50,8 @@ window.addEventListener("DOMContentLoaded", async () => {
     
     console.log('[App] All migrations completed');
 
+
+    
     // Now initialize the router
     console.log('[App] Initializing router...');
     try {
