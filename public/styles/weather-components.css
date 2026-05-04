@@ -292,10 +292,6 @@ weather-controls .error-message:not(:empty) {
     transition: transform 0.2s;
 }
 
-.widgets-section weather-current:hover {
-    transform: translateY(-2px);
-}
-
 /* Weather Page Layout */
 .weather-page-content {
     max-width: 800px;
