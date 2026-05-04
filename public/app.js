@@ -38,16 +38,6 @@ window.addEventListener("DOMContentLoaded", async () => {
         // Continue anyway
     }
     
-    try {
-        console.log('[App] Step 3: Running repairCorruptedNotes...');
-        const repairResult = await DBManager.repairCorruptedNotes();
-        console.log('[App] repairCorruptedNotes result:', repairResult);
-    } catch (err) {
-        console.error("[App] repairCorruptedNotes failed:", err);
-        console.error("[App] Error stack:", err.stack);
-        // Continue anyway
-    }
-    
     console.log('[App] All migrations completed');
 
 
