@@ -202,9 +202,4 @@ window.app = {
         Store.jwt = null;
         app.Router.go("/");
     },
-    // Debug helpers exposed for console use
-    debug: {
-        dbStatus: () => DBManager.debugStatus(),
-        forceReset: () => DBManager.forceReset()
-    }
 }

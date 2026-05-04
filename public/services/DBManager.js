@@ -4,18 +4,6 @@
  * This service provides a shared database connection that can be used
  * by multiple mini-apps (notes, todos, etc.) while keeping their data
  * in separate object stores.
- * 
- * Current structure:
- * - Database: pockist-db
- * - Version: 5 (added imports object store for tracking)
- * - Object Stores:
- *   - notes: Stores note content with id as keyPath
- *   - lists: Stores todo lists
- *   - imports: Tracks imported files to prevent duplicates
- * 
- * Future expansion:
- * - Additional object stores can be added by incrementing DB_VERSION
- *   and adding creation logic in the #openDB method's onupgradeneeded handler.
  */
 
 /**
@@ -28,13 +16,8 @@
  * 3. Add creation logic in #openDB's onupgradeneeded handler
  */
 const DB_CONFIG = {
-    // The shared database name used by all Pockist mini-apps
     NAME: 'pockist-db',
-
-    // Current database version. Incremented to 6 to add deletion_tokens object store.
-    // Increment this when adding new object stores or changing structures.
     VERSION: 6,
-
     // Object store names - each mini-app should have its own store
     STORES: {
         NOTES: 'notes',
@@ -798,73 +781,6 @@ export class DBManager {
             request.onblocked = () => {
                 console.error('[DBManager] Database upgrade blocked');
                 reject(new Error('Database upgrade blocked'));
-            };
-        });
-    }
-
-    // ============================================================================
-    // DEBUG AND UTILITY METHODS
-    // ============================================================================
-
-    /**
-     * Log current database status for debugging
-     */
-    static async debugStatus() {
-        console.log('=== DBManager Debug Status ===');
-        console.log('DB_CONFIG:', DB_CONFIG);
-        console.log('localStorage flags:');
-        console.log('  - migrationComplete:', localStorage.getItem('migrationComplete'));
-        console.log('  - multiNoteMigrationComplete:', localStorage.getItem('multiNoteMigrationComplete'));
-        console.log('  - multiNoteMigrationVersion:', localStorage.getItem('multiNoteMigrationVersion'));
-        console.log('  - notesRepairComplete:', localStorage.getItem('notesRepairComplete'));
-        console.log('  - todoDBMigrationComplete:', localStorage.getItem('todoDBMigrationComplete'));
-
-        try {
-            await this.init();
-            console.log('Database connected: yes');
-            console.log('Database version:', this.#db.version);
-            console.log('Object stores:', Array.from(this.#db.objectStoreNames));
-        } catch (error) {
-            console.error('Database not connected:', error);
-        }
-        console.log('=== End Debug Status ===');
-    }
-
-    /**
-     * Force reset the database - USE WITH CAUTION
-     * Deletes the entire database and recreates it
-     */
-    static async forceReset() {
-        console.warn('[DBManager] forceReset() called - deleting database!');
-        return new Promise((resolve) => {
-            // Close existing connection
-            if (this.#db) {
-                this.#db.close();
-                this.#db = null;
-            }
-            
-            const request = indexedDB.deleteDatabase(DB_CONFIG.NAME);
-            
-            request.onsuccess = () => {
-                console.log('[DBManager] Database deleted, will recreate on next init');
-                // Clear migration flags so everything re-runs
-                localStorage.removeItem('migrationComplete');
-                localStorage.removeItem('multiNoteMigrationComplete');
-                localStorage.removeItem('multiNoteMigrationVersion');
-                localStorage.removeItem('notesRepairComplete');
-                localStorage.removeItem('todoDBMigrationComplete');
-                console.log('[DBManager] Migration flags cleared');
-                resolve(true);
-            };
-            
-            request.onerror = () => {
-                console.error('[DBManager] Failed to delete database');
-                resolve(false);
-            };
-            
-            request.onblocked = () => {
-                console.error('[DBManager] Database delete blocked');
-                resolve(false);
             };
         });
     }
