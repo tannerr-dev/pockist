@@ -617,7 +617,11 @@ export class TodoList extends HTMLElement {
 			console.error('[TodoList] Cannot render - container element not found');
 			return;
 		}
-		
+
+		// Update mode class on container to replace :has() selectors
+		this.#containerEl.classList.remove('mode-single', 'mode-all');
+		this.#containerEl.classList.add(this.#mode === 'single' ? 'mode-single' : 'mode-all');
+
 		if (this.#mode === "single") {
 			this.#renderSingleMode();
 		} else {
@@ -757,13 +761,13 @@ export class TodoList extends HTMLElement {
 					`.clear-completed-btn[data-list-id="${list.id}"]`
 				);
 				const hasCompleted = list.todos.some((t) => t.completed);
-				clearBtn.style.display = hasCompleted ? "inline" : "none";
+				clearBtn.classList.toggle('hidden', !hasCompleted);
 
 				// Show/hide sort button
 				const sortBtn = listSection.querySelector(
 					`.sort-todos-btn[data-list-id="${list.id}"]`
 				);
-				sortBtn.style.display = list.todos.length > 0 ? "inline" : "none";
+				sortBtn.classList.toggle('hidden', !(list.todos.length > 0));
 
 				// Attach event listeners
 				const input = listSection.querySelector(
@@ -890,56 +894,13 @@ export class TodoList extends HTMLElement {
 			}
 			const hasCompleted = list?.todos.some((t) => t.completed);
 			if (this.#clearCompletedBtn) {
-				this.#clearCompletedBtn.style.display = hasCompleted
-					? "inline"
-					: "none";
+				this.#clearCompletedBtn.classList.toggle('hidden', !hasCompleted);
 			}
 			// Show sort button when there are todos
 			if (this.#sortTodosBtn) {
-				this.#sortTodosBtn.style.display = list?.todos.length > 0
-					? "inline"
-					: "none";
+				this.#sortTodosBtn.classList.toggle('hidden', !(list?.todos.length > 0));
 			}
-			// Update "more items" indicator
-			this.#updateMoreIndicator(list);
 		}
-	}
-
-	#updateMoreIndicator(list) {
-		const scrollContainer = this.querySelector(".todo-scroll-container");
-		if (!scrollContainer || !list) return;
-
-		// Use requestAnimationFrame to check after render
-		requestAnimationFrame(() => {
-			// Clear previous indicators
-			const allItems = scrollContainer.querySelectorAll('.todo-item');
-			allItems.forEach(item => {
-				item.classList.remove('has-more');
-				item.removeAttribute('data-more-count');
-			});
-
-			const containerRect = scrollContainer.getBoundingClientRect();
-			let lastVisibleItem = null;
-			let visibleCount = 0;
-
-			allItems.forEach(item => {
-				const itemRect = item.getBoundingClientRect();
-				// Item is visible if its top is within the container's visible area
-				if (itemRect.top >= containerRect.top && itemRect.top < containerRect.bottom) {
-					visibleCount++;
-					lastVisibleItem = item;
-				}
-			});
-
-			const hiddenCount = list.todos.length - visibleCount;
-
-			// Add indicator to last visible item if there are hidden items
-			if (hiddenCount > 0 && lastVisibleItem) {
-				const itemText = hiddenCount === 1 ? 'item' : 'items';
-				lastVisibleItem.classList.add('has-more');
-				lastVisibleItem.setAttribute('data-more-count', `${hiddenCount} more ${itemText}`);
-			}
-		});
 	}
 
 	#renderTodosForList(list, container) {

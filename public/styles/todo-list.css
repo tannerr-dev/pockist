@@ -2,8 +2,8 @@
 	margin-bottom: 1.5rem;
 }
 
-/* Card style for compact view (single mode) only */
-.todo-list-container:not(:has(#new-list-row[style*="flex"])) {
+/* Mode-based container styling - use classes instead of :has() */
+.todo-list-container.mode-single {
 	background-color: var(--bg-2);
 	border: 1px solid var(--border-color);
 	border-radius: 12px;
@@ -11,10 +11,17 @@
 	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 	display: flex;
 	flex-direction: column;
+	/* Reserve min-height for empty state and footer */
+	min-height: 200px;
 }
 
-/* Fixed height scrollable container for compact view */
-.todo-list-container:not(:has(#new-list-row[style*="flex"])) .todo-scroll-container {
+.todo-list-container.mode-all {
+	/* All mode has no special container styling */
+	min-height: 100px;
+}
+
+/* Fixed height scrollable container for single mode */
+.todo-list-container.mode-single .todo-scroll-container {
 	max-height: 400px;
 	overflow-y: auto;
 	overflow-x: hidden;
@@ -25,28 +32,9 @@
 }
 
 @media (max-width: 480px) {
-	.todo-list-container:not(:has(#new-list-row[style*="flex"])) .todo-scroll-container {
+	.todo-list-container.mode-single .todo-scroll-container {
 		max-height: 60svh;
 	}
-}
-
-/* "X more items" indicator on last visible todo item */
-.todo-item.has-more {
-	position: relative;
-}
-
-.todo-item.has-more::after {
-	content: attr(data-more-count);
-	position: absolute;
-	bottom: 0;
-	left: 0;
-	right: 0;
-	background: linear-gradient(to top, var(--bg-2) 60%, transparent);
-	padding: 1.5rem 0.5rem 0.5rem;
-	font-size: 0.8rem;
-	color: var(--text-muted);
-	text-align: center;
-	pointer-events: none;
 }
 
 .todo-list-selector-row {
@@ -75,7 +63,7 @@
 }
 
 /* Hide heading link in all mode (already on /list page) */
-.todo-list-container:has(#new-list-row[style*="flex"]) .todo-heading-link {
+.todo-list-container.mode-all .todo-heading-link {
 	pointer-events: none;
 	cursor: default;
 }
@@ -513,6 +501,12 @@
 .todo-footer-actions .button-link {
 	font-size: 0.8rem;
 	padding: 0.3rem 0.6rem;
+}
+
+/* Footer buttons - use visibility to reserve space and prevent layout shift */
+.button-link.hidden {
+	visibility: hidden;
+	pointer-events: none;
 }
 
 /* Responsive adjustments */
