@@ -99,6 +99,9 @@ func (h *WeatherHandler) Weather(w http.ResponseWriter, r *http.Request) {
 		log.Printf("[CACHE-HIT] Weather API | Key: %s", cacheKey)
 		w.Header().Set("Content-Type", "application/json")
 		w.Header().Set("X-Cache", "HIT")
+		w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+		w.Header().Set("Pragma", "no-cache")
+		w.Header().Set("Expires", "0")
 		json.NewEncoder(w).Encode(cachedData)
 		return
 	}
@@ -119,6 +122,9 @@ func (h *WeatherHandler) Weather(w http.ResponseWriter, r *http.Request) {
 	// Return response
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("X-Cache", "MISS")
+	w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+	w.Header().Set("Pragma", "no-cache")
+	w.Header().Set("Expires", "0")
 	json.NewEncoder(w).Encode(weatherData)
 }
 
