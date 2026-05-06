@@ -11,14 +11,13 @@ export class TodoList extends HTMLElement {
 
 	// DOM element references
 	#containerEl = null;
-	#listSelectorEl = null;
+	#listSelectorBtn = null;
 	#listsContainerEl = null;
 	#inputEl = null;
 	#addBtn = null;
 	#itemsLeftEl = null;
 	#clearCompletedBtn = null;
 	#sortTodosBtn = null;
-	#createListBtn = null;
 	#listActionsEl = null;
 
 	connectedCallback() {
@@ -32,14 +31,13 @@ export class TodoList extends HTMLElement {
 
 		// Cache DOM elements
 		this.#containerEl = this.querySelector(".todo-list-container");
-		this.#listSelectorEl = this.querySelector("#list-selector");
+		this.#listSelectorBtn = this.querySelector("#list-selector-btn");
 		this.#listsContainerEl = this.querySelector("#lists-container");
 		this.#inputEl = this.querySelector("#todo-input");
 		this.#addBtn = this.querySelector("#add-btn");
 		this.#itemsLeftEl = this.querySelector("#items-left");
 		this.#clearCompletedBtn = this.querySelector("#clear-completed");
 		this.#sortTodosBtn = this.querySelector("#sort-todos");
-		this.#createListBtn = this.querySelector("#create-list-btn");
 		this.#listActionsEl = this.querySelector("#list-actions");
 
 		// Add click handler for heading link
@@ -114,14 +112,8 @@ export class TodoList extends HTMLElement {
 		this.#clearCompletedBtn?.addEventListener("click", () => this.#clearCompleted());
 		this.#sortTodosBtn?.addEventListener("click", () => this.#sortTodos());
 
-		// Event listener for create list button
-		this.#createListBtn?.addEventListener("click", () => this.#handleCreateList());
-
-		// Event listener for list selector
-		this.#listSelectorEl?.addEventListener("change", (e) => {
-			this.#currentListId = e.target.value;
-			this.#render();
-		});
+		// Event listener for list selector button
+		this.#listSelectorBtn?.addEventListener("click", () => this.#showListSelectorDialog());
 	}
 
 	#getCurrentList() {
@@ -343,8 +335,7 @@ export class TodoList extends HTMLElement {
 		}
 	}
 
-	async #setDefaultList() {
-		const listId = this.#currentListId;
+	async #setDefaultList(listId) {
 		this.#lists.forEach((l) => {
 			l.isDefault = l.id === listId;
 		});
@@ -357,9 +348,7 @@ export class TodoList extends HTMLElement {
 		}
 	}
 
-	async #deleteList() {
-		const listId = this.#currentListId;
-
+	async #deleteList(listId) {
 		if (this.#lists.length <= 1) {
 			alert("Cannot delete the last list");
 			return;
@@ -376,9 +365,11 @@ export class TodoList extends HTMLElement {
 			list.order = index;
 		});
 
-		// Switch to default or first list
-		const defaultList = this.#lists.find((l) => l.isDefault);
-		this.#currentListId = defaultList?.id || this.#lists[0]?.id;
+		// If we deleted the current list, switch to default or first
+		if (this.#currentListId === listId) {
+			const defaultList = this.#lists.find((l) => l.isDefault);
+			this.#currentListId = defaultList?.id || this.#lists[0]?.id;
+		}
 
 		try {
 			await DBManager.saveLists(this.#lists);
@@ -404,9 +395,7 @@ export class TodoList extends HTMLElement {
 		}
 	}
 
-	async #moveList(direction) {
-		const listId = this.#currentListId;
-
+	async #moveList(listId, direction) {
 		// Ensure all lists have order field
 		this.#lists.forEach((list, index) => {
 			if (typeof list.order !== 'number') {
@@ -501,69 +490,170 @@ export class TodoList extends HTMLElement {
 		}
 	}
 
-	#render() {
-		if (!this.#containerEl) return;
-
-		// Sort lists by order for the dropdown
+	#showListSelectorDialog() {
+		// Sort lists by order
 		const sortedLists = [...this.#lists].sort((a, b) => {
 			const orderA = typeof a.order === 'number' ? a.order : 0;
 			const orderB = typeof b.order === 'number' ? b.order : 0;
 			return orderA - orderB;
 		});
 
-		// Update list selector dropdown
-		if (this.#listSelectorEl) {
-			this.#listSelectorEl.innerHTML = sortedLists
-				.map((l) =>
-					`<option value="${l.id}" ${l.id === this.#currentListId ? "selected" : ""}>
-						${this.#escapeHtml(l.name)} ${l.isDefault ? "(default)" : ""}
-					</option>`
-				)
-				.join("");
+		const dialog = document.createElement('dialog');
+		dialog.className = 'list-selector-dialog';
+
+		const listItemsHtml = sortedLists.map((list, index) => {
+			const isFirst = index === 0;
+			const isLast = index === sortedLists.length - 1;
+			const isSelected = list.id === this.#currentListId;
+			const isDefault = list.isDefault;
+
+			return `
+				<div class="list-selector-item ${isSelected ? 'selected' : ''}" data-list-id="${list.id}">
+					<div class="list-selector-item-info">
+						<span class="list-selector-item-name">${this.#escapeHtml(list.name)}</span>
+						${isDefault ? '<span class="list-selector-item-badge">default</span>' : ''}
+					</div>
+					<div class="list-selector-item-actions">
+						<button class="list-selector-move-up ${isFirst ? 'disabled' : ''}" data-list-id="${list.id}" ${isFirst ? 'disabled' : ''} title="Move up">▲</button>
+						<button class="list-selector-move-down ${isLast ? 'disabled' : ''}" data-list-id="${list.id}" ${isLast ? 'disabled' : ''} title="Move down">▼</button>
+						${!isDefault ? `<button class="list-selector-set-default" data-list-id="${list.id}" title="Set as default">★</button>` : ''}
+						<button class="list-selector-delete" data-list-id="${list.id}" title="Delete list">×</button>
+					</div>
+				</div>
+			`;
+		}).join('');
+
+		dialog.innerHTML = `
+			<div class="list-selector-dialog-content">
+				<h3>Select List</h3>
+				<div class="list-selector-list">
+					${listItemsHtml}
+				</div>
+				<div class="list-selector-dialog-footer">
+					<button class="list-selector-create-btn button" type="button">+ New List</button>
+				</div>
+			</div>
+		`;
+
+		document.body.appendChild(dialog);
+		dialog.showModal();
+
+		// Handle list selection (click on item name/info)
+		dialog.querySelectorAll('.list-selector-item').forEach(item => {
+			item.addEventListener('click', (e) => {
+				// Don't select if clicking on action buttons
+				if (e.target.closest('.list-selector-item-actions')) return;
+
+				const listId = item.dataset.listId;
+				this.#currentListId = listId;
+				dialog.close();
+				document.body.removeChild(dialog);
+				this.#renderWithTransition();
+			});
+		});
+
+		// Handle move up buttons
+		dialog.querySelectorAll('.list-selector-move-up:not(.disabled)').forEach(btn => {
+			btn.addEventListener('click', async (e) => {
+				e.stopPropagation();
+				const listId = btn.dataset.listId;
+				await this.#moveList(listId, -1);
+				// Refresh dialog
+				dialog.close();
+				document.body.removeChild(dialog);
+				this.#showListSelectorDialog();
+			});
+		});
+
+		// Handle move down buttons
+		dialog.querySelectorAll('.list-selector-move-down:not(.disabled)').forEach(btn => {
+			btn.addEventListener('click', async (e) => {
+				e.stopPropagation();
+				const listId = btn.dataset.listId;
+				await this.#moveList(listId, 1);
+				// Refresh dialog
+				dialog.close();
+				document.body.removeChild(dialog);
+				this.#showListSelectorDialog();
+			});
+		});
+
+		// Handle set default buttons
+		dialog.querySelectorAll('.list-selector-set-default').forEach(btn => {
+			btn.addEventListener('click', async (e) => {
+				e.stopPropagation();
+				const listId = btn.dataset.listId;
+				await this.#setDefaultList(listId);
+				// Refresh dialog
+				dialog.close();
+				document.body.removeChild(dialog);
+				this.#showListSelectorDialog();
+			});
+		});
+
+		// Handle delete buttons
+		dialog.querySelectorAll('.list-selector-delete').forEach(btn => {
+			btn.addEventListener('click', async (e) => {
+				e.stopPropagation();
+				const listId = btn.dataset.listId;
+				await this.#deleteList(listId);
+				// Refresh dialog
+				dialog.close();
+				document.body.removeChild(dialog);
+				if (this.#lists.length > 0) {
+					this.#showListSelectorDialog();
+				}
+			});
+		});
+
+		// Handle create new list button
+		const createBtn = dialog.querySelector('.list-selector-create-btn');
+		createBtn.addEventListener('click', async () => {
+			dialog.close();
+			document.body.removeChild(dialog);
+			await this.#handleCreateList();
+			if (this.#lists.length > 0) {
+				this.#showListSelectorDialog();
+			}
+		});
+
+		// Close on backdrop click
+		dialog.addEventListener('click', (e) => {
+			if (e.target === dialog) {
+				dialog.close();
+				document.body.removeChild(dialog);
+			}
+		});
+	}
+
+	#render() {
+		if (!this.#containerEl) return;
+
+		const currentList = this.#getCurrentList();
+
+		// Update list selector button
+		if (this.#listSelectorBtn) {
+			const nameSpan = this.#listSelectorBtn.querySelector('.list-selector-name');
+			if (nameSpan) {
+				nameSpan.textContent = currentList?.name || 'Select List';
+			}
 		}
 
-		// Update list actions (reorder buttons, etc.)
-		const currentList = this.#getCurrentList();
-		const currentListIndex = sortedLists.findIndex((l) => l.id === this.#currentListId);
-		const isFirst = currentListIndex === 0;
-		const isLast = currentListIndex === sortedLists.length - 1;
-		const isDefault = currentList?.isDefault;
-
+		// Update list actions (share and rename only)
 		if (this.#listActionsEl) {
 			this.#listActionsEl.innerHTML = `
-				<button class="button-link list-move-up ${isFirst ? 'disabled' : ''}" ${isFirst ? 'disabled' : ''} title="Move list up">▲</button>
-				<button class="button-link list-move-down ${isLast ? 'disabled' : ''}" ${isLast ? 'disabled' : ''} title="Move list down">▼</button>
 				<button class="button-link rename-list-btn" title="Rename list">Rename</button>
 				<button class="button-link share-list-btn" title="Share list">Share</button>
-				${!isDefault ? '<button class="button-link set-default-btn" title="Set as default">Set default</button>' : ''}
-				<button class="button-link delete-list-btn" title="Delete list">Delete</button>
 			`;
 
-			// Attach event listeners to action buttons
-			const moveUpBtn = this.#listActionsEl.querySelector('.list-move-up');
-			const moveDownBtn = this.#listActionsEl.querySelector('.list-move-down');
 			const renameBtn = this.#listActionsEl.querySelector('.rename-list-btn');
 			const shareBtn = this.#listActionsEl.querySelector('.share-list-btn');
-			const setDefaultBtn = this.#listActionsEl.querySelector('.set-default-btn');
-			const deleteBtn = this.#listActionsEl.querySelector('.delete-list-btn');
 
-			if (moveUpBtn && !isFirst) {
-				moveUpBtn.addEventListener('click', () => this.#moveList(-1));
-			}
-			if (moveDownBtn && !isLast) {
-				moveDownBtn.addEventListener('click', () => this.#moveList(1));
-			}
 			if (renameBtn) {
 				renameBtn.addEventListener('click', () => this.#editListName());
 			}
 			if (shareBtn) {
 				shareBtn.addEventListener('click', () => this.#shareList());
-			}
-			if (setDefaultBtn) {
-				setDefaultBtn.addEventListener('click', () => this.#setDefaultList());
-			}
-			if (deleteBtn) {
-				deleteBtn.addEventListener('click', () => this.#deleteList());
 			}
 		}
 

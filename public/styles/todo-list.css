@@ -4,7 +4,7 @@
 	border: 1px solid var(--border-color);
 	border-radius: 12px;
 	padding: 1rem;
-	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+	box-shadow: 0 2px 8px color-mix(in srgb, var(--bg-dark) 10%, transparent);
 	display: flex;
 	flex-direction: column;
 	min-height: 200px;
@@ -15,7 +15,7 @@
 	max-height: 400px;
 	overflow-y: auto;
 	overflow-x: hidden;
-	scrollbar-color: hsl(0 0% 100% /0.2) hsl(0 0% 0% /0);
+	scrollbar-color: color-mix(in srgb, var(--text) 20%) transparent;
 	scrollbar-gutter: stable both-edges;
 	flex: 1;
 	min-height: 0;
@@ -59,18 +59,6 @@
 	gap: 0.5rem;
 	flex-wrap: wrap;
 	justify-content: flex-end;
-}
-
-.list-selector {
-	padding: 0.5rem 0.75rem;
-	border: 1px solid var(--border-color);
-	border-radius: 8px;
-	background-color: var(--bg);
-	color: var(--text);
-	font-size: 0.9rem;
-	cursor: pointer;
-	outline: none;
-	min-width: 150px;
 }
 
 /* List actions buttons */
@@ -130,10 +118,192 @@
 }
 
 /* New list row styling */
-/* Create list button */
-.create-list-btn {
-	font-weight: 500;
+/* List selector button (replaces select dropdown) */
+.list-selector-btn {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	padding: 0.5rem 0.75rem;
+	border: 1px solid var(--border-color);
+	border-radius: 8px;
+	background-color: var(--bg);
+	color: var(--text);
+	font-size: 0.95rem;
+	cursor: pointer;
+	outline: none;
+	min-width: 150px;
+	transition: background-color 0.2s, border-color 0.2s;
+}
+
+.list-selector-btn:hover {
+	background-color: color-mix(in srgb, var(--text) 10%, transparent);
+}
+
+.list-selector-btn:active {
+	background-color: color-mix(in srgb, var(--text) 15%, transparent);
+}
+
+.list-selector-name {
+	flex: 1;
+	text-align: left;
+	overflow: hidden;
+	text-overflow: ellipsis;
 	white-space: nowrap;
+}
+
+.list-selector-arrow {
+	font-size: 0.7rem;
+	opacity: 0.7;
+	flex-shrink: 0;
+}
+
+/* List selector dialog */
+.list-selector-dialog {
+	padding: 0;
+	border: none;
+	border-radius: 12px;
+	background-color: var(--bg-2);
+	box-shadow: 0 4px 20px color-mix(in srgb, var(--bg-dark) 30%, transparent);
+	max-width: 400px;
+	width: 100%;
+	max-height: 80vh;
+}
+
+.list-selector-dialog::backdrop {
+	background-color: color-mix(in srgb, var(--bg-dark) 50%, transparent);
+}
+
+.list-selector-dialog-content {
+	display: flex;
+	flex-direction: column;
+	max-height: 80vh;
+}
+
+.list-selector-dialog-content h3 {
+	margin: 0;
+	padding: 1rem;
+	font-size: 1.1rem;
+	color: var(--text);
+	border-bottom: 1px solid var(--border-color);
+}
+
+.list-selector-list {
+	overflow-y: auto;
+	padding: 0.5rem;
+	flex: 1;
+}
+
+.list-selector-item {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 0.75rem;
+	border-radius: 8px;
+	cursor: pointer;
+	transition: background-color 0.2s;
+	margin-bottom: 0.25rem;
+}
+
+.list-selector-item:hover {
+	background-color: color-mix(in srgb, var(--text) 10%, transparent);
+}
+
+.list-selector-item.selected {
+	background-color: color-mix(in srgb, var(--text) 15%, transparent);
+}
+
+.list-selector-item-info {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	flex: 1;
+	overflow: hidden;
+}
+
+.list-selector-item-name {
+	font-weight: 500;
+	color: var(--text);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.list-selector-item-badge {
+	font-size: 0.65rem;
+	padding: 0.15rem 0.35rem;
+	background-color: var(--accent);
+	color: white;
+	border-radius: 4px;
+	opacity: 0.8;
+	flex-shrink: 0;
+}
+
+.list-selector-item-actions {
+	display: flex;
+	align-items: center;
+	gap: 0.25rem;
+	opacity: 0;
+	transition: opacity 0.2s;
+}
+
+.list-selector-item:hover .list-selector-item-actions {
+	opacity: 1;
+}
+
+.list-selector-item-actions button {
+	width: 28px;
+	height: 28px;
+	border: none;
+	background: transparent;
+	color: var(--text);
+	opacity: 0.5;
+	font-size: 0.85rem;
+	cursor: pointer;
+	border-radius: 4px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	transition: all 0.15s ease;
+	padding: 0;
+}
+
+.list-selector-item-actions button:hover:not(:disabled) {
+	opacity: 1;
+	background-color: color-mix(in srgb, var(--text) 15%, transparent);
+}
+
+.list-selector-item-actions button:disabled {
+	opacity: 0.15;
+	cursor: default;
+}
+
+.list-selector-set-default:hover:not(:disabled) {
+	color: var(--accent);
+}
+
+.list-selector-delete:hover:not(:disabled) {
+	color: var(--error);
+}
+
+.list-selector-dialog-footer {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 0.75rem 1rem;
+	border-top: 1px solid var(--border-color);
+	gap: 1rem;
+}
+
+.list-selector-create-btn {
+	font-size: 0.9rem;
+	width: 100%;
+}
+
+/* Always show actions on touch devices */
+@media (hover: none) {
+	.list-selector-item-actions {
+		opacity: 1;
+	}
 }
 
 /* Todo list container */
@@ -166,14 +336,14 @@
 	align-items: center;
 	gap: 0.75rem;
 	padding: 0.875rem 1rem;
-	border-bottom: 1px solid hsl(0 0% 50% / 0.1);
+	border-bottom: 1px solid var(--border-color);
 	transition: background-color 0.2s;
 }
 
 /* Highlight effect when reorder buttons are clicked */
 .todo-item:has(.todo-move-up:active),
 .todo-item:has(.todo-move-down:active) {
-	background-color: hsl(0 0% 50% / 0.1);
+	background-color: color-mix(in srgb, var(--text) 10%, transparent);
 }
 
 .todo-item:last-child {
@@ -181,7 +351,7 @@
 }
 
 .todo-item:hover {
-	background-color: hsl(0 0% 50% / 0.05);
+	background-color: color-mix(in srgb, var(--text) 5%, transparent);
 }
 
 .todo-item.completed .todo-text {
@@ -207,14 +377,14 @@
 }
 
 .todo-text:hover {
-	background-color: hsl(0 0% 50% / 0.1);
+	background-color: color-mix(in srgb, var(--text) 10%, transparent);
 	border-radius: 4px;
 	padding: 0.125rem 0.25rem;
 	margin: -0.125rem -0.25rem;
 }
 
 .todo-text:focus {
-	background-color: hsl(0 0% 50% / 0.15);
+	background-color: color-mix(in srgb, var(--text) 15%, transparent);
 	border-radius: 4px;
 	padding: 0.125rem 0.25rem;
 	margin: -0.125rem -0.25rem;
@@ -239,8 +409,8 @@
 
 .todo-delete:hover {
 	opacity: 1;
-	background-color: hsl(0 70% 50% / 0.2);
-	color: hsl(0 70% 50%);
+	background-color: color-mix(in srgb, var(--error) 20%, transparent);
+	color: var(--error);
 }
 
 .todo-reorder {
@@ -276,7 +446,7 @@
 .todo-move-up:hover:not(:disabled),
 .todo-move-down:hover:not(:disabled) {
 	opacity: 1;
-	background-color: hsl(0 0% 50% / 0.15);
+	background-color: color-mix(in srgb, var(--text) 15%, transparent);
 	transform: scale(1.1);
 }
 
@@ -350,7 +520,7 @@
 }
 
 .button-link:hover:not(:disabled) {
-	background-color: hsl(0 0% 50% / 0.1);
+	background-color: color-mix(in srgb, var(--text) 10%, transparent);
 }
 
 .button-link:disabled {
