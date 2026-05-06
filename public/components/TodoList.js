@@ -395,6 +395,19 @@ export class TodoList extends HTMLElement {
 		}
 	}
 
+	async #editListNameById(listId, newName) {
+		const list = this.#lists.find((l) => l.id === listId);
+		if (!list || !newName.trim() || newName.trim() === list.name) return;
+
+		list.name = newName.trim();
+		try {
+			await DBManager.saveLists(this.#lists);
+			this.#renderWithTransition();
+		} catch (error) {
+			console.error('[TodoList] Error saving after name edit:', error);
+		}
+	}
+
 	async #moveList(listId, direction) {
 		// Ensure all lists have order field
 		this.#lists.forEach((list, index) => {
@@ -510,7 +523,7 @@ export class TodoList extends HTMLElement {
 			return `
 				<div class="list-selector-item ${isSelected ? 'selected' : ''}" data-list-id="${list.id}">
 					<div class="list-selector-item-info">
-						<span class="list-selector-item-name">${this.#escapeHtml(list.name)}</span>
+						<span class="list-selector-item-name" contenteditable="true" data-list-id="${list.id}">${this.#escapeHtml(list.name)}</span>
 						${isDefault ? '<span class="list-selector-item-badge">default</span>' : ''}
 					</div>
 					<div class="list-selector-item-actions">
@@ -538,17 +551,45 @@ export class TodoList extends HTMLElement {
 		document.body.appendChild(dialog);
 		dialog.showModal();
 
-		// Handle list selection (click on item name/info)
+		// Handle list selection (click on item, but not on editable name or action buttons)
 		dialog.querySelectorAll('.list-selector-item').forEach(item => {
 			item.addEventListener('click', (e) => {
-				// Don't select if clicking on action buttons
+				// Don't select if clicking on action buttons or the editable name
 				if (e.target.closest('.list-selector-item-actions')) return;
+				if (e.target.classList.contains('list-selector-item-name')) return;
 
 				const listId = item.dataset.listId;
 				this.#currentListId = listId;
 				dialog.close();
 				document.body.removeChild(dialog);
 				this.#renderWithTransition();
+			});
+		});
+
+		// Handle editable list names (rename)
+		dialog.querySelectorAll('.list-selector-item-name').forEach(nameEl => {
+			const originalName = nameEl.textContent;
+			const listId = nameEl.dataset.listId;
+
+			nameEl.addEventListener('blur', async () => {
+				const newName = nameEl.textContent.trim();
+				if (newName && newName !== originalName) {
+					await this.#editListNameById(listId, newName);
+				} else {
+					// Restore original name if empty or unchanged
+					nameEl.textContent = originalName;
+				}
+			});
+
+			nameEl.addEventListener('keydown', (e) => {
+				if (e.key === 'Enter') {
+					e.preventDefault();
+					nameEl.blur();
+				} else if (e.key === 'Escape') {
+					e.preventDefault();
+					nameEl.textContent = originalName;
+					nameEl.blur();
+				}
 			});
 		});
 
@@ -584,10 +625,11 @@ export class TodoList extends HTMLElement {
 				e.stopPropagation();
 				const listId = btn.dataset.listId;
 				await this.#setDefaultList(listId);
-				// Refresh dialog
+				// Select this list and close dialog
+				this.#currentListId = listId;
 				dialog.close();
 				document.body.removeChild(dialog);
-				this.#showListSelectorDialog();
+				this.#renderWithTransition();
 			});
 		});
 
@@ -639,19 +681,13 @@ export class TodoList extends HTMLElement {
 			}
 		}
 
-		// Update list actions (share and rename only)
+		// Update list actions (share only)
 		if (this.#listActionsEl) {
 			this.#listActionsEl.innerHTML = `
-				<button class="button-link rename-list-btn" title="Rename list">Rename</button>
 				<button class="button-link share-list-btn" title="Share list">Share</button>
 			`;
 
-			const renameBtn = this.#listActionsEl.querySelector('.rename-list-btn');
 			const shareBtn = this.#listActionsEl.querySelector('.share-list-btn');
-
-			if (renameBtn) {
-				renameBtn.addEventListener('click', () => this.#editListName());
-			}
 			if (shareBtn) {
 				shareBtn.addEventListener('click', () => this.#shareList());
 			}
