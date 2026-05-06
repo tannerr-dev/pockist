@@ -321,6 +321,10 @@
 }
 
 /* Todo list container */
+#lists-container {
+	view-transition-name: todo-list-content;
+}
+
 #lists-container ul {
 	list-style: none;
 	padding: 0;
@@ -483,24 +487,24 @@
 }
 
 /* View Transitions API styles */
-::view-transition-old(root),
-::view-transition-new(root) {
+/* Scoped to list container only - prevents white flash on full page */
+::view-transition-group(todo-list-content) {
 	animation-duration: 0.25s;
 }
 
-/* Smooth transitions for list containers during view transitions */
-::view-transition-group(todo-list) {
-	animation-duration: 0.3s;
+::view-transition-old(todo-list-content),
+::view-transition-new(todo-list-content) {
+	animation-duration: 0.25s;
+}
+
+/* Todo item transitions for reorder/delete operations */
+::view-transition-group(todo-item) {
+	animation-duration: 0.2s;
 }
 
 ::view-transition-old(todo-item),
 ::view-transition-new(todo-item) {
 	animation-duration: 0.2s;
-}
-
-::view-transition-old(list-item),
-::view-transition-new(list-item) {
-	animation-duration: 0.25s;
 }
 
 .todo-empty {
