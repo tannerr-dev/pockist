@@ -18,8 +18,7 @@ export class TodoList extends HTMLElement {
 	#itemsLeftEl = null;
 	#clearCompletedBtn = null;
 	#sortTodosBtn = null;
-	#newListInputEl = null;
-	#newListBtn = null;
+	#createListBtn = null;
 	#listActionsEl = null;
 
 	connectedCallback() {
@@ -40,8 +39,7 @@ export class TodoList extends HTMLElement {
 		this.#itemsLeftEl = this.querySelector("#items-left");
 		this.#clearCompletedBtn = this.querySelector("#clear-completed");
 		this.#sortTodosBtn = this.querySelector("#sort-todos");
-		this.#newListInputEl = this.querySelector("#new-list-input");
-		this.#newListBtn = this.querySelector("#new-list-btn");
+		this.#createListBtn = this.querySelector("#create-list-btn");
 		this.#listActionsEl = this.querySelector("#list-actions");
 
 		// Add click handler for heading link
@@ -116,11 +114,8 @@ export class TodoList extends HTMLElement {
 		this.#clearCompletedBtn?.addEventListener("click", () => this.#clearCompleted());
 		this.#sortTodosBtn?.addEventListener("click", () => this.#sortTodos());
 
-		// Event listeners for new list creation
-		this.#newListBtn?.addEventListener("click", () => this.#handleNewList());
-		this.#newListInputEl?.addEventListener("keydown", (e) => {
-			if (e.key === "Enter") this.#handleNewList();
-		});
+		// Event listener for create list button
+		this.#createListBtn?.addEventListener("click", () => this.#handleCreateList());
 
 		// Event listener for list selector
 		this.#listSelectorEl?.addEventListener("change", (e) => {
@@ -324,13 +319,13 @@ export class TodoList extends HTMLElement {
 		}
 	}
 
-	async #handleNewList() {
-		const name = this.#newListInputEl?.value.trim();
-		if (!name) return;
+	async #handleCreateList() {
+		const name = await DialogService.prompt("Enter a name for the new list:");
+		if (!name || !name.trim()) return;
 
 		const newList = {
 			id: Date.now().toString(),
-			name: name,
+			name: name.trim(),
 			todos: [],
 			isDefault: false,
 			createdAt: Date.now(),
@@ -339,7 +334,6 @@ export class TodoList extends HTMLElement {
 
 		this.#lists.push(newList);
 		this.#currentListId = newList.id;
-		this.#newListInputEl.value = "";
 
 		try {
 			await DBManager.saveLists(this.#lists);

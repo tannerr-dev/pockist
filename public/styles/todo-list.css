@@ -130,19 +130,10 @@
 }
 
 /* New list row styling */
-.new-list-row {
-	margin-bottom: 0.75rem;
-	padding-bottom: 0.75rem;
-	border-bottom: 1px solid hsl(0 0% 50% / 0.1);
-}
-
-.new-list-row input {
-	font-size: 0.95rem;
-}
-
-.new-list-row button {
-	font-size: 0.95rem;
-	padding: 0.75rem 1rem;
+/* Create list button */
+.create-list-btn {
+	font-weight: 500;
+	white-space: nowrap;
 }
 
 /* Todo list container */

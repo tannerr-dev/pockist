@@ -104,8 +104,12 @@ export const DialogService = {
 
 			input.addEventListener("keydown", (e) => {
 				if (e.key === "Enter") {
+					e.preventDefault();
+					e.stopPropagation();
 					handleConfirm();
 				} else if (e.key === "Escape") {
+					e.preventDefault();
+					e.stopPropagation();
 					handleCancel();
 				}
 			});
