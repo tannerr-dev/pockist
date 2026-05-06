@@ -335,17 +335,20 @@
       <div class="todo-list-container">
         <div class="todo-list-selector-row">
           <h2><a href="/list" class="todo-heading-link">Todos</a></h2>
-          <select id="list-selector" class="list-selector">
-            <option>Loading...</option>
-          </select>
+          <div class="todo-list-selector-controls">
+            <select id="list-selector" class="list-selector">
+              <option>Loading...</option>
+            </select>
+            <div id="list-actions" class="list-actions"></div>
+          </div>
+        </div>
+        <div class="todo-input-row new-list-row">
+          <input type="text" id="new-list-input" placeholder="New list name..." autocomplete="off">
+          <button id="new-list-btn">Create</button>
         </div>
         <div class="todo-input-row">
           <input type="text" id="todo-input" placeholder="Add a new task..." autocomplete="off">
           <button id="add-btn">Add</button>
-        </div>
-        <div id="new-list-row" class="todo-input-row new-list-row" style="display: none;">
-          <input type="text" id="new-list-input" placeholder="New list name..." autocomplete="off">
-          <button id="new-list-btn">Create</button>
         </div>
         <div class="todo-scroll-container">
           <div id="lists-container"></div>
@@ -362,7 +365,7 @@
 
     <template id="todo-list-page">
       <h1>Todo List</h1>
-      <todo-list mode="all"></todo-list>
+      <todo-list></todo-list>
     </template>
 
     <!-- END OF TEMPLATES -->
