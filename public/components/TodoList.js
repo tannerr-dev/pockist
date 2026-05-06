@@ -146,14 +146,6 @@ export class TodoList extends HTMLElement {
 		}
 	}
 
-	#renderWithTransition() {
-		if (document.startViewTransition) {
-			document.startViewTransition(() => this.#render());
-		} else {
-			this.#render();
-		}
-	}
-
 	async #toggleTodo(todoId) {
 		const list = this.#getCurrentList();
 		if (!list) return;
@@ -204,7 +196,7 @@ export class TodoList extends HTMLElement {
 
 			try {
 				await DBManager.saveLists(this.#lists);
-				this.#renderWithTransition();
+				this.#render();
 			} catch (error) {
 				console.error('[TodoList] Error saving after delete:', error);
 			}
@@ -238,7 +230,7 @@ export class TodoList extends HTMLElement {
 
 		try {
 			await DBManager.saveLists(this.#lists);
-			this.#renderWithTransition();
+			this.#render();
 		} catch (error) {
 			console.error('[TodoList] Error saving after move:', error);
 		}
@@ -275,7 +267,7 @@ export class TodoList extends HTMLElement {
 
 		try {
 			await DBManager.saveLists(this.#lists);
-			this.#renderWithTransition();
+			this.#render();
 		} catch (error) {
 			console.error('[TodoList] Error saving after clear:', error);
 		}
@@ -305,7 +297,7 @@ export class TodoList extends HTMLElement {
 
 		try {
 			await DBManager.saveLists(this.#lists);
-			this.#renderWithTransition();
+			this.#render();
 		} catch (error) {
 			console.error('[TodoList] Error saving after sort:', error);
 		}
@@ -329,7 +321,7 @@ export class TodoList extends HTMLElement {
 
 		try {
 			await DBManager.saveLists(this.#lists);
-			this.#renderWithTransition();
+			this.#render();
 		} catch (error) {
 			console.error('[TodoList] Error saving new list:', error);
 		}
@@ -342,7 +334,7 @@ export class TodoList extends HTMLElement {
 
 		try {
 			await DBManager.saveLists(this.#lists);
-			this.#renderWithTransition();
+			this.#render();
 		} catch (error) {
 			console.error('[TodoList] Error saving default list:', error);
 		}
@@ -373,7 +365,7 @@ export class TodoList extends HTMLElement {
 
 		try {
 			await DBManager.saveLists(this.#lists);
-			this.#renderWithTransition();
+			this.#render();
 		} catch (error) {
 			console.error('[TodoList] Error saving after list delete:', error);
 		}
@@ -388,7 +380,7 @@ export class TodoList extends HTMLElement {
 			list.name = newName.trim();
 			try {
 				await DBManager.saveLists(this.#lists);
-				this.#renderWithTransition();
+				this.#render();
 			} catch (error) {
 				console.error('[TodoList] Error saving after name edit:', error);
 			}
@@ -402,7 +394,7 @@ export class TodoList extends HTMLElement {
 		list.name = newName.trim();
 		try {
 			await DBManager.saveLists(this.#lists);
-			this.#renderWithTransition();
+			this.#render();
 		} catch (error) {
 			console.error('[TodoList] Error saving after name edit:', error);
 		}
@@ -432,7 +424,7 @@ export class TodoList extends HTMLElement {
 
 		try {
 			await DBManager.saveLists(this.#lists);
-			this.#renderWithTransition();
+			this.#render();
 		} catch (error) {
 			console.error('[TodoList] Error saving after list move:', error);
 		}
@@ -562,7 +554,7 @@ export class TodoList extends HTMLElement {
 				this.#currentListId = listId;
 				dialog.close();
 				document.body.removeChild(dialog);
-				this.#renderWithTransition();
+				this.#render();
 			});
 		});
 
@@ -629,7 +621,7 @@ export class TodoList extends HTMLElement {
 				this.#currentListId = listId;
 				dialog.close();
 				document.body.removeChild(dialog);
-				this.#renderWithTransition();
+				this.#render();
 			});
 		});
 
