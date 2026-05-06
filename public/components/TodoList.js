@@ -636,13 +636,13 @@ export class TodoList extends HTMLElement {
 
 				if (!isAtTop) {
 					moveUpBtn.addEventListener("click", () => {
-						this.#moveTodo(todo.id, 1);
+						this.#moveTodo(todo.id, -1);
 					});
 				}
 
 				if (!isAtBottom) {
 					moveDownBtn.addEventListener("click", () => {
-						this.#moveTodo(todo.id, -1);
+						this.#moveTodo(todo.id, 1);
 					});
 				}
 
