@@ -515,7 +515,7 @@ export class TodoList extends HTMLElement {
 			return `
 				<div class="list-selector-item ${isSelected ? 'selected' : ''}" data-list-id="${list.id}">
 					<div class="list-selector-item-info">
-						<span class="list-selector-item-name" contenteditable="true" data-list-id="${list.id}">${this.#escapeHtml(list.name)}</span>
+						<span class="list-selector-item-name" contenteditable="false" data-list-id="${list.id}">${this.#escapeHtml(list.name)}</span>
 						${isDefault ? '<span class="list-selector-item-badge">default</span>' : ''}
 					</div>
 					<div class="list-selector-item-actions">
@@ -560,10 +560,25 @@ export class TodoList extends HTMLElement {
 
 		// Handle editable list names (rename)
 		dialog.querySelectorAll('.list-selector-item-name').forEach(nameEl => {
-			const originalName = nameEl.textContent;
 			const listId = nameEl.dataset.listId;
+			let originalName = '';
+
+			// Enable editing on click
+			nameEl.addEventListener('click', (e) => {
+				e.stopPropagation();
+				originalName = nameEl.textContent;
+				nameEl.contentEditable = 'true';
+				nameEl.focus();
+				// Select all text for easy editing
+				const range = document.createRange();
+				range.selectNodeContents(nameEl);
+				const selection = window.getSelection();
+				selection.removeAllRanges();
+				selection.addRange(range);
+			});
 
 			nameEl.addEventListener('blur', async () => {
+				nameEl.contentEditable = 'false';
 				const newName = nameEl.textContent.trim();
 				if (newName && newName !== originalName) {
 					await this.#editListNameById(listId, newName);
