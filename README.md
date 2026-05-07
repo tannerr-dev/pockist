@@ -12,6 +12,7 @@ Update: I am making this repository the self hosted version of this project.
 I may later create a public facing Pockist Cloud SAAS.
 
 ---
+This website is a progressive web app. This means it runs a service worker in the browser that runs the app offline and locally. All data is stored locally. When you want to shre, you can create a temporary list or note that is then transferred to the cloud. The link and data is deleted after 24 hours.
 
 I am using golang with sqlite on the backend with html, css, and javascript on the frontend. 
 Deployed with docker on a five dollar vps.
