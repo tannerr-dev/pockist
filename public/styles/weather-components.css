@@ -31,6 +31,7 @@ weather-current {
 
 .weather-current-inner {
     background: var(--bg-2);
+	border: 1px solid var(--border-color);
     border-radius: 12px;
     padding: 20px;
 }
@@ -124,6 +125,7 @@ weather-meta {
 
 .weather-meta-inner {
     background: var(--bg-2);
+	border: 1px solid var(--border-color);
     border-radius: 12px;
     padding: 20px;
 }
@@ -162,6 +164,7 @@ weather-map {
 
 .weather-map-inner {
     background: var(--bg-2);
+	border: 1px solid var(--border-color);
     border-radius: 12px;
     padding: 16px;
     overflow: hidden;
@@ -193,6 +196,7 @@ weather-debug {
 weather-debug .debug-data {
     background: var(--bg-2);
     border-radius: 12px;
+	border: 1px solid var(--border-color);
     overflow: hidden;
 }
 
