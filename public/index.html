@@ -7,7 +7,7 @@
     <!-- Base Styles -->
     <link href="/styles/reset.css" rel="stylesheet">
     <link href="/styles/global.css" rel="stylesheet">
-    
+
     <!-- Component Styles -->
     <link href="/styles/nav.css" rel="stylesheet">
     <link href="/styles/local-notes.css" rel="stylesheet">
@@ -135,8 +135,8 @@
         <a href="/list" class="drawer-btn" data-nav-link>List</a>
         <a href="/about" class="drawer-btn" data-nav-link>About</a>
         <div class="drawer-divider"></div>
-        <button type="button" class="drawer-btn drawer-btn--export" id="drawer-export-btn">💾 Export All</button>
-        <button type="button" class="drawer-btn drawer-btn--import" id="drawer-import-btn">📥 Import Data</button>
+        <button type="button" class="drawer-btn drawer-btn--export" id="drawer-export-btn">Export All</button>
+        <button type="button" class="drawer-btn drawer-btn--import" id="drawer-import-btn">Import Data</button>
         <input type="file" id="drawer-import-input" accept=".json" style="display: none;">
       </div>
     </nav>
@@ -191,15 +191,15 @@
           <span class="notes-count"></span>
           <button id="new-note-btn" type="button">+ New Note</button>
         </div>
-        
+
         <div id="empty-state" style="display: none;">
           <p>No notes yet.</p>
           <button id="create-first-note-btn" type="button">Create your first note</button>
         </div>
-        
+
         <div id="notes-items"></div>
       </div>
-      
+
       <!-- Editor View -->
       <div id="note-editor" style="display: none;">
         <div class="editor-header">
@@ -209,14 +209,14 @@
             <button id="delete-btn" type="button">Delete</button>
           </div>
         </div>
-        
+
         <input 
           type="text" 
           id="note-title" 
           placeholder="Title" 
           autocomplete="off"
         >
-        
+
         <textarea 
           id="note-content" 
           placeholder="Start typing your note..."
