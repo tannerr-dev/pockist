@@ -21,7 +21,7 @@ export const DialogService = {
 			const confirmBtn = dialog.querySelector(".app-dialog-btn--confirm");
 			
 			const cleanup = () => {
-				document.body.removeChild(dialog);
+				dialog.remove();
 			};
 			
 			const handleCancel = () => {
@@ -83,7 +83,7 @@ export const DialogService = {
 			setTimeout(() => input.focus(), 0);
 
 			const cleanup = () => {
-				document.body.removeChild(dialog);
+				dialog.remove();
 			};
 
 			const handleCancel = () => {
