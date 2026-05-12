@@ -17,7 +17,7 @@
  */
 const DB_CONFIG = {
     NAME: 'pockist-db',
-    VERSION: 6,
+    VERSION: 7,
     // Object store names - each mini-app should have its own store
     STORES: {
         NOTES: 'notes',
@@ -224,18 +224,81 @@ export class DBManager {
     // ============================================================================
 
     /**
-     * Get all lists from the database.
-     *
-     * @returns {Promise<Array>} Array of list objects
+     * Get all lists from the database (legacy method).
+     * Uses the new granular methods internally for v7+ compatibility.
+     * 
+     * @returns {Promise<Array>} Array of list objects with todos
      */
     static async getLists() {
-        console.log('[DBManager] getLists() called');
+        console.log('[DBManager] getLists() called (legacy wrapper)');
+        await this.init();
+
+        try {
+            // Use new granular methods: get metadata first, then load each list
+            const metadata = await this.getListMetadata();
+            console.log(`[DBManager] getLists() loading ${metadata.length} lists via metadata`);
+            
+            // Load each list individually
+            const lists = [];
+            for (const meta of metadata) {
+                const list = await this.getList(meta.id);
+                if (list) {
+                    lists.push(list);
+                }
+            }
+            
+            // Sort by order to ensure consistency
+            lists.sort((a, b) => (a.order || 0) - (b.order || 0));
+            
+            console.log(`[DBManager] getLists() loaded ${lists.length} lists`);
+            return lists;
+        } catch (error) {
+            console.error('[DBManager] getLists() error:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Save all lists to the database (legacy method).
+     * Uses the new granular saveList() method internally for v7+ compatibility.
+     * This saves each list individually and updates the metadata index.
+     * 
+     * @param {Array} lists - Array of list objects to save
+     * @returns {Promise<void>}
+     */
+    static async saveLists(lists) {
+        console.log('[DBManager] saveLists() called with', lists.length, 'lists (legacy wrapper)');
+        await this.init();
+
+        try {
+            // Use new granular method: save each list individually
+            for (const list of lists) {
+                await this.saveList(list);
+            }
+            console.log('[DBManager] saveLists() success - saved', lists.length, 'lists individually');
+        } catch (error) {
+            console.error('[DBManager] saveLists() error:', error);
+            throw error;
+        }
+    }
+
+    // ============================================================================
+    // GRANULAR LIST METHODS (v7+)
+    // Individual list operations with metadata index support
+    // ============================================================================
+
+    /**
+     * Get a single list by its ID.
+     * Returns the full list object including todos.
+     * 
+     * @param {string} listId - The list ID
+     * @returns {Promise<Object|null>} The list object or null if not found
+     */
+    static async getList(listId) {
+        console.log(`[DBManager] getList(${listId}) called`);
         await this.init();
 
         return new Promise((resolve, reject) => {
-            console.log('[DBManager] Checking if lists store exists:', this.#db.objectStoreNames.contains(DB_CONFIG.STORES.LISTS));
-            console.log('[DBManager] Available stores:', Array.from(this.#db.objectStoreNames));
-            
             if (!this.#db.objectStoreNames.contains(DB_CONFIG.STORES.LISTS)) {
                 console.error('[DBManager] Lists object store not found');
                 reject(new Error('Lists object store not found'));
@@ -244,28 +307,30 @@ export class DBManager {
 
             const transaction = this.#db.transaction([DB_CONFIG.STORES.LISTS], 'readonly');
             const store = transaction.objectStore(DB_CONFIG.STORES.LISTS);
-            const request = store.get('todoLists');
+            const request = store.get(listId);
 
             request.onsuccess = () => {
-                console.log('[DBManager] getLists() success:', request.result);
-                resolve(request.result || []);
+                console.log(`[DBManager] getList(${listId}) success:`, request.result ? 'found' : 'not found');
+                resolve(request.result || null);
             };
 
             request.onerror = () => {
-                console.error('[DBManager] getLists() error:', request.error);
+                console.error(`[DBManager] getList(${listId}) error:`, request.error);
                 reject(request.error);
             };
         });
     }
 
     /**
-     * Save lists to the database.
-     *
-     * @param {Array} lists - Array of list objects to save
+     * Save a single list to the database.
+     * Updates both the list record and the metadata index.
+     * Automatically sets updatedAt timestamp.
+     * 
+     * @param {Object} list - The list object to save
      * @returns {Promise<void>}
      */
-    static async saveLists(lists) {
-        console.log('[DBManager] saveLists() called with', lists.length, 'lists');
+    static async saveList(list) {
+        console.log(`[DBManager] saveList(${list.id}) called`);
         await this.init();
 
         return new Promise((resolve, reject) => {
@@ -277,19 +342,456 @@ export class DBManager {
 
             const transaction = this.#db.transaction([DB_CONFIG.STORES.LISTS], 'readwrite');
             const store = transaction.objectStore(DB_CONFIG.STORES.LISTS);
-            const request = store.put(lists, 'todoLists');
 
-            request.onsuccess = () => {
-                console.log('[DBManager] saveLists() success');
+            // Update timestamps
+            const now = Date.now();
+            const listToSave = {
+                ...list,
+                updatedAt: now,
+                lastAccessed: now
+            };
+
+            // Save the full list
+            const listRequest = store.put(listToSave, list.id);
+
+            listRequest.onsuccess = () => {
+                console.log(`[DBManager] saveList(${list.id}) - list saved`);
+                
+                // Update metadata index
+                const metaRequest = store.get('list-metadata');
+                metaRequest.onsuccess = () => {
+                    let metadata = metaRequest.result || [];
+                    const existingIndex = metadata.findIndex(m => m.id === list.id);
+                    const metaEntry = {
+                        id: list.id,
+                        name: list.name,
+                        isDefault: list.isDefault || false,
+                        order: typeof list.order === 'number' ? list.order : 0,
+                        createdAt: list.createdAt || now,
+                        updatedAt: now,
+                        lastAccessed: now,
+                        todoCount: list.todos ? list.todos.length : 0
+                    };
+
+                    if (existingIndex >= 0) {
+                        metadata[existingIndex] = metaEntry;
+                    } else {
+                        metadata.push(metaEntry);
+                    }
+
+                    // Sort by order before saving
+                    metadata.sort((a, b) => a.order - b.order);
+                    store.put(metadata, 'list-metadata');
+                    console.log(`[DBManager] saveList(${list.id}) - metadata updated`);
+                };
+
+                metaRequest.onerror = () => {
+                    console.error(`[DBManager] saveList(${list.id}) - metadata update failed:`, metaRequest.error);
+                };
+            };
+
+            listRequest.onerror = () => {
+                console.error(`[DBManager] saveList(${list.id}) error:`, listRequest.error);
+                reject(listRequest.error);
+            };
+
+            transaction.oncomplete = () => {
+                console.log(`[DBManager] saveList(${list.id}) transaction complete`);
                 resolve();
             };
 
+            transaction.onerror = () => {
+                console.error(`[DBManager] saveList(${list.id}) transaction error:`, transaction.error);
+                reject(transaction.error);
+            };
+        });
+    }
+
+    /**
+     * Delete a single list from the database.
+     * Also updates the metadata index to remove the list.
+     * 
+     * @param {string} listId - The list ID to delete
+     * @returns {Promise<void>}
+     */
+    static async deleteList(listId) {
+        console.log(`[DBManager] deleteList(${listId}) called`);
+        await this.init();
+
+        return new Promise((resolve, reject) => {
+            if (!this.#db.objectStoreNames.contains(DB_CONFIG.STORES.LISTS)) {
+                console.error('[DBManager] Lists object store not found');
+                reject(new Error('Lists object store not found'));
+                return;
+            }
+
+            const transaction = this.#db.transaction([DB_CONFIG.STORES.LISTS], 'readwrite');
+            const store = transaction.objectStore(DB_CONFIG.STORES.LISTS);
+
+            // Delete the list
+            const deleteRequest = store.delete(listId);
+
+            deleteRequest.onsuccess = () => {
+                console.log(`[DBManager] deleteList(${listId}) - list deleted`);
+                
+                // Update metadata to remove this list
+                const metaRequest = store.get('list-metadata');
+                metaRequest.onsuccess = () => {
+                    let metadata = metaRequest.result || [];
+                    metadata = metadata.filter(m => m.id !== listId);
+                    store.put(metadata, 'list-metadata');
+                    console.log(`[DBManager] deleteList(${listId}) - metadata updated`);
+                };
+            };
+
+            deleteRequest.onerror = () => {
+                console.error(`[DBManager] deleteList(${listId}) error:`, deleteRequest.error);
+                reject(deleteRequest.error);
+            };
+
+            transaction.oncomplete = () => resolve();
+            transaction.onerror = () => reject(transaction.error);
+        });
+    }
+
+    /**
+     * Get metadata for all lists (lightweight, no todos).
+     * Returns sorted array by order. Includes default list info.
+     * 
+     * @returns {Promise<Array>} Array of metadata objects
+     */
+    static async getListMetadata() {
+        console.log('[DBManager] getListMetadata() called');
+        await this.init();
+
+        return new Promise((resolve, reject) => {
+            if (!this.#db.objectStoreNames.contains(DB_CONFIG.STORES.LISTS)) {
+                console.error('[DBManager] Lists object store not found');
+                reject(new Error('Lists object store not found'));
+                return;
+            }
+
+            const transaction = this.#db.transaction([DB_CONFIG.STORES.LISTS], 'readonly');
+            const store = transaction.objectStore(DB_CONFIG.STORES.LISTS);
+            const request = store.get('list-metadata');
+
+            request.onsuccess = () => {
+                let metadata = request.result || [];
+                // Ensure sorted by order
+                metadata.sort((a, b) => a.order - b.order);
+                console.log(`[DBManager] getListMetadata() success: ${metadata.length} lists`);
+                resolve(metadata);
+            };
+
             request.onerror = () => {
-                console.error('[DBManager] saveLists() error:', request.error);
+                console.error('[DBManager] getListMetadata() error:', request.error);
                 reject(request.error);
             };
         });
     }
+
+    /**
+     * Get the default list ID from metadata.
+     * 
+     * @returns {Promise<string|null>} The default list ID or null
+     */
+    static async getDefaultListId() {
+        console.log('[DBManager] getDefaultListId() called');
+        const metadata = await this.getListMetadata();
+        const defaultList = metadata.find(m => m.isDefault);
+        return defaultList ? defaultList.id : (metadata[0] ? metadata[0].id : null);
+    }
+
+    /**
+     * Update the order of a specific list.
+     * Updates both the list record and metadata index.
+     * 
+     * @param {string} listId - The list ID
+     * @param {number} newOrder - The new order value
+     * @returns {Promise<void>}
+     */
+    static async updateListOrder(listId, newOrder) {
+        console.log(`[DBManager] updateListOrder(${listId}, ${newOrder}) called`);
+        await this.init();
+
+        return new Promise((resolve, reject) => {
+            if (!this.#db.objectStoreNames.contains(DB_CONFIG.STORES.LISTS)) {
+                reject(new Error('Lists object store not found'));
+                return;
+            }
+
+            const transaction = this.#db.transaction([DB_CONFIG.STORES.LISTS], 'readwrite');
+            const store = transaction.objectStore(DB_CONFIG.STORES.LISTS);
+
+            // Update list order
+            const listRequest = store.get(listId);
+            listRequest.onsuccess = () => {
+                const list = listRequest.result;
+                if (list) {
+                    list.order = newOrder;
+                    list.updatedAt = Date.now();
+                    store.put(list, listId);
+                    console.log(`[DBManager] updateListOrder - list updated`);
+                }
+            };
+
+            // Update metadata order
+            const metaRequest = store.get('list-metadata');
+            metaRequest.onsuccess = () => {
+                let metadata = metaRequest.result || [];
+                const entry = metadata.find(m => m.id === listId);
+                if (entry) {
+                    entry.order = newOrder;
+                    entry.updatedAt = Date.now();
+                    // Re-sort and save
+                    metadata.sort((a, b) => a.order - b.order);
+                    store.put(metadata, 'list-metadata');
+                    console.log(`[DBManager] updateListOrder - metadata updated`);
+                }
+            };
+
+            transaction.oncomplete = () => resolve();
+            transaction.onerror = () => reject(transaction.error);
+        });
+    }
+
+    /**
+     * Set a list as the default list.
+     * Unsets all other lists as default. Updates metadata accordingly.
+     * 
+     * @param {string} listId - The list ID to set as default
+     * @returns {Promise<void>}
+     */
+    static async setDefaultList(listId) {
+        console.log(`[DBManager] setDefaultList(${listId}) called`);
+        await this.init();
+
+        return new Promise((resolve, reject) => {
+            if (!this.#db.objectStoreNames.contains(DB_CONFIG.STORES.LISTS)) {
+                reject(new Error('Lists object store not found'));
+                return;
+            }
+
+            const transaction = this.#db.transaction([DB_CONFIG.STORES.LISTS], 'readwrite');
+            const store = transaction.objectStore(DB_CONFIG.STORES.LISTS);
+
+            // Get all list IDs from metadata
+            const metaRequest = store.get('list-metadata');
+            metaRequest.onsuccess = () => {
+                const metadata = metaRequest.result || [];
+                const now = Date.now();
+
+                // Update each list's isDefault flag
+                metadata.forEach(meta => {
+                    const listReq = store.get(meta.id);
+                    listReq.onsuccess = () => {
+                        const list = listReq.result;
+                        if (list) {
+                            list.isDefault = (list.id === listId);
+                            list.updatedAt = now;
+                            store.put(list, list.id);
+                        }
+                    };
+                    // Update metadata
+                    meta.isDefault = (meta.id === listId);
+                    meta.updatedAt = now;
+                });
+
+                store.put(metadata, 'list-metadata');
+                console.log(`[DBManager] setDefaultList - default set to ${listId}`);
+            };
+
+            transaction.oncomplete = () => resolve();
+            transaction.onerror = () => reject(transaction.error);
+        });
+    }
+
+    /**
+     * Update the lastAccessed timestamp for a list.
+     * Updates both the list and metadata.
+     * 
+     * @param {string} listId - The list ID
+     * @returns {Promise<void>}
+     */
+    static async updateLastAccessed(listId) {
+        console.log(`[DBManager] updateLastAccessed(${listId}) called`);
+        await this.init();
+
+        return new Promise((resolve, reject) => {
+            if (!this.#db.objectStoreNames.contains(DB_CONFIG.STORES.LISTS)) {
+                reject(new Error('Lists object store not found'));
+                return;
+            }
+
+            const transaction = this.#db.transaction([DB_CONFIG.STORES.LISTS], 'readwrite');
+            const store = transaction.objectStore(DB_CONFIG.STORES.LISTS);
+
+            const now = Date.now();
+
+            // Update list
+            const listRequest = store.get(listId);
+            listRequest.onsuccess = () => {
+                const list = listRequest.result;
+                if (list) {
+                    list.lastAccessed = now;
+                    store.put(list, listId);
+                }
+            };
+
+            // Update metadata
+            const metaRequest = store.get('list-metadata');
+            metaRequest.onsuccess = () => {
+                let metadata = metaRequest.result || [];
+                const entry = metadata.find(m => m.id === listId);
+                if (entry) {
+                    entry.lastAccessed = now;
+                    store.put(metadata, 'list-metadata');
+                }
+            };
+
+            transaction.oncomplete = () => resolve();
+            transaction.onerror = () => reject(transaction.error);
+        });
+    }
+
+    /**
+     * Create a new list with proper initialization.
+     * Generates ID, sets timestamps, and adds to metadata.
+     * 
+     * @param {Object} listData - The list data (name, optional isDefault, optional order)
+     * @returns {Promise<Object>} The created list object
+     */
+    static async createList(listData) {
+        console.log('[DBManager] createList() called with:', listData);
+        await this.init();
+
+        const now = Date.now();
+        const metadata = await this.getListMetadata();
+        
+        // Generate new order (after last list)
+        const maxOrder = metadata.length > 0 
+            ? Math.max(...metadata.map(m => m.order))
+            : -1;
+
+        const newList = {
+            id: `list-${now}-${Math.random().toString(36).substr(2, 9)}`,
+            name: listData.name || 'New List',
+            todos: [],
+            isDefault: listData.isDefault || false,
+            order: typeof listData.order === 'number' ? listData.order : maxOrder + 1,
+            createdAt: now,
+            updatedAt: now,
+            lastAccessed: now
+        };
+
+        // If this is the first list or marked as default, handle default logic
+        if (newList.isDefault || metadata.length === 0) {
+            // Unset others if this is default
+            if (metadata.length > 0 && newList.isDefault) {
+                await this.setDefaultList(newList.id);
+            }
+        }
+
+        await this.saveList(newList);
+        console.log(`[DBManager] createList() created: ${newList.id}`);
+        return newList;
+    }
+
+    /**
+     * Rebuild the metadata index from all individual list records.
+     * Useful for recovery if metadata gets out of sync with actual lists.
+     * Scans all list records and rebuilds the metadata index.
+     * 
+     * @returns {Promise<Array>} The rebuilt metadata array
+     */
+    static async rebuildMetadata() {
+        console.log('[DBManager] rebuildMetadata() called');
+        await this.init();
+
+        return new Promise((resolve, reject) => {
+            if (!this.#db.objectStoreNames.contains(DB_CONFIG.STORES.LISTS)) {
+                reject(new Error('Lists object store not found'));
+                return;
+            }
+
+            const transaction = this.#db.transaction([DB_CONFIG.STORES.LISTS], 'readonly');
+            const store = transaction.objectStore(DB_CONFIG.STORES.LISTS);
+            
+            // Get all keys to find list records (exclude metadata key)
+            const keysRequest = store.getAllKeys();
+            
+            keysRequest.onsuccess = () => {
+                const allKeys = keysRequest.result || [];
+                const listKeys = allKeys.filter(key => key !== 'list-metadata');
+                
+                console.log(`[DBManager] rebuildMetadata() found ${listKeys.length} list records`);
+                
+                // Load each list and build metadata
+                const metadata = [];
+                let loadedCount = 0;
+                
+                if (listKeys.length === 0) {
+                    // No lists found, save empty metadata
+                    const writeTransaction = this.#db.transaction([DB_CONFIG.STORES.LISTS], 'readwrite');
+                    const writeStore = writeTransaction.objectStore(DB_CONFIG.STORES.LISTS);
+                    writeStore.put([], 'list-metadata');
+                    resolve([]);
+                    return;
+                }
+                
+                listKeys.forEach(key => {
+                    const listRequest = store.get(key);
+                    listRequest.onsuccess = () => {
+                        const list = listRequest.result;
+                        if (list && list.id) {
+                            metadata.push({
+                                id: list.id,
+                                name: list.name || 'Unnamed List',
+                                isDefault: list.isDefault || false,
+                                order: typeof list.order === 'number' ? list.order : 0,
+                                createdAt: list.createdAt || Date.now(),
+                                updatedAt: list.updatedAt || list.createdAt || Date.now(),
+                                lastAccessed: list.lastAccessed || list.createdAt || Date.now(),
+                                todoCount: list.todos ? list.todos.length : 0
+                            });
+                        }
+                        loadedCount++;
+                        
+                        // When all loaded, sort and save
+                        if (loadedCount === listKeys.length) {
+                            // Sort by order
+                            metadata.sort((a, b) => a.order - b.order);
+                            
+                            // Save rebuilt metadata
+                            const writeTransaction = this.#db.transaction([DB_CONFIG.STORES.LISTS], 'readwrite');
+                            const writeStore = writeTransaction.objectStore(DB_CONFIG.STORES.LISTS);
+                            writeStore.put(metadata, 'list-metadata');
+                            
+                            console.log(`[DBManager] rebuildMetadata() rebuilt ${metadata.length} entries`);
+                            resolve(metadata);
+                        }
+                    };
+                    
+                    listRequest.onerror = () => {
+                        loadedCount++;
+                        console.error(`[DBManager] rebuildMetadata() error loading list ${key}:`, listRequest.error);
+                        if (loadedCount === listKeys.length) {
+                            resolve(metadata);
+                        }
+                    };
+                });
+            };
+            
+            keysRequest.onerror = () => {
+                console.error('[DBManager] rebuildMetadata() error getting keys:', keysRequest.error);
+                reject(keysRequest.error);
+            };
+        });
+    }
+
+    // ============================================================================
+    // END OF GRANULAR LIST METHODS
+    // ============================================================================
 
     // ============================================================================
     // IMPORT TRACKING METHODS
@@ -747,6 +1249,97 @@ export class DBManager {
                 }
 
                 console.log('[DBManager] Stores after upgrade:', Array.from(db.objectStoreNames));
+
+                // Version 7 migration: Split monolithic lists array into individual records
+                // Also creates metadata index for efficient list management
+                if (event.oldVersion < 7 && db.objectStoreNames.contains(DB_CONFIG.STORES.LISTS)) {
+                    console.log('[DBManager] Running v6->v7 migration: Splitting lists into individual records');
+                    
+                    const transaction = event.target.transaction;
+                    const store = transaction.objectStore(DB_CONFIG.STORES.LISTS);
+                    
+                    // Check for old format data (single 'todoLists' key containing array)
+                    const oldDataRequest = store.get('todoLists');
+                    oldDataRequest.onsuccess = () => {
+                        if (oldDataRequest.result && Array.isArray(oldDataRequest.result)) {
+                            const lists = oldDataRequest.result;
+                            console.log(`[DBManager] Migrating ${lists.length} lists to individual records`);
+                            
+                            // Migrate each list to its own record keyed by list ID
+                            lists.forEach(list => {
+                                if (list.id) {
+                                    // Ensure list has all required fields for new format
+                                    const now = Date.now();
+                                    const migratedList = {
+                                        ...list,
+                                        order: typeof list.order === 'number' ? list.order : 0,
+                                        createdAt: list.createdAt || now,
+                                        updatedAt: list.updatedAt || list.createdAt || now,
+                                        lastAccessed: list.lastAccessed || list.createdAt || now
+                                    };
+                                    store.put(migratedList, list.id);
+                                    console.log(`[DBManager] Migrated list: ${list.id} - ${list.name}`);
+                                }
+                            });
+                            
+                            // Create metadata index with summary info for all lists
+                            const metadata = lists.map(l => ({
+                                id: l.id,
+                                name: l.name,
+                                isDefault: l.isDefault || false,
+                                order: typeof l.order === 'number' ? l.order : 0,
+                                createdAt: l.createdAt || Date.now(),
+                                updatedAt: l.updatedAt || l.createdAt || Date.now(),
+                                lastAccessed: l.lastAccessed || l.createdAt || Date.now(),
+                                todoCount: l.todos ? l.todos.length : 0
+                            }));
+                            
+                            // Sort metadata by order before saving
+                            metadata.sort((a, b) => a.order - b.order);
+                            store.put(metadata, 'list-metadata');
+                            console.log('[DBManager] Created list-metadata index');
+                            
+                            // Clean up old monolithic key after successful migration
+                            store.delete('todoLists');
+                            console.log('[DBManager] Cleaned up old todoLists key');
+                            
+                        } else {
+                            // No old data found, create fresh metadata with default list
+                            console.log('[DBManager] No old data found, creating fresh metadata with default list');
+                            const now = Date.now();
+                            const defaultList = {
+                                id: 'default',
+                                name: 'My Todos',
+                                todos: [],
+                                isDefault: true,
+                                createdAt: now,
+                                updatedAt: now,
+                                lastAccessed: now,
+                                order: 0
+                            };
+                            
+                            store.put(defaultList, 'default');
+                            
+                            const metadata = [{
+                                id: 'default',
+                                name: 'My Todos',
+                                isDefault: true,
+                                order: 0,
+                                createdAt: now,
+                                updatedAt: now,
+                                lastAccessed: now,
+                                todoCount: 0
+                            }];
+                            
+                            store.put(metadata, 'list-metadata');
+                            console.log('[DBManager] Created default list and metadata');
+                        }
+                    };
+                    
+                    oldDataRequest.onerror = () => {
+                        console.error('[DBManager] Error during v6->v7 migration:', oldDataRequest.error);
+                    };
+                }
             };
 
             request.onsuccess = (event) => {
