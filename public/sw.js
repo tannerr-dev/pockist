@@ -50,12 +50,12 @@ async function handleApiRequest(request) {
 		const cachedResponse = await cache.match(request);
 
 		if (cachedResponse) {
-			console.log("[SW] Serving API from cache:", request.url);
+			// console.log("[SW] Serving API from cache:", request.url);
 			return cachedResponse;
 		}
 
 		// No cache available - propagate error
-		console.log("[SW] No cache available for:", request.url);
+		// console.log("[SW] No cache available for:", request.url);
 		throw error;
 	}
 }
@@ -66,14 +66,14 @@ async function handleStaticAsset(request) {
 	const cachedResponse = await cache.match(request);
 
 	if (cachedResponse) {
-		console.log("[SW] Serving stale from cache:", request.url);
+		// console.log("[SW] Serving stale from cache:", request.url);
 
 		// Revalidate in background
 		fetch(request)
 			.then((networkResponse) => {
 				if (networkResponse.ok) {
 					cache.put(request, networkResponse.clone());
-					console.log("[SW] Updated cache with fresh version:", request.url);
+					// console.log("[SW] Updated cache with fresh version:", request.url);
 
 					self.clients.matchAll().then((clients) => {
 						clients.forEach((client) => {
