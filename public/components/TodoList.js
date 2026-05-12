@@ -5,7 +5,10 @@ import { ShareService } from "../services/ShareService.js";
 import './ShareButton.js';
 
 export class TodoList extends HTMLElement {
-	#lists = [];
+	// State: metadata for all lists (lightweight, no todos)
+	#listMetadata = [];
+	// State: full current list data (including todos)
+	#currentList = null;
 	#currentListId = null;
 	#initialized = false;
 
@@ -59,33 +62,25 @@ export class TodoList extends HTMLElement {
 			await DBManager.init();
 			await DBManager.migrateFromTodoDB();
 
-			this.#lists = await DBManager.getLists();
-
-			// Migrate lists to add order field (backward compatibility)
-			this.#lists.forEach((list, index) => {
-				if (typeof list.order !== 'number') {
-					list.order = index;
-				}
-			});
+			// Load metadata for all lists (lightweight, no todos)
+			this.#listMetadata = await DBManager.getListMetadata();
 
 			// Ensure at least one list exists
-			if (this.#lists.length === 0) {
-				this.#lists.push({
-					id: "default",
+			if (this.#listMetadata.length === 0) {
+				const newList = await DBManager.createList({
 					name: "My Todos",
-					todos: [],
-					isDefault: true,
-					createdAt: Date.now(),
-					order: 0,
+					isDefault: true
 				});
-				await DBManager.saveLists(this.#lists);
+				this.#listMetadata = await DBManager.getListMetadata();
+				this.#currentListId = newList.id;
+			} else if (!this.#currentListId) {
+				// Set current list to default if not set
+				const defaultList = this.#listMetadata.find((l) => l.isDefault);
+				this.#currentListId = defaultList?.id || this.#listMetadata[0]?.id;
 			}
 
-			// Set current list to default if not set
-			if (!this.#currentListId) {
-				const defaultList = this.#lists.find((l) => l.isDefault);
-				this.#currentListId = defaultList?.id || this.#lists[0]?.id;
-			}
+			// Load the full current list data (with todos)
+			await this.#loadCurrentList();
 
 			this.#initialized = true;
 			this.#render();
@@ -116,8 +111,35 @@ export class TodoList extends HTMLElement {
 		this.#listSelectorBtn?.addEventListener("click", () => this.#showListSelectorDialog());
 	}
 
+	// Load the full current list from DB (including todos)
+	async #loadCurrentList() {
+		if (!this.#currentListId) return;
+		
+		try {
+			this.#currentList = await DBManager.getList(this.#currentListId);
+			
+			// Update last accessed timestamp
+			await DBManager.updateLastAccessed(this.#currentListId);
+			
+			// Update metadata in memory too
+			const metaIndex = this.#listMetadata.findIndex(m => m.id === this.#currentListId);
+			if (metaIndex >= 0) {
+				this.#listMetadata[metaIndex].lastAccessed = Date.now();
+			}
+		} catch (error) {
+			console.error('[TodoList] Error loading current list:', error);
+			this.#currentList = null;
+		}
+	}
+
+	// Get the current list metadata (lightweight info)
+	#getCurrentListMeta() {
+		return this.#listMetadata.find((m) => m.id === this.#currentListId);
+	}
+
+	// Get the full current list (with todos) - from cached state
 	#getCurrentList() {
-		return this.#lists.find((l) => l.id === this.#currentListId);
+		return this.#currentList;
 	}
 
 	async #handleAdd() {
@@ -135,14 +157,53 @@ export class TodoList extends HTMLElement {
 			order: list.todos.length,
 		};
 
+		// Add to state
 		list.todos.push(todo);
 		this.#inputEl.value = "";
 
+		// Surgical DOM update: insert new todo at top with animation
+		let ul = this.#listsContainerEl.querySelector('.todo-list-ul');
+		
+		// If list was empty, remove empty message and create UL
+		if (!ul) {
+			this.#listsContainerEl.innerHTML = '';
+			ul = document.createElement('ul');
+			ul.className = 'todo-list-ul';
+			this.#listsContainerEl.appendChild(ul);
+		}
+
+		// Create new element and insert at top
+		const li = this.#createTodoElement(todo, 0, list.todos.length);
+		li.style.opacity = '0';
+		li.style.transform = 'translateY(-10px)';
+		ul.insertBefore(li, ul.firstChild);
+
+		// Animate in
+		requestAnimationFrame(() => {
+			li.style.transition = 'opacity 0.2s, transform 0.2s';
+			li.style.opacity = '1';
+			li.style.transform = 'translateY(0)';
+		});
+
+		// Update move buttons (old top item now has up button enabled)
+		this.#updateMoveButtons();
+		this.#updateFooter();
+
+		// Save to DB in background
 		try {
-			await DBManager.saveLists(this.#lists);
-			this.#render();
+			await DBManager.saveList(list);
+			// Update metadata
+			const metaIndex = this.#listMetadata.findIndex(m => m.id === list.id);
+			if (metaIndex >= 0) {
+				this.#listMetadata[metaIndex].todoCount = list.todos.length;
+			}
 		} catch (error) {
-			console.error('[TodoList] Error saving lists:', error);
+			console.error('[TodoList] Error saving list:', error);
+			// On error, revert: remove the added todo
+			li.remove();
+			list.todos.pop();
+			this.#updateFooter();
+			// TODO: Show error notification
 		}
 	}
 
@@ -151,14 +212,32 @@ export class TodoList extends HTMLElement {
 		if (!list) return;
 
 		const todo = list.todos.find((t) => t.id === todoId);
-		if (todo) {
-			todo.completed = !todo.completed;
-			try {
-				await DBManager.saveLists(this.#lists);
-				this.#render();
-			} catch (error) {
-				console.error('[TodoList] Error saving after toggle:', error);
+		if (!todo) return;
+
+		// Toggle in state
+		const newCompletedState = !todo.completed;
+		todo.completed = newCompletedState;
+
+		// Surgical DOM update: toggle class only
+		const li = this.#listsContainerEl.querySelector(`[data-todo-id="${todoId}"]`);
+		if (li) {
+			li.classList.toggle('completed', newCompletedState);
+		}
+
+		// Update footer stats immediately
+		this.#updateFooter();
+
+		// Save to DB in background
+		try {
+			await DBManager.saveList(list);
+		} catch (error) {
+			console.error('[TodoList] Error saving after toggle:', error);
+			// Revert on error
+			todo.completed = !newCompletedState;
+			if (li) {
+				li.classList.toggle('completed', !newCompletedState);
 			}
+			this.#updateFooter();
 		}
 	}
 
@@ -167,13 +246,31 @@ export class TodoList extends HTMLElement {
 		if (!list) return;
 
 		const todo = list.todos.find((t) => t.id === todoId);
-		if (todo && newText.trim()) {
-			todo.text = newText.trim();
-			try {
-				await DBManager.saveLists(this.#lists);
-				this.#render();
-			} catch (error) {
-				console.error('[TodoList] Error saving after edit:', error);
+		if (!todo) return;
+
+		const trimmedText = newText.trim();
+		if (!trimmedText || trimmedText === todo.text) return;
+
+		// Store original text for potential revert
+		const originalText = todo.text;
+
+		// Update state
+		todo.text = trimmedText;
+
+		// DOM is already updated by contenteditable, just save to DB
+		try {
+			await DBManager.saveList(list);
+		} catch (error) {
+			console.error('[TodoList] Error saving after edit:', error);
+			// Revert on error
+			todo.text = originalText;
+			// Update DOM to show original text
+			const li = this.#listsContainerEl.querySelector(`[data-todo-id="${todoId}"]`);
+			if (li) {
+				const textSpan = li.querySelector('.todo-text');
+				if (textSpan) {
+					textSpan.textContent = originalText;
+				}
 			}
 		}
 	}
@@ -186,20 +283,58 @@ export class TodoList extends HTMLElement {
 		if (!todo) return;
 
 		const confirmed = await DialogService.confirm(`Delete "${todo.text}"? This cannot be undone.`, "Delete");
-		if (confirmed) {
-			list.todos = list.todos.filter((t) => t.id !== todoId);
+		if (!confirmed) return;
 
-			// Reorder remaining todos with descending order (newest/highest on top)
+		// Find DOM element
+		const li = this.#listsContainerEl.querySelector(`[data-todo-id="${todoId}"]`);
+
+		// Remove from state
+		const deletedTodo = todo;
+		const deletedIndex = list.todos.findIndex((t) => t.id === todoId);
+		list.todos = list.todos.filter((t) => t.id !== todoId);
+
+		// Reorder remaining todos
+		list.todos.forEach((todo, index) => {
+			todo.order = list.todos.length - 1 - index;
+		});
+
+		// Surgical DOM update: animate out then remove
+		if (li) {
+			li.style.transition = 'opacity 0.2s, transform 0.2s';
+			li.style.opacity = '0';
+			li.style.transform = 'translateX(20px)';
+
+			setTimeout(() => {
+				li.remove();
+				// If list is now empty, show empty message
+				if (list.todos.length === 0) {
+					this.#listsContainerEl.innerHTML = '<li class="todo-empty">No todos yet. Add one above!</li>';
+				}
+			}, 200);
+		}
+
+		// Update move buttons and footer
+		this.#updateMoveButtons();
+		this.#updateFooter();
+
+		// Save to DB in background
+		try {
+			await DBManager.saveList(list);
+			// Update metadata
+			const metaIndex = this.#listMetadata.findIndex(m => m.id === list.id);
+			if (metaIndex >= 0) {
+				this.#listMetadata[metaIndex].todoCount = list.todos.length;
+			}
+		} catch (error) {
+			console.error('[TodoList] Error saving after delete:', error);
+			// Revert on error: restore todo and re-render
+			list.todos.splice(deletedIndex, 0, deletedTodo);
+			// Reorder again
 			list.todos.forEach((todo, index) => {
 				todo.order = list.todos.length - 1 - index;
 			});
-
-			try {
-				await DBManager.saveLists(this.#lists);
-				this.#render();
-			} catch (error) {
-				console.error('[TodoList] Error saving after delete:', error);
-			}
+			// Full re-render to restore state
+			this.#renderTodoList();
 		}
 	}
 
@@ -220,7 +355,17 @@ export class TodoList extends HTMLElement {
 		const newIndex = todoIndex + direction;
 		if (newIndex < 0 || newIndex >= list.todos.length) return;
 
-		// Swap the todos and update their order values
+		// Find DOM elements
+		const items = Array.from(this.#listsContainerEl.querySelectorAll('.todo-item'));
+		const currentLi = items.find(li => li.dataset.todoId === todoId);
+		if (!currentLi) return;
+
+		const targetLi = direction === -1 
+			? currentLi.previousElementSibling 
+			: currentLi.nextElementSibling;
+		if (!targetLi) return;
+
+		// Swap the todos and update their order values in state
 		const tempOrder = list.todos[todoIndex].order;
 		list.todos[todoIndex].order = list.todos[newIndex].order;
 		list.todos[newIndex].order = tempOrder;
@@ -228,11 +373,37 @@ export class TodoList extends HTMLElement {
 		// Sort todos by order descending (highest first for newest-on-top)
 		list.todos.sort((a, b) => b.order - a.order);
 
+		// Surgical DOM update: animate and swap positions
+		currentLi.style.transition = 'transform 0.2s';
+		targetLi.style.transition = 'transform 0.2s';
+
+		// Actually swap in DOM
+		if (direction === -1) {
+			currentLi.parentNode.insertBefore(currentLi, targetLi);
+		} else {
+			currentLi.parentNode.insertBefore(targetLi, currentLi);
+		}
+
+		// Update move buttons (enabled/disabled states may have changed)
+		this.#updateMoveButtons();
+
+		// Save to DB in background
 		try {
-			await DBManager.saveLists(this.#lists);
-			this.#render();
+			await DBManager.saveList(list);
 		} catch (error) {
 			console.error('[TodoList] Error saving after move:', error);
+			// Revert on error: swap back
+			if (direction === -1) {
+				currentLi.parentNode.insertBefore(targetLi, currentLi);
+			} else {
+				currentLi.parentNode.insertBefore(currentLi, targetLi);
+			}
+			// Revert state
+			const temp = list.todos[todoIndex].order;
+			list.todos[todoIndex].order = list.todos[newIndex].order;
+			list.todos[newIndex].order = temp;
+			list.todos.sort((a, b) => b.order - a.order);
+			this.#updateMoveButtons();
 		}
 	}
 
@@ -240,17 +411,21 @@ export class TodoList extends HTMLElement {
 		const list = this.#getCurrentList();
 		if (!list) return;
 
-		const completedCount = list.todos.filter((t) => t.completed).length;
-		if (completedCount === 0) return;
+		const completedTodos = list.todos.filter((t) => t.completed);
+		if (completedTodos.length === 0) return;
 
-		const itemText = completedCount === 1 ? 'item' : 'items';
+		const itemText = completedTodos.length === 1 ? 'item' : 'items';
 		const confirmed = await DialogService.confirm(
-			`Clear ${completedCount} completed ${itemText}? This cannot be undone.`,
+			`Clear ${completedTodos.length} completed ${itemText}? This cannot be undone.`,
 			'Clear'
 		);
 
 		if (!confirmed) return;
 
+		// Store completed IDs for DOM removal
+		const completedIds = completedTodos.map(t => t.id);
+
+		// Remove from state
 		list.todos = list.todos.filter((t) => !t.completed);
 
 		// Sort by order descending (newest first) before reassigning
@@ -265,11 +440,43 @@ export class TodoList extends HTMLElement {
 			todo.order = list.todos.length - 1 - index;
 		});
 
+		// Surgical DOM update: animate out completed todos
+		completedIds.forEach((id, index) => {
+			const li = this.#listsContainerEl.querySelector(`[data-todo-id="${id}"]`);
+			if (li) {
+				li.style.transition = 'opacity 0.2s, transform 0.2s';
+				li.style.opacity = '0';
+				li.style.transform = 'translateX(20px)';
+				
+				setTimeout(() => {
+					li.remove();
+				}, 200 + (index * 50)); // Stagger animations
+			}
+		});
+
+		// Update footer and buttons
+		this.#updateMoveButtons();
+		this.#updateFooter();
+
+		// If list is now empty, show empty message after animations
+		if (list.todos.length === 0) {
+			setTimeout(() => {
+				this.#listsContainerEl.innerHTML = '<li class="todo-empty">No todos yet. Add one above!</li>';
+			}, 200 + (completedIds.length * 50));
+		}
+
+		// Save to DB in background
 		try {
-			await DBManager.saveLists(this.#lists);
-			this.#render();
+			await DBManager.saveList(list);
+			// Update metadata
+			const metaIndex = this.#listMetadata.findIndex(m => m.id === list.id);
+			if (metaIndex >= 0) {
+				this.#listMetadata[metaIndex].todoCount = list.todos.length;
+			}
 		} catch (error) {
 			console.error('[TodoList] Error saving after clear:', error);
+			// On error, full re-render to restore state
+			this.#renderTodoList();
 		}
 	}
 
@@ -295,11 +502,23 @@ export class TodoList extends HTMLElement {
 			todo.order = list.todos.length - 1 - index;
 		});
 
+		// Full re-render needed since everything reordered
+		// But we can animate the reordering
+		const ul = this.#listsContainerEl.querySelector('.todo-list-ul');
+		if (ul) {
+			ul.style.opacity = '0.5';
+			ul.style.transition = 'opacity 0.2s';
+		}
+
 		try {
-			await DBManager.saveLists(this.#lists);
-			this.#render();
+			await DBManager.saveList(list);
+			
+			// Re-render the todo list (not full render)
+			this.#renderTodoList();
 		} catch (error) {
 			console.error('[TodoList] Error saving after sort:', error);
+			// Re-render to restore state
+			this.#renderTodoList();
 		}
 	}
 
@@ -307,67 +526,74 @@ export class TodoList extends HTMLElement {
 		const name = await DialogService.prompt("Enter a name for the new list:");
 		if (!name || !name.trim()) return;
 
-		const newList = {
-			id: Date.now().toString(),
-			name: name.trim(),
-			todos: [],
-			isDefault: false,
-			createdAt: Date.now(),
-			order: this.#lists.length,
-		};
-
-		this.#lists.push(newList);
-		this.#currentListId = newList.id;
-
 		try {
-			await DBManager.saveLists(this.#lists);
+			// Use DBManager.createList() to properly create with metadata
+			const newList = await DBManager.createList({
+				name: name.trim(),
+				isDefault: false
+			});
+
+			// Refresh metadata
+			this.#listMetadata = await DBManager.getListMetadata();
+			
+			// Switch to new list
+			this.#currentListId = newList.id;
+			this.#currentList = newList;
+			
 			this.#render();
 		} catch (error) {
-			console.error('[TodoList] Error saving new list:', error);
+			console.error('[TodoList] Error creating new list:', error);
 		}
 	}
 
 	async #setDefaultList(listId) {
-		this.#lists.forEach((l) => {
-			l.isDefault = l.id === listId;
-		});
-
 		try {
-			await DBManager.saveLists(this.#lists);
+			// Use granular method to set default
+			await DBManager.setDefaultList(listId);
+			
+			// Refresh metadata to reflect changes
+			this.#listMetadata = await DBManager.getListMetadata();
+			
+			// Update current list if needed
+			if (this.#currentList) {
+				this.#currentList.isDefault = (this.#currentList.id === listId);
+			}
+			
 			this.#render();
 		} catch (error) {
-			console.error('[TodoList] Error saving default list:', error);
+			console.error('[TodoList] Error setting default list:', error);
 		}
 	}
 
 	async #deleteList(listId) {
-		if (this.#lists.length <= 1) {
+		if (this.#listMetadata.length <= 1) {
 			alert("Cannot delete the last list");
 			return;
 		}
 
-		const list = this.#lists.find((l) => l.id === listId);
-		const confirmed = await DialogService.confirm(`Delete "${list?.name || 'this list'}"? This cannot be undone.`, "Delete");
+		const listMeta = this.#listMetadata.find((l) => l.id === listId);
+		const confirmed = await DialogService.confirm(`Delete "${listMeta?.name || 'this list'}"? This cannot be undone.`, "Delete");
 		if (!confirmed) return;
 
-		this.#lists = this.#lists.filter((l) => l.id !== listId);
-
-		// Reorder remaining lists
-		this.#lists.forEach((list, index) => {
-			list.order = index;
-		});
-
-		// If we deleted the current list, switch to default or first
-		if (this.#currentListId === listId) {
-			const defaultList = this.#lists.find((l) => l.isDefault);
-			this.#currentListId = defaultList?.id || this.#lists[0]?.id;
-		}
-
 		try {
-			await DBManager.saveLists(this.#lists);
+			// Use granular delete method
+			await DBManager.deleteList(listId);
+			
+			// Remove from local metadata
+			this.#listMetadata = this.#listMetadata.filter((l) => l.id !== listId);
+
+			// If we deleted the current list, switch to default or first
+			if (this.#currentListId === listId) {
+				const defaultList = this.#listMetadata.find((l) => l.isDefault);
+				this.#currentListId = defaultList?.id || this.#listMetadata[0]?.id;
+				
+				// Load the new current list
+				await this.#loadCurrentList();
+			}
+			
 			this.#render();
 		} catch (error) {
-			console.error('[TodoList] Error saving after list delete:', error);
+			console.error('[TodoList] Error deleting list:', error);
 		}
 	}
 
@@ -379,7 +605,13 @@ export class TodoList extends HTMLElement {
 		if (newName && newName.trim() && newName.trim() !== list.name) {
 			list.name = newName.trim();
 			try {
-				await DBManager.saveLists(this.#lists);
+				// Save only this list, not all lists
+				await DBManager.saveList(list);
+				// Update metadata in memory
+				const metaIndex = this.#listMetadata.findIndex(m => m.id === list.id);
+				if (metaIndex >= 0) {
+					this.#listMetadata[metaIndex].name = list.name;
+				}
 				this.#render();
 			} catch (error) {
 				console.error('[TodoList] Error saving after name edit:', error);
@@ -388,42 +620,65 @@ export class TodoList extends HTMLElement {
 	}
 
 	async #editListNameById(listId, newName) {
-		const list = this.#lists.find((l) => l.id === listId);
-		if (!list || !newName.trim() || newName.trim() === list.name) return;
+		const trimmedName = newName.trim();
+		if (!trimmedName) return;
 
-		list.name = newName.trim();
-		try {
-			await DBManager.saveLists(this.#lists);
-			this.#render();
-		} catch (error) {
-			console.error('[TodoList] Error saving after name edit:', error);
+		// Check if this is the current list
+		if (this.#currentList && this.#currentList.id === listId) {
+			if (trimmedName === this.#currentList.name) return;
+			this.#currentList.name = trimmedName;
+			try {
+				await DBManager.saveList(this.#currentList);
+			} catch (error) {
+				console.error('[TodoList] Error saving after name edit:', error);
+				return;
+			}
+		} else {
+			// Need to load the list first
+			try {
+				const list = await DBManager.getList(listId);
+				if (!list || trimmedName === list.name) return;
+				list.name = trimmedName;
+				await DBManager.saveList(list);
+			} catch (error) {
+				console.error('[TodoList] Error saving after name edit:', error);
+				return;
+			}
 		}
+
+		// Update metadata in memory
+		const metaIndex = this.#listMetadata.findIndex(m => m.id === listId);
+		if (metaIndex >= 0) {
+			this.#listMetadata[metaIndex].name = trimmedName;
+		}
+		this.#render();
 	}
 
 	async #moveList(listId, direction) {
-		// Ensure all lists have order field
-		this.#lists.forEach((list, index) => {
-			if (typeof list.order !== 'number') {
-				list.order = index;
-			}
-		});
-
-		const listIndex = this.#lists.findIndex((l) => l.id === listId);
+		// Find the list in metadata
+		const listIndex = this.#listMetadata.findIndex((l) => l.id === listId);
 		if (listIndex === -1) return;
 
 		const newIndex = listIndex + direction;
-		if (newIndex < 0 || newIndex >= this.#lists.length) return;
+		if (newIndex < 0 || newIndex >= this.#listMetadata.length) return;
 
-		// Swap order values
-		const tempOrder = this.#lists[listIndex].order;
-		this.#lists[listIndex].order = this.#lists[newIndex].order;
-		this.#lists[newIndex].order = tempOrder;
+		// Get the two lists involved
+		const listA = this.#listMetadata[listIndex];
+		const listB = this.#listMetadata[newIndex];
 
-		// Sort lists by order
-		this.#lists.sort((a, b) => a.order - b.order);
+		// Swap order values in metadata
+		const tempOrder = listA.order;
+		listA.order = listB.order;
+		listB.order = tempOrder;
+
+		// Sort metadata by order
+		this.#listMetadata.sort((a, b) => a.order - b.order);
 
 		try {
-			await DBManager.saveLists(this.#lists);
+			// Update order in DB for both lists
+			await DBManager.updateListOrder(listA.id, listA.order);
+			await DBManager.updateListOrder(listB.id, listB.order);
+			
 			this.#render();
 		} catch (error) {
 			console.error('[TodoList] Error saving after list move:', error);
@@ -470,11 +725,28 @@ export class TodoList extends HTMLElement {
 			const urlInput = dialog.querySelector('.share-url');
 			copyBtn.addEventListener('click', () => {
 				urlInput.select();
-				document.execCommand('copy');
-				copyBtn.textContent = 'Copied!';
-				setTimeout(() => {
-					copyBtn.textContent = 'Copy';
-				}, 2000);
+				// Use modern clipboard API instead of deprecated execCommand
+				if (navigator.clipboard && navigator.clipboard.writeText) {
+					navigator.clipboard.writeText(urlInput.value).then(() => {
+						copyBtn.textContent = 'Copied!';
+						setTimeout(() => {
+							copyBtn.textContent = 'Copy';
+						}, 2000);
+					}).catch(() => {
+						// Fallback to execCommand
+						document.execCommand('copy');
+						copyBtn.textContent = 'Copied!';
+						setTimeout(() => {
+							copyBtn.textContent = 'Copy';
+						}, 2000);
+					});
+				} else {
+					document.execCommand('copy');
+					copyBtn.textContent = 'Copied!';
+					setTimeout(() => {
+						copyBtn.textContent = 'Copy';
+					}, 2000);
+				}
 			});
 
 			const closeBtn = dialog.querySelector('.share-close-btn');
@@ -496,33 +768,29 @@ export class TodoList extends HTMLElement {
 	}
 
 	#showListSelectorDialog() {
-		// Sort lists by order
-		const sortedLists = [...this.#lists].sort((a, b) => {
-			const orderA = typeof a.order === 'number' ? a.order : 0;
-			const orderB = typeof b.order === 'number' ? b.order : 0;
-			return orderA - orderB;
-		});
+		// Metadata is already sorted by order from getListMetadata()
+		const sortedMetadata = [...this.#listMetadata];
 
 		const dialog = document.createElement('dialog');
 		dialog.className = 'list-selector-dialog';
 
-		const listItemsHtml = sortedLists.map((list, index) => {
+		const listItemsHtml = sortedMetadata.map((meta, index) => {
 			const isFirst = index === 0;
-			const isLast = index === sortedLists.length - 1;
-			const isSelected = list.id === this.#currentListId;
-			const isDefault = list.isDefault;
+			const isLast = index === sortedMetadata.length - 1;
+			const isSelected = meta.id === this.#currentListId;
+			const isDefault = meta.isDefault;
 
 			return `
-				<div class="list-selector-item ${isSelected ? 'selected' : ''}" data-list-id="${list.id}">
+				<div class="list-selector-item ${isSelected ? 'selected' : ''}" data-list-id="${meta.id}">
 					<div class="list-selector-item-info">
-						<span class="list-selector-item-name" contenteditable="false" data-list-id="${list.id}">${this.#escapeHtml(list.name)}</span>
+						<span class="list-selector-item-name" contenteditable="false" data-list-id="${meta.id}">${this.#escapeHtml(meta.name)}</span>
 						${isDefault ? '<span class="list-selector-item-badge">default</span>' : ''}
 					</div>
 					<div class="list-selector-item-actions">
-						<button class="list-selector-move-up ${isFirst ? 'disabled' : ''}" data-list-id="${list.id}" ${isFirst ? 'disabled' : ''} title="Move up">▲</button>
-						<button class="list-selector-move-down ${isLast ? 'disabled' : ''}" data-list-id="${list.id}" ${isLast ? 'disabled' : ''} title="Move down">▼</button>
-						${!isDefault ? `<button class="list-selector-set-default" data-list-id="${list.id}" title="Set as default">★</button>` : ''}
-						<button class="list-selector-delete" data-list-id="${list.id}" title="Delete list">×</button>
+						<button class="list-selector-move-up ${isFirst ? 'disabled' : ''}" data-list-id="${meta.id}" ${isFirst ? 'disabled' : ''} title="Move up">▲</button>
+						<button class="list-selector-move-down ${isLast ? 'disabled' : ''}" data-list-id="${meta.id}" ${isLast ? 'disabled' : ''} title="Move down">▼</button>
+						${!isDefault ? `<button class="list-selector-set-default" data-list-id="${meta.id}" title="Set as default">★</button>` : ''}
+						<button class="list-selector-delete" data-list-id="${meta.id}" title="Delete list">×</button>
 					</div>
 				</div>
 			`;
@@ -545,7 +813,7 @@ export class TodoList extends HTMLElement {
 
 		// Handle list selection (click on item, but not on editable name or action buttons)
 		dialog.querySelectorAll('.list-selector-item').forEach(item => {
-			item.addEventListener('click', (e) => {
+			item.addEventListener('click', async (e) => {
 				// Don't select if clicking on action buttons or the editable name
 				if (e.target.closest('.list-selector-item-actions')) return;
 				if (e.target.classList.contains('list-selector-item-name')) return;
@@ -554,6 +822,9 @@ export class TodoList extends HTMLElement {
 				this.#currentListId = listId;
 				dialog.close();
 				document.body.removeChild(dialog);
+				
+				// Load the selected list (with todos) and track lastAccessed
+				await this.#loadCurrentList();
 				this.#render();
 			});
 		});
@@ -636,6 +907,9 @@ export class TodoList extends HTMLElement {
 				this.#currentListId = listId;
 				dialog.close();
 				document.body.removeChild(dialog);
+				
+				// Load the selected list and track lastAccessed
+				await this.#loadCurrentList();
 				this.#render();
 			});
 		});
@@ -649,7 +923,7 @@ export class TodoList extends HTMLElement {
 				// Refresh dialog
 				dialog.close();
 				document.body.removeChild(dialog);
-				if (this.#lists.length > 0) {
+				if (this.#listMetadata.length > 0) {
 					this.#showListSelectorDialog();
 				}
 			});
@@ -661,7 +935,7 @@ export class TodoList extends HTMLElement {
 			dialog.close();
 			document.body.removeChild(dialog);
 			await this.#handleCreateList();
-			if (this.#lists.length > 0) {
+			if (this.#listMetadata.length > 0) {
 				this.#showListSelectorDialog();
 			}
 		});
@@ -675,16 +949,154 @@ export class TodoList extends HTMLElement {
 		});
 	}
 
+	// ============================================================================
+	// SURGICAL DOM UPDATE HELPERS
+	// These methods update only what changed, avoiding full re-renders
+	// ============================================================================
+
+	/**
+	 * Create a DOM element for a single todo
+	 * @param {Object} todo - The todo object
+	 * @param {number} index - The index in the list (for move button states)
+	 * @param {number} total - Total number of todos
+	 * @returns {HTMLElement} The list item element
+	 */
+	#createTodoElement(todo, index, total) {
+		const li = document.createElement('li');
+		li.className = `todo-item ${todo.completed ? "completed" : ""}`;
+		li.dataset.todoId = todo.id;
+		li.style.viewTransitionName = `todo-${todo.id}`;
+
+		const isAtTop = index === 0;
+		const isAtBottom = index === total - 1;
+
+		li.innerHTML = `
+			<input type="checkbox" class="todo-checkbox" ${todo.completed ? "checked" : ""}>
+			<span class="todo-text" contenteditable="true">${this.#escapeHtml(todo.text)}</span>
+			<div class="todo-reorder">
+				<button class="todo-move-up ${isAtTop ? 'disabled' : ''}" aria-label="Move up" ${isAtTop ? 'disabled' : ''}>▲</button>
+				<button class="todo-move-down ${isAtBottom ? 'disabled' : ''}" aria-label="Move down" ${isAtBottom ? 'disabled' : ''}>▼</button>
+			</div>
+			<button class="todo-delete" aria-label="Delete todo">×</button>
+		`;
+
+		// Attach event listeners
+		const checkbox = li.querySelector(".todo-checkbox");
+		const textSpan = li.querySelector(".todo-text");
+		const deleteBtn = li.querySelector(".todo-delete");
+		const moveUpBtn = li.querySelector(".todo-move-up");
+		const moveDownBtn = li.querySelector(".todo-move-down");
+
+		checkbox.addEventListener("change", () => {
+			this.#toggleTodo(todo.id);
+		});
+
+		textSpan.addEventListener("blur", () => {
+			this.#editTodo(todo.id, textSpan.textContent);
+		});
+
+		textSpan.addEventListener("keydown", (e) => {
+			if (e.key === "Enter") {
+				e.preventDefault();
+				textSpan.blur();
+			}
+		});
+
+		deleteBtn.addEventListener("click", () => {
+			this.#deleteTodo(todo.id);
+		});
+
+		if (!isAtTop) {
+			moveUpBtn.addEventListener("click", () => {
+				this.#moveTodo(todo.id, -1);
+			});
+		}
+
+		if (!isAtBottom) {
+			moveDownBtn.addEventListener("click", () => {
+				this.#moveTodo(todo.id, 1);
+			});
+		}
+
+		return li;
+	}
+
+	/**
+	 * Update just the footer stats (items left, button visibility)
+	 */
+	#updateFooter() {
+		const list = this.#getCurrentList();
+		
+		const activeCount = list?.todos.filter((t) => !t.completed).length || 0;
+		if (this.#itemsLeftEl) {
+			this.#itemsLeftEl.textContent = `${activeCount} item${activeCount !== 1 ? "s" : ""} left`;
+		}
+
+		const hasCompleted = list?.todos.some((t) => t.completed);
+		if (this.#clearCompletedBtn) {
+			this.#clearCompletedBtn.classList.toggle('hidden', !hasCompleted);
+		}
+
+		if (this.#sortTodosBtn) {
+			this.#sortTodosBtn.classList.toggle('hidden', !(list?.todos.length > 0));
+		}
+	}
+
+	/**
+	 * Update the disabled states of move buttons after reordering
+	 */
+	#updateMoveButtons() {
+		const list = this.#getCurrentList();
+		if (!list || !this.#listsContainerEl) return;
+
+		const items = this.#listsContainerEl.querySelectorAll('.todo-item');
+		items.forEach((li, index) => {
+			const moveUpBtn = li.querySelector('.todo-move-up');
+			const moveDownBtn = li.querySelector('.todo-move-down');
+			
+			if (moveUpBtn) {
+				const isAtTop = index === 0;
+				moveUpBtn.disabled = isAtTop;
+				moveUpBtn.classList.toggle('disabled', isAtTop);
+			}
+			
+			if (moveDownBtn) {
+				const isAtBottom = index === items.length - 1;
+				moveDownBtn.disabled = isAtBottom;
+				moveDownBtn.classList.toggle('disabled', isAtBottom);
+			}
+		});
+	}
+
+	/**
+	 * Get ordered todos array (sorted by order descending)
+	 */
+	#getOrderedTodos() {
+		const list = this.#getCurrentList();
+		if (!list) return [];
+		
+		return [...list.todos].sort((a, b) => {
+			const orderA = typeof a.order === 'number' ? a.order : 0;
+			const orderB = typeof b.order === 'number' ? b.order : 0;
+			return orderB - orderA;
+		});
+	}
+
+	// ============================================================================
+	// END OF SURGICAL DOM UPDATE HELPERS
+	// ============================================================================
+
 	#render() {
 		if (!this.#containerEl) return;
 
 		const currentList = this.#getCurrentList();
+		const currentMeta = this.#getCurrentListMeta();
 
 		// Update list selector button
 		if (this.#listSelectorBtn) {
 			const nameSpan = this.#listSelectorBtn.querySelector('.list-selector-name');
 			if (nameSpan) {
-				nameSpan.textContent = currentList?.name || 'Select List';
+				nameSpan.textContent = currentMeta?.name || 'Select List';
 			}
 		}
 
@@ -714,91 +1126,21 @@ export class TodoList extends HTMLElement {
 			this.#listsContainerEl.innerHTML = '<li class="todo-empty">No todos yet. Add one above!</li>';
 		} else {
 			// Render todos in descending order (newest/highest order on top)
-			const orderedTodos = [...list.todos].sort((a, b) => {
-				const orderA = typeof a.order === 'number' ? a.order : 0;
-				const orderB = typeof b.order === 'number' ? b.order : 0;
-				return orderB - orderA;
-			});
+			const orderedTodos = this.#getOrderedTodos();
 
 			const ul = document.createElement('ul');
 			ul.className = 'todo-list-ul';
 
 			orderedTodos.forEach((todo, index) => {
-				const li = document.createElement('li');
-				li.className = `todo-item ${todo.completed ? "completed" : ""}`;
-				li.dataset.todoId = todo.id;
-				li.style.viewTransitionName = `todo-${todo.id}`;
-
-				const isAtTop = index === 0;
-				const isAtBottom = index === orderedTodos.length - 1;
-
-				li.innerHTML = `
-					<input type="checkbox" class="todo-checkbox" ${todo.completed ? "checked" : ""}>
-					<span class="todo-text" contenteditable="true">${this.#escapeHtml(todo.text)}</span>
-					<div class="todo-reorder">
-						<button class="todo-move-up ${isAtTop ? 'disabled' : ''}" aria-label="Move up" ${isAtTop ? 'disabled' : ''}>▲</button>
-						<button class="todo-move-down ${isAtBottom ? 'disabled' : ''}" aria-label="Move down" ${isAtBottom ? 'disabled' : ''}>▼</button>
-					</div>
-					<button class="todo-delete" aria-label="Delete todo">×</button>
-				`;
-
-				const checkbox = li.querySelector(".todo-checkbox");
-				const textSpan = li.querySelector(".todo-text");
-				const deleteBtn = li.querySelector(".todo-delete");
-				const moveUpBtn = li.querySelector(".todo-move-up");
-				const moveDownBtn = li.querySelector(".todo-move-down");
-
-				checkbox.addEventListener("change", () => {
-					this.#toggleTodo(todo.id);
-				});
-
-				textSpan.addEventListener("blur", () => {
-					this.#editTodo(todo.id, textSpan.textContent);
-				});
-
-				textSpan.addEventListener("keydown", (e) => {
-					if (e.key === "Enter") {
-						e.preventDefault();
-						textSpan.blur();
-					}
-				});
-
-				deleteBtn.addEventListener("click", () => {
-					this.#deleteTodo(todo.id);
-				});
-
-				if (!isAtTop) {
-					moveUpBtn.addEventListener("click", () => {
-						this.#moveTodo(todo.id, -1);
-					});
-				}
-
-				if (!isAtBottom) {
-					moveDownBtn.addEventListener("click", () => {
-						this.#moveTodo(todo.id, 1);
-					});
-				}
-
+				const li = this.#createTodoElement(todo, index, orderedTodos.length);
 				ul.appendChild(li);
 			});
 
 			this.#listsContainerEl.appendChild(ul);
 		}
 
-		// Update footer
-		const activeCount = list?.todos.filter((t) => !t.completed).length || 0;
-		if (this.#itemsLeftEl) {
-			this.#itemsLeftEl.textContent = `${activeCount} item${activeCount !== 1 ? "s" : ""} left`;
-		}
-
-		const hasCompleted = list?.todos.some((t) => t.completed);
-		if (this.#clearCompletedBtn) {
-			this.#clearCompletedBtn.classList.toggle('hidden', !hasCompleted);
-		}
-
-		if (this.#sortTodosBtn) {
-			this.#sortTodosBtn.classList.toggle('hidden', !(list?.todos.length > 0));
-		}
+		// Update footer after rendering
+		this.#updateFooter();
 	}
 
 	#escapeHtml(text) {
