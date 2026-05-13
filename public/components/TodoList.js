@@ -18,7 +18,6 @@ export class TodoList extends HTMLElement {
 	#listsContainerEl = null;
 	#inputEl = null;
 	#addBtn = null;
-	#itemsLeftEl = null;
 	#clearCompletedBtn = null;
 	#sortTodosBtn = null;
 	#listActionsEl = null;
@@ -38,7 +37,6 @@ export class TodoList extends HTMLElement {
 		this.#listsContainerEl = this.querySelector("#lists-container");
 		this.#inputEl = this.querySelector("#todo-input");
 		this.#addBtn = this.querySelector("#add-btn");
-		this.#itemsLeftEl = this.querySelector("#items-left");
 		this.#clearCompletedBtn = this.querySelector("#clear-completed");
 		this.#sortTodosBtn = this.querySelector("#sort-todos");
 		this.#listActionsEl = this.querySelector("#list-actions");
@@ -1022,15 +1020,10 @@ export class TodoList extends HTMLElement {
 	}
 
 	/**
-	 * Update just the footer stats (items left, button visibility)
+	 * Update footer button visibility
 	 */
 	#updateFooter() {
 		const list = this.#getCurrentList();
-		
-		const activeCount = list?.todos.filter((t) => !t.completed).length || 0;
-		if (this.#itemsLeftEl) {
-			this.#itemsLeftEl.textContent = `${activeCount} item${activeCount !== 1 ? "s" : ""} left`;
-		}
 
 		const hasCompleted = list?.todos.some((t) => t.completed);
 		if (this.#clearCompletedBtn) {
