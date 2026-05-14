@@ -116,6 +116,14 @@ export class TodoList extends HTMLElement {
 		try {
 			this.#currentList = await DBManager.getList(this.#currentListId);
 			
+			// Migrate old data: if todos have order fields, sort by them and strip them
+			// Array index is now the source of truth for display order (index 0 = top)
+			if (this.#currentList?.todos?.some(t => typeof t.order === 'number')) {
+				this.#currentList.todos.sort((a, b) => (b.order || 0) - (a.order || 0));
+				this.#currentList.todos.forEach(t => delete t.order);
+				await DBManager.saveList(this.#currentList);
+			}
+			
 			// Update last accessed timestamp
 			await DBManager.updateLastAccessed(this.#currentListId);
 			
@@ -152,11 +160,10 @@ export class TodoList extends HTMLElement {
 			text: text,
 			completed: false,
 			createdAt: Date.now(),
-			order: list.todos.length,
 		};
 
-		// Add to state
-		list.todos.push(todo);
+		// Add to state at the top (index 0 = top of list)
+		list.todos.unshift(todo);
 		this.#inputEl.value = "";
 
 		// Surgical DOM update: insert new todo at top with animation
@@ -291,11 +298,6 @@ export class TodoList extends HTMLElement {
 		const deletedIndex = list.todos.findIndex((t) => t.id === todoId);
 		list.todos = list.todos.filter((t) => t.id !== todoId);
 
-		// Reorder remaining todos
-		list.todos.forEach((todo, index) => {
-			todo.order = list.todos.length - 1 - index;
-		});
-
 		// Surgical DOM update: animate out then remove
 		if (li) {
 			li.style.transition = 'opacity 0.2s, transform 0.2s';
@@ -327,10 +329,6 @@ export class TodoList extends HTMLElement {
 			console.error('[TodoList] Error saving after delete:', error);
 			// Revert on error: restore todo and re-render
 			list.todos.splice(deletedIndex, 0, deletedTodo);
-			// Reorder again
-			list.todos.forEach((todo, index) => {
-				todo.order = list.todos.length - 1 - index;
-			});
 			// Full re-render to restore state
 			this.#renderTodoList();
 		}
@@ -339,13 +337,6 @@ export class TodoList extends HTMLElement {
 	async #moveTodo(todoId, direction) {
 		const list = this.#getCurrentList();
 		if (!list) return;
-
-		// Ensure todos have order field (backward compatibility)
-		list.todos.forEach((todo, index) => {
-			if (typeof todo.order !== 'number') {
-				todo.order = index;
-			}
-		});
 
 		const todoIndex = list.todos.findIndex((t) => t.id === todoId);
 		if (todoIndex === -1) return;
@@ -363,13 +354,10 @@ export class TodoList extends HTMLElement {
 			: currentLi.nextElementSibling;
 		if (!targetLi) return;
 
-		// Swap the todos and update their order values in state
-		const tempOrder = list.todos[todoIndex].order;
-		list.todos[todoIndex].order = list.todos[newIndex].order;
-		list.todos[newIndex].order = tempOrder;
-
-		// Sort todos by order descending (highest first for newest-on-top)
-		list.todos.sort((a, b) => b.order - a.order);
+		// Swap the todos in the array
+		const temp = list.todos[todoIndex];
+		list.todos[todoIndex] = list.todos[newIndex];
+		list.todos[newIndex] = temp;
 
 		// Surgical DOM update: animate and swap positions
 		currentLi.style.transition = 'transform 0.2s';
@@ -390,17 +378,17 @@ export class TodoList extends HTMLElement {
 			await DBManager.saveList(list);
 		} catch (error) {
 			console.error('[TodoList] Error saving after move:', error);
-			// Revert on error: swap back
+			// Revert on error: swap back in array
+			const revertTemp = list.todos[todoIndex];
+			list.todos[todoIndex] = list.todos[newIndex];
+			list.todos[newIndex] = revertTemp;
+
+			// Revert DOM
 			if (direction === -1) {
 				currentLi.parentNode.insertBefore(targetLi, currentLi);
 			} else {
 				currentLi.parentNode.insertBefore(currentLi, targetLi);
 			}
-			// Revert state
-			const temp = list.todos[todoIndex].order;
-			list.todos[todoIndex].order = list.todos[newIndex].order;
-			list.todos[newIndex].order = temp;
-			list.todos.sort((a, b) => b.order - a.order);
 			this.#updateMoveButtons();
 		}
 	}
@@ -425,18 +413,6 @@ export class TodoList extends HTMLElement {
 
 		// Remove from state
 		list.todos = list.todos.filter((t) => !t.completed);
-
-		// Sort by order descending (newest first) before reassigning
-		list.todos.sort((a, b) => {
-			const orderA = typeof a.order === 'number' ? a.order : 0;
-			const orderB = typeof b.order === 'number' ? b.order : 0;
-			return orderB - orderA;
-		});
-
-		// Reassign order values to maintain descending order
-		list.todos.forEach((todo, index) => {
-			todo.order = list.todos.length - 1 - index;
-		});
 
 		// Surgical DOM update: animate out completed todos
 		completedIds.forEach((id, index) => {
@@ -483,21 +459,13 @@ export class TodoList extends HTMLElement {
 		if (!list) return;
 
 		// Sort: active items first, then completed items
-		// Within each group, sort by order descending (newest first within each group)
+		// Within each group, maintain current relative order (stable sort)
 		list.todos.sort((a, b) => {
 			// Completed items go to the bottom
 			if (a.completed !== b.completed) {
 				return a.completed ? 1 : -1;
 			}
-			// Within same completion status, sort by order descending (highest/newest first)
-			const orderA = typeof a.order === 'number' ? a.order : 0;
-			const orderB = typeof b.order === 'number' ? b.order : 0;
-			return orderB - orderA;
-		});
-
-		// Reassign order values to reflect new positions
-		list.todos.forEach((todo, index) => {
-			todo.order = list.todos.length - 1 - index;
+			return 0;
 		});
 
 		// Full re-render needed since everything reordered
@@ -1068,11 +1036,8 @@ export class TodoList extends HTMLElement {
 		const list = this.#getCurrentList();
 		if (!list) return [];
 		
-		return [...list.todos].sort((a, b) => {
-			const orderA = typeof a.order === 'number' ? a.order : 0;
-			const orderB = typeof b.order === 'number' ? b.order : 0;
-			return orderB - orderA;
-		});
+		// Array index is the source of truth for display order
+		return [...list.todos];
 	}
 
 	// ============================================================================
@@ -1118,14 +1083,11 @@ export class TodoList extends HTMLElement {
 		if (!list || list.todos.length === 0) {
 			this.#listsContainerEl.innerHTML = '<li class="todo-empty">No todos yet. Add one above!</li>';
 		} else {
-			// Render todos in descending order (newest/highest order on top)
-			const orderedTodos = this.#getOrderedTodos();
-
 			const ul = document.createElement('ul');
 			ul.className = 'todo-list-ul';
 
-			orderedTodos.forEach((todo, index) => {
-				const li = this.#createTodoElement(todo, index, orderedTodos.length);
+			list.todos.forEach((todo, index) => {
+				const li = this.#createTodoElement(todo, index, list.todos.length);
 				ul.appendChild(li);
 			});
 
