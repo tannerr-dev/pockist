@@ -129,7 +129,7 @@ nav {
 	background-color: var(--bg);
 	border: none;
 	border-bottom-left-radius: 12px;
-	box-shadow: -4px 4px 12px rgba(0, 0, 0, 0.3);
+	/* box-shadow: -4px 4px 12px rgba(0, 0, 0, 0.3); */
 	padding: 16px;
 	gap: 10px;
 	overflow: visible;
