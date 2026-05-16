@@ -1,5 +1,6 @@
 import { ShareService } from '../services/ShareService.js';
 import { DialogService } from '../services/DialogService.js';
+import { ImportExportService } from '../services/ImportExportService.js';
 
 /**
  * ShareButton - Web component for sharing notes and lists
@@ -83,24 +84,35 @@ export class ShareButton extends HTMLElement {
     }
 
     async showShareDialog(shareData) {
-        // Create dialog
+        const item = this.type === 'note' ? shareData.notes[0] : shareData.lists[0];
+        const typeLabel = this.type === 'note' ? 'Note' : 'List';
+
+        // Create options dialog
         const dialog = document.createElement('dialog');
         dialog.className = 'share-dialog';
         dialog.innerHTML = `
             <div class="share-dialog-content">
-                <h3>Share ${this.type === 'note' ? 'Note' : 'List'}</h3>
+                <h3>Share ${typeLabel}</h3>
                 <p class="share-title">"${this.itemTitle}"</p>
-                <div class="share-info">
-                    <span class="share-expiry">⏰ Link expires in 24 hours</span>
+                <div class="share-options">
+                    <button class="share-option-btn share-option-link" type="button">
+                        <span class="share-option-icon">&#128279;</span>
+                        <span class="share-option-label">Temporary Public Link</span>
+                        <span class="share-option-desc">Create a shareable link that expires in 24 hours</span>
+                    </button>
+                    <button class="share-option-btn share-option-json" type="button">
+                        <span class="share-option-icon">&#128190;</span>
+                        <span class="share-option-label">Download Pockist Format</span>
+                        <span class="share-option-desc">Export as JSON for backup or re-import</span>
+                    </button>
+                    <button class="share-option-btn share-option-md" type="button">
+                        <span class="share-option-icon">&#128196;</span>
+                        <span class="share-option-label">Download Markdown</span>
+                        <span class="share-option-desc">Export as a Markdown file</span>
+                    </button>
                 </div>
                 <div class="share-actions">
-                    <button class="share-create-btn" type="button">Create Share Link</button>
                     <button class="share-cancel-btn" type="button">Cancel</button>
-                </div>
-                <div class="share-result" style="display: none;">
-                    <input type="text" class="share-url" readonly />
-                    <button class="share-copy-btn" type="button">Copy</button>
-                    <p class="share-success">✓ Link created! Expires in 24 hours.</p>
                 </div>
             </div>
         `;
@@ -108,16 +120,19 @@ export class ShareButton extends HTMLElement {
         document.body.appendChild(dialog);
         dialog.showModal();
 
-        // Event listeners
-        const createBtn = dialog.querySelector('.share-create-btn');
+        const linkBtn = dialog.querySelector('.share-option-link');
+        const jsonBtn = dialog.querySelector('.share-option-json');
+        const mdBtn = dialog.querySelector('.share-option-md');
         const cancelBtn = dialog.querySelector('.share-cancel-btn');
-        const copyBtn = dialog.querySelector('.share-copy-btn');
-        const resultDiv = dialog.querySelector('.share-result');
-        const actionsDiv = dialog.querySelector('.share-actions');
 
-        createBtn.addEventListener('click', async () => {
-            createBtn.disabled = true;
-            createBtn.textContent = 'Creating...';
+        const cleanup = () => {
+            dialog.close();
+            document.body.removeChild(dialog);
+        };
+
+        linkBtn.addEventListener('click', async () => {
+            linkBtn.disabled = true;
+            linkBtn.classList.add('loading');
 
             try {
                 const result = await ShareService.createShare(
@@ -126,42 +141,83 @@ export class ShareButton extends HTMLElement {
                     this.itemTitle
                 );
 
-                // Show result
+                // Replace dialog content with result
+                dialog.innerHTML = `
+                    <div class="share-dialog-content">
+                        <h3>${typeLabel} Shared!</h3>
+                        <p>"${this.itemTitle}"</p>
+                        <div class="share-info">
+                            <span class="share-expiry">Link expires in ${result.expiresIn}</span>
+                        </div>
+                        <div class="share-result">
+                            <input type="text" class="share-url" value="${window.location.origin}${result.url}" readonly />
+                            <button class="share-copy-btn" type="button">Copy</button>
+                            <p class="share-success">Share link created!</p>
+                        </div>
+                        <div class="share-actions">
+                            <button class="share-close-btn" type="button">Close</button>
+                        </div>
+                    </div>
+                `;
+
+                const copyBtn = dialog.querySelector('.share-copy-btn');
                 const urlInput = dialog.querySelector('.share-url');
-                urlInput.value = `${window.location.origin}${result.url}`;
-                
-                actionsDiv.style.display = 'none';
-                resultDiv.style.display = 'block';
+                copyBtn.addEventListener('click', () => {
+                    urlInput.select();
+                    if (navigator.clipboard && navigator.clipboard.writeText) {
+                        navigator.clipboard.writeText(urlInput.value).then(() => {
+                            copyBtn.textContent = 'Copied!';
+                            setTimeout(() => copyBtn.textContent = 'Copy', 2000);
+                        }).catch(() => {
+                            document.execCommand('copy');
+                            copyBtn.textContent = 'Copied!';
+                            setTimeout(() => copyBtn.textContent = 'Copy', 2000);
+                        });
+                    } else {
+                        document.execCommand('copy');
+                        copyBtn.textContent = 'Copied!';
+                        setTimeout(() => copyBtn.textContent = 'Copy', 2000);
+                    }
+                });
+
+                const closeBtn = dialog.querySelector('.share-close-btn');
+                closeBtn.addEventListener('click', cleanup);
 
             } catch (error) {
                 console.error('[ShareButton] Create share failed:', error);
                 alert(`Failed to create share: ${error.message}`);
-                createBtn.disabled = false;
-                createBtn.textContent = 'Create Share Link';
+                linkBtn.disabled = false;
+                linkBtn.classList.remove('loading');
             }
         });
 
-        cancelBtn.addEventListener('click', () => {
-            dialog.close();
-            document.body.removeChild(dialog);
+        jsonBtn.addEventListener('click', async () => {
+            cleanup();
+            try {
+                if (this.type === 'note') {
+                    await ImportExportService.exportNote(item);
+                } else {
+                    await ImportExportService.exportList(item);
+                }
+            } catch (error) {
+                console.error('[ShareButton] Export failed:', error);
+                alert(`Failed to export: ${error.message}`);
+            }
         });
 
-        copyBtn.addEventListener('click', () => {
-            const urlInput = dialog.querySelector('.share-url');
-            urlInput.select();
-            document.execCommand('copy');
-            copyBtn.textContent = 'Copied!';
-            setTimeout(() => {
-                copyBtn.textContent = 'Copy';
-            }, 2000);
+        mdBtn.addEventListener('click', async () => {
+            cleanup();
+            try {
+                await ImportExportService.exportMarkdown(item, this.type);
+            } catch (error) {
+                console.error('[ShareButton] Markdown export failed:', error);
+                alert(`Failed to export markdown: ${error.message}`);
+            }
         });
 
-        // Close on backdrop click
+        cancelBtn.addEventListener('click', cleanup);
         dialog.addEventListener('click', (e) => {
-            if (e.target === dialog) {
-                dialog.close();
-                document.body.removeChild(dialog);
-            }
+            if (e.target === dialog) cleanup();
         });
     }
 }

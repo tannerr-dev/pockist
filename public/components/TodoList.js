@@ -2,6 +2,7 @@ import { Router } from "../services/Router.js";
 import { DBManager } from "../services/DBManager.js";
 import { DialogService } from "../services/DialogService.js";
 import { ShareService } from "../services/ShareService.js";
+import { ImportExportService } from "../services/ImportExportService.js";
 import './ShareButton.js';
 
 export class TodoList extends HTMLElement {
@@ -655,6 +656,80 @@ export class TodoList extends HTMLElement {
 		const list = this.#getCurrentList();
 		if (!list) return;
 
+		const dialog = document.createElement('dialog');
+		dialog.className = 'share-dialog';
+		dialog.innerHTML = `
+			<div class="share-dialog-content">
+				<h3>Share List</h3>
+				<p class="share-title">"${this.#escapeHtml(list.name || 'Untitled List')}"</p>
+				<div class="share-options">
+					<button class="share-option-btn share-option-link" type="button">
+						<span class="share-option-icon">&#128279;</span>
+						<span class="share-option-label">Temporary Public Link</span>
+						<span class="share-option-desc">Create a shareable link that expires in 24 hours</span>
+					</button>
+					<button class="share-option-btn share-option-json" type="button">
+						<span class="share-option-icon">&#128190;</span>
+						<span class="share-option-label">Download Pockist Format</span>
+						<span class="share-option-desc">Export as JSON for backup or re-import</span>
+					</button>
+					<button class="share-option-btn share-option-md" type="button">
+						<span class="share-option-icon">&#128196;</span>
+						<span class="share-option-label">Download Markdown</span>
+						<span class="share-option-desc">Export as a Markdown checklist file</span>
+					</button>
+				</div>
+				<div class="share-actions">
+					<button class="share-cancel-btn" type="button">Cancel</button>
+				</div>
+			</div>
+		`;
+
+		document.body.appendChild(dialog);
+		dialog.showModal();
+
+		const linkBtn = dialog.querySelector('.share-option-link');
+		const jsonBtn = dialog.querySelector('.share-option-json');
+		const mdBtn = dialog.querySelector('.share-option-md');
+		const cancelBtn = dialog.querySelector('.share-cancel-btn');
+
+		const cleanup = () => {
+			dialog.close();
+			document.body.removeChild(dialog);
+		};
+
+		linkBtn.addEventListener('click', async () => {
+			cleanup();
+			await this.#createShareLink(list);
+		});
+
+		jsonBtn.addEventListener('click', async () => {
+			cleanup();
+			try {
+				await ImportExportService.exportList(list);
+			} catch (error) {
+				console.error('[TodoList] Export failed:', error);
+				alert(`Failed to export list: ${error.message}`);
+			}
+		});
+
+		mdBtn.addEventListener('click', async () => {
+			cleanup();
+			try {
+				await ImportExportService.exportMarkdown(list, 'list');
+			} catch (error) {
+				console.error('[TodoList] Markdown export failed:', error);
+				alert(`Failed to export markdown: ${error.message}`);
+			}
+		});
+
+		cancelBtn.addEventListener('click', cleanup);
+		dialog.addEventListener('click', (e) => {
+			if (e.target === dialog) cleanup();
+		});
+	}
+
+	async #createShareLink(list) {
 		try {
 			const shareData = {
 				notes: [],
@@ -691,27 +766,19 @@ export class TodoList extends HTMLElement {
 			const urlInput = dialog.querySelector('.share-url');
 			copyBtn.addEventListener('click', () => {
 				urlInput.select();
-				// Use modern clipboard API instead of deprecated execCommand
 				if (navigator.clipboard && navigator.clipboard.writeText) {
 					navigator.clipboard.writeText(urlInput.value).then(() => {
 						copyBtn.textContent = 'Copied!';
-						setTimeout(() => {
-							copyBtn.textContent = 'Copy';
-						}, 2000);
+						setTimeout(() => copyBtn.textContent = 'Copy', 2000);
 					}).catch(() => {
-						// Fallback to execCommand
 						document.execCommand('copy');
 						copyBtn.textContent = 'Copied!';
-						setTimeout(() => {
-							copyBtn.textContent = 'Copy';
-						}, 2000);
+						setTimeout(() => copyBtn.textContent = 'Copy', 2000);
 					});
 				} else {
 					document.execCommand('copy');
 					copyBtn.textContent = 'Copied!';
-					setTimeout(() => {
-						copyBtn.textContent = 'Copy';
-					}, 2000);
+					setTimeout(() => copyBtn.textContent = 'Copy', 2000);
 				}
 			});
 

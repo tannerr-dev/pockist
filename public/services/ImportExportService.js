@@ -96,6 +96,102 @@ export class ImportExportService {
         return { success: true, fileName };
     }
     
+    /**
+     * Export a specific item as Markdown and trigger download
+     * @param {Object} item - The note or list object
+     * @param {string} type - 'note' or 'list'
+     */
+    static async exportMarkdown(item, type) {
+        console.log('[ImportExportService] exportMarkdown() starting...');
+        
+        if (!item) {
+            throw new Error(`Invalid ${type} provided for markdown export`);
+        }
+        
+        const markdown = type === 'note'
+            ? this.#noteToMarkdown(item)
+            : this.#listToMarkdown(item);
+        
+        const fileName = type === 'note'
+            ? this.#generateMarkdownFileName('note', item.title)
+            : this.#generateMarkdownFileName('list', item.name);
+        
+        const blob = new Blob([markdown], { type: 'text/markdown' });
+        const url = URL.createObjectURL(blob);
+        
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        console.log('[ImportExportService] Markdown exported successfully');
+        return { success: true, fileName };
+    }
+    
+    /**
+     * Convert a note to Markdown format
+     * @private
+     */
+    static #noteToMarkdown(note) {
+        const title = note.title || 'Untitled Note';
+        const body = note.content || note.text || '';
+        const date = note.createdAt ? new Date(note.createdAt).toLocaleString() : '';
+        
+        let markdown = `# ${title}\n\n`;
+        if (date) {
+            markdown += `*Created: ${date}*\n\n`;
+        }
+        markdown += body;
+        return markdown;
+    }
+    
+    /**
+     * Convert a todo list to Markdown format
+     * @private
+     */
+    static #listToMarkdown(list) {
+        const title = list.name || 'Untitled List';
+        const todos = list.todos || [];
+        const date = list.createdAt ? new Date(list.createdAt).toLocaleString() : '';
+        
+        let markdown = `# ${title}\n\n`;
+        if (date) {
+            markdown += `*Created: ${date}*\n\n`;
+        }
+        
+        if (todos.length === 0) {
+            markdown += '*No todos yet.*';
+        } else {
+            todos.forEach(todo => {
+                const checkbox = todo.completed ? '[x]' : '[ ]';
+                markdown += `- ${checkbox} ${todo.text}\n`;
+            });
+        }
+        
+        return markdown;
+    }
+    
+    /**
+     * Generate markdown filename for export
+     * @private
+     */
+    static #generateMarkdownFileName(type, name = '') {
+        const date = new Date().toISOString().split('T')[0];
+        const safeName = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 30);
+        
+        switch (type) {
+            case 'note':
+                return `${safeName || 'untitled'}-${date}.md`;
+            case 'list':
+                return `${safeName || 'untitled'}-list-${date}.md`;
+            default:
+                return `pockist-export-${date}.md`;
+        }
+    }
+    
     // ============================================================================
     // IMPORT FUNCTIONS
     // ============================================================================
