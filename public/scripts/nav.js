@@ -116,6 +116,7 @@ if (themeSwitch) {
 const settingsSwitch = document.getElementById("settings-switch");
 if (settingsSwitch) {
 	settingsSwitch.addEventListener("click", () => {
+		document.querySelector("#drawer").hidePopover();
 		const drawer = document.querySelector('home-settings-drawer');
 		if (drawer) {
 			drawer.open();
