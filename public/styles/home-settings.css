@@ -5,20 +5,21 @@
 home-settings-drawer {
     position: fixed;
     top: 0;
-    left: -200px;
+    right: -200px;
     bottom: 0;
     width: 200px;
     background-color: var(--bg-2);
-    border-right: 1px solid var(--border-color);
     z-index: 3;
-    transition: left 0.3s ease;
-    display: flex;
+    transition: right 0.3s ease;
+    display: none;
     flex-direction: column;
     overflow-y: auto;
 }
 
 home-settings-drawer[open] {
-    left: 0;
+    right: 0;
+    display: flex;
+    border-left: 1px solid var(--border-color);
 }
 
 .settings-drawer-header {

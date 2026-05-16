@@ -85,6 +85,12 @@ export class HomeSettingsDrawer extends HTMLElement {
         }
     }
 
+    #onDocumentClick = (e) => {
+        if (!this.contains(e.target)) {
+            this.close();
+        }
+    }
+
     async #toggleWidget(widgetId, enabled) {
         const main = new Set(this.#currentLayout.main || []);
         if (enabled) {
@@ -107,10 +113,14 @@ export class HomeSettingsDrawer extends HTMLElement {
 
     open() {
         this.setAttribute('open', '');
+        setTimeout(() => {
+            document.addEventListener('click', this.#onDocumentClick);
+        }, 0);
     }
 
     close() {
         this.removeAttribute('open');
+        document.removeEventListener('click', this.#onDocumentClick);
     }
 
     get isOpen() {
