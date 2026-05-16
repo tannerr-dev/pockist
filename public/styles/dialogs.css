@@ -108,6 +108,26 @@
 	border-color: var(--accent);
 }
 
+/* Share Dialog (used by TodoList.js, ShareButton.js, ImportExportService.js) */
+.share-dialog {
+	padding: 0;
+	border: none;
+	border-radius: 12px;
+	background-color: var(--bg-2);
+	box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+	max-width: 400px;
+	width: 90%;
+}
+
+.share-dialog::backdrop {
+	background-color: rgba(0, 0, 0, 0.6);
+	backdrop-filter: blur(2px);
+}
+
+.share-dialog-content {
+	padding: 24px;
+}
+
 /* Share Components */
 
 /* Share Button */
