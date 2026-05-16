@@ -657,9 +657,9 @@ export class TodoList extends HTMLElement {
 		if (!list) return;
 
 		const dialog = document.createElement('dialog');
-		dialog.className = 'share-dialog';
+		dialog.className = 'dialog';
 		dialog.innerHTML = `
-			<div class="share-dialog-content">
+			<div class="dialog-content">
 				<h3>Share List</h3>
 				<p class="share-title">"${this.#escapeHtml(list.name || 'Untitled List')}"</p>
 				<div class="share-options">
@@ -740,21 +740,20 @@ export class TodoList extends HTMLElement {
 			const fullUrl = `${window.location.origin}${result.url}`;
 
 			const dialog = document.createElement('dialog');
-			dialog.className = 'share-dialog';
+			dialog.className = 'dialog';
 			dialog.innerHTML = `
-				<div class="share-dialog-content">
+				<div class="dialog-content">
 					<h3>List Shared!</h3>
-					<p>"${this.#escapeHtml(list.name || 'Untitled List')}"</p>
-					<div class="share-info">
-						<span class="share-expiry">Link expires in ${result.expiresIn}</span>
+					<p class="share-title">"${this.#escapeHtml(list.name || 'Untitled List')}"</p>
+					<div class="share-result-card">
+						<span class="share-option-icon">&#128279;</span>
+						<span class="share-option-label">Temporary Public Link</span>
+						<span class="share-result-url">${fullUrl}</span>
+						<span class="share-result-meta">Link expires in ${result.expiresIn}</span>
 					</div>
-					<div class="share-result">
-						<input type="text" class="share-url" value="${fullUrl}" readonly />
-						<button class="share-copy-btn" type="button">Copy</button>
-						<p class="share-success">Share link created!</p>
-					</div>
-					<div class="share-actions">
-						<button class="share-close-btn" type="button">Close</button>
+					<div class="dialog-footer">
+						<button class="dialog-btn dialog-btn--secondary share-close-btn" type="button">Close</button>
+						<button class="dialog-btn dialog-btn--primary share-copy-btn" type="button">Copy Link</button>
 					</div>
 				</div>
 			`;
@@ -763,23 +762,15 @@ export class TodoList extends HTMLElement {
 			dialog.showModal();
 
 			const copyBtn = dialog.querySelector('.share-copy-btn');
-			const urlInput = dialog.querySelector('.share-url');
+			const urlSpan = dialog.querySelector('.share-result-url');
 			copyBtn.addEventListener('click', () => {
-				urlInput.select();
-				if (navigator.clipboard && navigator.clipboard.writeText) {
-					navigator.clipboard.writeText(urlInput.value).then(() => {
-						copyBtn.textContent = 'Copied!';
-						setTimeout(() => copyBtn.textContent = 'Copy', 2000);
-					}).catch(() => {
-						document.execCommand('copy');
-						copyBtn.textContent = 'Copied!';
-						setTimeout(() => copyBtn.textContent = 'Copy', 2000);
-					});
-				} else {
-					document.execCommand('copy');
+				const url = urlSpan.textContent;
+				navigator.clipboard.writeText(url).then(() => {
 					copyBtn.textContent = 'Copied!';
-					setTimeout(() => copyBtn.textContent = 'Copy', 2000);
-				}
+					setTimeout(() => copyBtn.textContent = 'Copy Link', 2000);
+				}).catch((err) => {
+					console.error('Failed to copy:', err);
+				});
 			});
 
 			const closeBtn = dialog.querySelector('.share-close-btn');
@@ -805,7 +796,7 @@ export class TodoList extends HTMLElement {
 		const sortedMetadata = [...this.#listMetadata];
 
 		const dialog = document.createElement('dialog');
-		dialog.className = 'list-selector-dialog';
+		dialog.className = 'dialog';
 
 		const listItemsHtml = sortedMetadata.map((meta, index) => {
 			const isFirst = index === 0;
@@ -830,12 +821,12 @@ export class TodoList extends HTMLElement {
 		}).join('');
 
 		dialog.innerHTML = `
-			<div class="list-selector-dialog-content">
+			<div class="dialog-content">
 				<h3>Select List</h3>
 				<div class="list-selector-list">
 					${listItemsHtml}
 				</div>
-				<div class="list-selector-dialog-footer">
+				<div class="dialog-footer">
 					<button class="list-selector-create-btn button" type="button">+ New List</button>
 				</div>
 			</div>
