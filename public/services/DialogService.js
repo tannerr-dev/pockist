@@ -3,22 +3,22 @@ export const DialogService = {
 		return new Promise((resolve) => {
 			// Create dialog element
 			const dialog = document.createElement("dialog");
-			dialog.className = "app-dialog";
-			
+			dialog.className = "dialog";
+
 			dialog.innerHTML = `
-				<div class="app-dialog-content">
+				<div class="dialog-content">
 					<p class="app-dialog-message">${this.escapeHtml(message)}</p>
-					<div class="app-dialog-actions">
-						<button class="app-dialog-btn app-dialog-btn--cancel" type="button">Cancel</button>
-						<button class="app-dialog-btn app-dialog-btn--confirm" type="button">${this.escapeHtml(confirmText)}</button>
+					<div class="dialog-footer">
+						<button class="dialog-btn dialog-btn--secondary" type="button">Cancel</button>
+						<button class="dialog-btn dialog-btn--primary" type="button">${this.escapeHtml(confirmText)}</button>
 					</div>
 				</div>
 			`;
-			
+
 			document.body.appendChild(dialog);
-			
-			const cancelBtn = dialog.querySelector(".app-dialog-btn--cancel");
-			const confirmBtn = dialog.querySelector(".app-dialog-btn--confirm");
+
+			const cancelBtn = dialog.querySelector(".dialog-btn--secondary");
+			const confirmBtn = dialog.querySelector(".dialog-btn--primary");
 			
 			const cleanup = () => {
 				dialog.remove();
@@ -60,15 +60,15 @@ export const DialogService = {
 	prompt(message, defaultValue = "") {
 		return new Promise((resolve) => {
 			const dialog = document.createElement("dialog");
-			dialog.className = "app-dialog";
+			dialog.className = "dialog";
 
 			dialog.innerHTML = `
-				<div class="app-dialog-content">
+				<div class="dialog-content">
 					<p class="app-dialog-message">${this.escapeHtml(message)}</p>
 					<input type="text" class="app-dialog-input" value="${this.escapeHtml(defaultValue)}" />
-					<div class="app-dialog-actions">
-						<button class="app-dialog-btn app-dialog-btn--cancel" type="button">Cancel</button>
-						<button class="app-dialog-btn app-dialog-btn--confirm" type="button">OK</button>
+					<div class="dialog-footer">
+						<button class="dialog-btn dialog-btn--secondary" type="button">Cancel</button>
+						<button class="dialog-btn dialog-btn--primary" type="button">OK</button>
 					</div>
 				</div>
 			`;
@@ -76,8 +76,8 @@ export const DialogService = {
 			document.body.appendChild(dialog);
 
 			const input = dialog.querySelector(".app-dialog-input");
-			const cancelBtn = dialog.querySelector(".app-dialog-btn--cancel");
-			const confirmBtn = dialog.querySelector(".app-dialog-btn--confirm");
+			const cancelBtn = dialog.querySelector(".dialog-btn--secondary");
+			const confirmBtn = dialog.querySelector(".dialog-btn--primary");
 
 			// Focus input after dialog is shown
 			setTimeout(() => input.focus(), 0);
