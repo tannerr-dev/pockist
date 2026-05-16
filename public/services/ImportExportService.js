@@ -209,8 +209,17 @@ export class ImportExportService {
         }
         
         try {
-            // Read and parse file
+            // Read file content
             const content = await this.#readFile(file);
+            
+            // Auto-detect markdown files
+            if (file.name.toLowerCase().endsWith('.md')) {
+                console.log('[ImportExportService] Detected markdown file');
+                const parsed = this.#parseMarkdown(content);
+                return await this.#importMarkdown(parsed, file.name);
+            }
+            
+            // JSON import flow
             const data = JSON.parse(content);
             
             // Validate structure
@@ -394,6 +403,352 @@ export class ImportExportService {
             reader.readAsText(file);
         });
     }
+    
+    // ============================================================================
+    // MARKDOWN IMPORT FUNCTIONS
+    // ============================================================================
+    
+    /**
+     * Parse markdown content into a structured object
+     * @private
+     */
+    static #parseMarkdown(content) {
+        const lines = content.split('\n');
+        
+        // Extract title: first non-empty line, capped at 32 chars
+        let title = 'Untitled';
+        let bodyStartIndex = 0;
+        for (let i = 0; i < lines.length; i++) {
+            const trimmed = lines[i].trim();
+            if (trimmed) {
+                title = trimmed.replace(/^#+\s*/, '').slice(0, 32).trim();
+                bodyStartIndex = i;
+                break;
+            }
+        }
+        
+        // Check for checkbox patterns to determine type
+        const checkboxPattern = /^-\s*\[(\s|x)\]\s*(.*)$/i;
+        const todos = [];
+        
+        for (const line of lines) {
+            const match = line.match(checkboxPattern);
+            if (match) {
+                todos.push({
+                    text: match[2].trim(),
+                    completed: match[1].toLowerCase() === 'x'
+                });
+            }
+        }
+        
+        if (todos.length > 0) {
+            return {
+                type: 'list',
+                title,
+                todos,
+                rawContent: content
+            };
+        }
+        
+        return {
+            type: 'note',
+            title,
+            content: content.trim(),
+            rawContent: content
+        };
+    }
+    
+    /**
+     * Import parsed markdown data with create/merge options
+     * @private
+     */
+    static async #importMarkdown(parsed, fileName) {
+        console.log('[ImportExportService] #importMarkdown() starting...');
+        
+        const choice = await this.#showMarkdownImportDialog(parsed);
+        if (!choice) {
+            return { success: false, cancelled: true };
+        }
+        
+        if (choice === 'create') {
+            await this.#createFromMarkdown(parsed);
+            console.log('[ImportExportService] Markdown import: created new', parsed.type);
+            return { success: true, action: 'create', type: parsed.type };
+        }
+        
+        if (choice === 'merge') {
+            const target = await this.#showMergeSelector(parsed.type);
+            if (!target) {
+                return { success: false, cancelled: true };
+            }
+            await this.#mergeIntoItem(target, parsed);
+            console.log('[ImportExportService] Markdown import: merged into existing', parsed.type);
+            return { success: true, action: 'merge', type: parsed.type };
+        }
+        
+        return { success: false, cancelled: true };
+    }
+    
+    /**
+     * Show import options dialog for markdown (create new / merge / cancel)
+     * @private
+     */
+    static #showMarkdownImportDialog(parsed) {
+        return new Promise((resolve) => {
+            const typeLabel = parsed.type === 'list' ? 'List' : 'Note';
+            const detailText = parsed.type === 'list'
+                ? `${parsed.todos.length} todo${parsed.todos.length === 1 ? '' : 's'}`
+                : `${parsed.content.length} characters`;
+            
+            const dialog = document.createElement('dialog');
+            dialog.className = 'share-dialog';
+            dialog.innerHTML = `
+                <div class="share-dialog-content">
+                    <h3>Import Markdown ${typeLabel}</h3>
+                    <p class="share-title">"${this.#escapeHtml(parsed.title)}"</p>
+                    <div class="share-info">
+                        <span class="share-expiry">${this.#escapeHtml(detailText)}</span>
+                    </div>
+                    <div class="share-options">
+                        <button class="share-option-btn share-option-create" type="button">
+                            <span class="share-option-icon">&#10133;</span>
+                            <span class="share-option-label">Create New ${typeLabel}</span>
+                            <span class="share-option-desc">Add as a new ${parsed.type === 'list' ? 'todo list' : 'note'}</span>
+                        </button>
+                        <button class="share-option-btn share-option-merge" type="button">
+                            <span class="share-option-icon">&#128256;</span>
+                            <span class="share-option-label">Merge Into Existing</span>
+                            <span class="share-option-desc">Append to an existing ${parsed.type === 'list' ? 'list' : 'note'}</span>
+                        </button>
+                    </div>
+                    <div class="share-actions">
+                        <button class="share-cancel-btn" type="button">Cancel</button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(dialog);
+            dialog.showModal();
+            
+            const createBtn = dialog.querySelector('.share-option-create');
+            const mergeBtn = dialog.querySelector('.share-option-merge');
+            const cancelBtn = dialog.querySelector('.share-cancel-btn');
+            
+            const cleanup = () => {
+                dialog.close();
+                document.body.removeChild(dialog);
+            };
+            
+            createBtn.addEventListener('click', () => {
+                cleanup();
+                resolve('create');
+            });
+            
+            mergeBtn.addEventListener('click', () => {
+                cleanup();
+                resolve('merge');
+            });
+            
+            cancelBtn.addEventListener('click', () => {
+                cleanup();
+                resolve(null);
+            });
+            
+            dialog.addEventListener('click', (e) => {
+                if (e.target === dialog) {
+                    cleanup();
+                    resolve(null);
+                }
+            });
+        });
+    }
+    
+    /**
+     * Show selector dialog for existing lists or notes to merge into
+     * @private
+     */
+    static async #showMergeSelector(type) {
+        const typeLabel = type === 'list' ? 'List' : 'Note';
+        const items = type === 'list'
+            ? await DBManager.getListMetadata()
+            : await DBManager.getAllNotes();
+        
+        return new Promise((resolve) => {
+            const dialog = document.createElement('dialog');
+            dialog.className = 'share-dialog';
+            
+            if (items.length === 0) {
+                dialog.innerHTML = `
+                    <div class="share-dialog-content">
+                        <h3>Merge Into Existing ${typeLabel}</h3>
+                        <p class="share-title">No existing ${typeLabel.toLowerCase()}s found.</p>
+                        <div class="share-actions">
+                            <button class="share-cancel-btn" type="button">Close</button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(dialog);
+                dialog.showModal();
+                
+                const closeBtn = dialog.querySelector('.share-cancel-btn');
+                const cleanup = () => {
+                    dialog.close();
+                    document.body.removeChild(dialog);
+                    resolve(null);
+                };
+                closeBtn.addEventListener('click', cleanup);
+                dialog.addEventListener('click', (e) => {
+                    if (e.target === dialog) cleanup();
+                });
+                return;
+            }
+            
+            const itemListHtml = items.map((item, index) => {
+                const name = type === 'list' ? item.name : (item.title || 'Untitled');
+                const isFirst = index === 0;
+                return `
+                    <button class="share-option-btn share-merge-item" type="button" data-id="${this.#escapeHtml(item.id)}">
+                        <span class="share-option-label">${this.#escapeHtml(name)}</span>
+                    </button>
+                `;
+            }).join('');
+            
+            dialog.innerHTML = `
+                <div class="share-dialog-content">
+                    <h3>Merge Into Existing ${typeLabel}</h3>
+                    <p class="share-title">Choose a ${typeLabel.toLowerCase()} to append to:</p>
+                    <div class="share-options">
+                        ${itemListHtml}
+                    </div>
+                    <div class="share-actions">
+                        <button class="share-cancel-btn" type="button">Cancel</button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(dialog);
+            dialog.showModal();
+            
+            const itemBtns = dialog.querySelectorAll('.share-merge-item');
+            const cancelBtn = dialog.querySelector('.share-cancel-btn');
+            
+            const cleanup = () => {
+                dialog.close();
+                document.body.removeChild(dialog);
+            };
+            
+            itemBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const itemId = btn.dataset.id;
+                    const selectedItem = items.find(i => i.id === itemId);
+                    cleanup();
+                    resolve(selectedItem || null);
+                });
+            });
+            
+            cancelBtn.addEventListener('click', () => {
+                cleanup();
+                resolve(null);
+            });
+            
+            dialog.addEventListener('click', (e) => {
+                if (e.target === dialog) {
+                    cleanup();
+                    resolve(null);
+                }
+            });
+        });
+    }
+    
+    /**
+     * Create a new note or list from parsed markdown
+     * @private
+     */
+    static async #createFromMarkdown(parsed) {
+        const now = new Date().toISOString();
+        
+        if (parsed.type === 'list') {
+            const newList = await DBManager.createList({
+                name: parsed.title,
+                isDefault: false
+            });
+            
+            // Add parsed todos
+            const todos = parsed.todos.map((todo, index) => ({
+                id: `todo-${Date.now()}-${index}`,
+                text: todo.text,
+                completed: todo.completed,
+                createdAt: Date.now()
+            }));
+            
+            newList.todos = todos;
+            await DBManager.saveList(newList);
+        } else {
+            const noteId = `note-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
+            const note = {
+                id: noteId,
+                title: parsed.title,
+                content: parsed.content,
+                createdAt: now,
+                updatedAt: now
+            };
+            await DBManager.saveNote(noteId, note);
+        }
+    }
+    
+    /**
+     * Merge parsed markdown into an existing note or list
+     * @private
+     */
+    static async #mergeIntoItem(target, parsed) {
+        const now = new Date().toISOString();
+        
+        if (parsed.type === 'list') {
+            // Load full list to get todos array
+            const fullList = await DBManager.getList(target.id);
+            if (!fullList) {
+                throw new Error('Target list not found');
+            }
+            
+            // Append new todos at the bottom
+            const existingCount = fullList.todos?.length || 0;
+            const newTodos = parsed.todos.map((todo, index) => ({
+                id: `todo-${Date.now()}-${index}`,
+                text: todo.text,
+                completed: todo.completed,
+                createdAt: Date.now()
+            }));
+            
+            fullList.todos = [...(fullList.todos || []), ...newTodos];
+            fullList.updatedAt = Date.now();
+            await DBManager.saveList(fullList);
+        } else {
+            // For notes, append content with a divider
+            const divider = '\n\n---\n\n';
+            const newContent = (target.content || '') + divider + parsed.content;
+            
+            const updatedNote = {
+                ...target,
+                content: newContent,
+                updatedAt: now
+            };
+            await DBManager.saveNote(target.id, updatedNote);
+        }
+    }
+    
+    /**
+     * Escape HTML for safe insertion into dialog content
+     * @private
+     */
+    static #escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+    
+    // ============================================================================
+    // END MARKDOWN IMPORT FUNCTIONS
+    // ============================================================================
     
     /**
      * Validate import data structure
