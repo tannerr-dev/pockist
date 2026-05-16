@@ -112,3 +112,13 @@ if (themeSwitch) {
 		detectColorScheme();
 	});
 }
+
+const settingsSwitch = document.getElementById("settings-switch");
+if (settingsSwitch) {
+	settingsSwitch.addEventListener("click", () => {
+		const drawer = document.querySelector('home-settings-drawer');
+		if (drawer) {
+			drawer.open();
+		}
+	});
+}

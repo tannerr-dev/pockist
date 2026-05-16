@@ -17,13 +17,14 @@
  */
 const DB_CONFIG = {
     NAME: 'pockist-db',
-    VERSION: 7,
+    VERSION: 8,
     // Object store names - each mini-app should have its own store
     STORES: {
         NOTES: 'notes',
         LISTS: 'lists',
         IMPORTS: 'imports',
         DELETION_TOKENS: 'deletionTokens',
+        SETTINGS: 'settings',
     }
 };
 
@@ -1248,6 +1249,14 @@ export class DBManager {
                     console.log('[DBManager] DeletionTokens store already exists');
                 }
 
+                if (!db.objectStoreNames.contains(DB_CONFIG.STORES.SETTINGS)) {
+                    console.log('[DBManager] Creating settings store...');
+                    db.createObjectStore(DB_CONFIG.STORES.SETTINGS);
+                    console.log('[DBManager] Settings store created');
+                } else {
+                    console.log('[DBManager] Settings store already exists');
+                }
+
                 console.log('[DBManager] Stores after upgrade:', Array.from(db.objectStoreNames));
 
                 // Version 7 migration: Split monolithic lists array into individual records
@@ -1758,5 +1767,84 @@ export class DBManager {
     }
     // ============================================================================
     // END OF MULTI-NOTE MIGRATION
+    // ============================================================================
+
+    // ============================================================================
+    // SETTINGS METHODS
+    // ============================================================================
+
+    /**
+     * Get a setting value by key.
+     * @param {string} key - The setting key
+     * @returns {Promise<any|null>} The value or null if not found
+     */
+    static async getSetting(key) {
+        console.log(`[DBManager] getSetting(${key}) called`);
+        await this.init();
+
+        return new Promise((resolve, reject) => {
+            if (!this.#db.objectStoreNames.contains(DB_CONFIG.STORES.SETTINGS)) {
+                console.error('[DBManager] Settings object store not found');
+                reject(new Error('Settings object store not found'));
+                return;
+            }
+
+            const transaction = this.#db.transaction([DB_CONFIG.STORES.SETTINGS], 'readonly');
+            const store = transaction.objectStore(DB_CONFIG.STORES.SETTINGS);
+            const request = store.get(key);
+
+            request.onsuccess = () => {
+                const result = request.result;
+                if (result === undefined) {
+                    console.log(`[DBManager] getSetting(${key}) - not found`);
+                    resolve(null);
+                } else {
+                    console.log(`[DBManager] getSetting(${key}) success`);
+                    resolve(result);
+                }
+            };
+
+            request.onerror = () => {
+                console.error(`[DBManager] getSetting(${key}) error:`, request.error);
+                reject(request.error);
+            };
+        });
+    }
+
+    /**
+     * Save a setting value by key.
+     * @param {string} key - The setting key
+     * @param {any} value - The value to save
+     * @returns {Promise<void>}
+     */
+    static async saveSetting(key, value) {
+        console.log(`[DBManager] saveSetting(${key}) called`);
+        await this.init();
+
+        return new Promise((resolve, reject) => {
+            if (!this.#db.objectStoreNames.contains(DB_CONFIG.STORES.SETTINGS)) {
+                console.error('[DBManager] Settings object store not found');
+                reject(new Error('Settings object store not found'));
+                return;
+            }
+
+            const transaction = this.#db.transaction([DB_CONFIG.STORES.SETTINGS], 'readwrite');
+            const store = transaction.objectStore(DB_CONFIG.STORES.SETTINGS);
+            const request = store.put(value, key);
+
+            request.onsuccess = () => {
+                console.log(`[DBManager] saveSetting(${key}) success`);
+                resolve();
+            };
+
+            request.onerror = () => {
+                console.error(`[DBManager] saveSetting(${key}) error:`, request.error);
+                reject(request.error);
+            };
+        });
+    }
+
+    // ============================================================================
+    // END OF SETTINGS METHODS
     // ============================================================================
 }
