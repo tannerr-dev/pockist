@@ -811,7 +811,11 @@ export class TodoListWidget extends HTMLElement {
 			if (direction === -1) {
 				this.#offset = Math.max(0, this.#offset - 1);
 			} else {
-				this.#offset += 1;
+				if (this.#offset === 0) {
+					this.#offset = 2;
+				} else {
+					this.#offset += 1;
+				}
 				this.#clampOffset();
 			}
 			this.#renderSlots();
