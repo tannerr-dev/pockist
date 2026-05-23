@@ -104,7 +104,11 @@ export class TodoListWidget extends HTMLElement {
 
 		this.#addBtn?.addEventListener("click", () => this.#handleAdd());
 		this.#inputEl?.addEventListener("keydown", (e) => {
-			if (e.key === "Enter") this.#handleAdd();
+			if (e.key === "Enter") {
+				e.preventDefault();
+				this.#handleAdd();
+				this.#inputEl?.focus();
+			}
 		});
 
 		this.#clearCompletedBtn?.addEventListener("click", () => this.#clearCompleted());
