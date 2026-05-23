@@ -123,3 +123,13 @@ if (settingsSwitch) {
 		}
 	});
 }
+
+const menuBtn = document.querySelector(".menu");
+if (menuBtn) {
+	menuBtn.addEventListener("click", () => {
+		const settingsDrawer = document.querySelector('home-settings-drawer');
+		if (settingsDrawer && settingsDrawer.isOpen) {
+			settingsDrawer.close();
+		}
+	});
+}

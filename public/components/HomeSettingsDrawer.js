@@ -59,9 +59,12 @@ export class HomeSettingsDrawer extends HTMLElement {
     }
 
     #attachListeners() {
-        const closeBtn = this.querySelector('.settings-drawer-close');
-        if (closeBtn) {
-            closeBtn.addEventListener('click', () => this.close());
+        const backBtn = this.querySelector('.settings-back');
+        if (backBtn) {
+            backBtn.addEventListener('click', () => {
+                this.close();
+                document.getElementById('drawer').showPopover();
+            });
         }
 
         const listEl = this.querySelector('.settings-widgets-list');
@@ -74,7 +77,7 @@ export class HomeSettingsDrawer extends HTMLElement {
             });
         }
 
-        const resetBtn = this.querySelector('.settings-reset-btn');
+        const resetBtn = this.querySelector('.drawer-btn--import');
         if (resetBtn) {
             resetBtn.addEventListener('click', async () => {
                 this.#currentLayout = getDefaultLayout();
