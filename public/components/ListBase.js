@@ -3,6 +3,7 @@ import { DBManager } from "../services/DBManager.js";
 import { DialogService } from "../services/DialogService.js";
 import { ShareService } from "../services/ShareService.js";
 import { ImportExportService } from "../services/ImportExportService.js";
+import { ListItem } from "./ListItem.js";
 
 /**
  * ListBase - Abstract base class for list components.
@@ -141,6 +142,22 @@ export class ListBase extends HTMLElement {
 		this._clearCompletedBtn?.addEventListener("click", () => this._clearCompleted());
 		this._sortTodosBtn?.addEventListener("click", () => this._sortTodos());
 		this._listSelectorBtn?.addEventListener("click", () => this._showListSelectorDialog());
+
+		this._listsContainerEl?.addEventListener("list-toggle", (e) => {
+			this._toggleTodo(e.detail.itemId, e.detail.completed);
+		});
+		this._listsContainerEl?.addEventListener("list-edit", (e) => {
+			this._editTodo(e.detail.itemId, e.detail.text);
+		});
+		this._listsContainerEl?.addEventListener("list-delete", (e) => {
+			this._deleteTodo(e.detail.itemId);
+		});
+		this._listsContainerEl?.addEventListener("list-move-up", (e) => {
+			this._moveTodo(e.detail.itemId, -1);
+		});
+		this._listsContainerEl?.addEventListener("list-move-down", (e) => {
+			this._moveTodo(e.detail.itemId, 1);
+		});
 	}
 
 	// -------------------------------------------------------------------------
@@ -208,35 +225,33 @@ export class ListBase extends HTMLElement {
 		}
 	}
 
-	async _toggleTodo(todoId) {
+	async _toggleTodo(todoId, newCompletedState) {
 		const list = this._getCurrentList();
 		if (!list) return;
 
 		const todo = list.todos.find((t) => t.id === todoId);
 		if (!todo) return;
 
-		const newCompletedState = !todo.completed;
+		if (newCompletedState === undefined) {
+			newCompletedState = !todo.completed;
+		}
 		todo.completed = newCompletedState;
 
-		const li = this._listsContainerEl.querySelector(`[data-todo-id="${todoId}"]`);
-		if (li) {
-			li.classList.toggle('completed', newCompletedState);
-			const checkbox = li.querySelector('.todo-checkbox');
-			if (checkbox) checkbox.checked = newCompletedState;
+		const item = this._listsContainerEl.querySelector(`list-item[item-id="${todoId}"]`);
+		if (item) {
+			item.completed = newCompletedState;
 		}
 
 		this._updateFooter();
 
 		try {
 			await DBManager.saveList(list);
-			this._onAfterToggle(todoId, newCompletedState, li);
+			this._onAfterToggle(todoId, newCompletedState, item);
 		} catch (error) {
 			console.error(`[${this.constructor.name}] Error saving after toggle:`, error);
 			todo.completed = !newCompletedState;
-			if (li) {
-				li.classList.toggle('completed', !newCompletedState);
-				const checkbox = li.querySelector('.todo-checkbox');
-				if (checkbox) checkbox.checked = !newCompletedState;
+			if (item) {
+				item.completed = !newCompletedState;
 			}
 			this._updateFooter();
 		}
@@ -261,10 +276,9 @@ export class ListBase extends HTMLElement {
 		} catch (error) {
 			console.error(`[${this.constructor.name}] Error saving after edit:`, error);
 			todo.text = originalText;
-			const li = this._listsContainerEl.querySelector(`[data-todo-id="${todoId}"]`);
-			if (li) {
-				const textSpan = li.querySelector('.todo-text');
-				if (textSpan) textSpan.textContent = originalText;
+			const item = this._listsContainerEl.querySelector(`list-item[item-id="${todoId}"]`);
+			if (item) {
+				item.text = originalText;
 			}
 		}
 	}
@@ -841,62 +855,14 @@ export class ListBase extends HTMLElement {
 	}
 
 	_createTodoElement(todo, index, total) {
-		const li = document.createElement('li');
-		li.className = `todo-item ${todo.completed ? "completed" : ""}`;
-		li.dataset.todoId = todo.id;
-		li.style.viewTransitionName = `todo-${todo.id}`;
-
-		const isAtTop = index === 0;
-		const isAtBottom = index === total - 1;
-
-		li.innerHTML = `
-			<input type="checkbox" class="todo-checkbox" ${todo.completed ? "checked" : ""}>
-			<span class="todo-text" contenteditable="true">${this._escapeHtml(todo.text)}</span>
-			<div class="todo-reorder">
-				<button class="todo-move-up ${isAtTop ? 'disabled' : ''}" aria-label="Move up" ${isAtTop ? 'disabled' : ''}>▲</button>
-				<button class="todo-move-down ${isAtBottom ? 'disabled' : ''}" aria-label="Move down" ${isAtBottom ? 'disabled' : ''}>▼</button>
-			</div>
-			<button class="todo-delete" aria-label="Delete todo">×</button>
-		`;
-
-		const checkbox = li.querySelector(".todo-checkbox");
-		const textSpan = li.querySelector(".todo-text");
-		const deleteBtn = li.querySelector(".todo-delete");
-		const moveUpBtn = li.querySelector(".todo-move-up");
-		const moveDownBtn = li.querySelector(".todo-move-down");
-
-		checkbox.addEventListener("change", () => {
-			this._toggleTodo(todo.id);
-		});
-
-		textSpan.addEventListener("blur", () => {
-			this._editTodo(todo.id, textSpan.textContent);
-		});
-
-		textSpan.addEventListener("keydown", (e) => {
-			if (e.key === "Enter") {
-				e.preventDefault();
-				textSpan.blur();
-			}
-		});
-
-		deleteBtn.addEventListener("click", () => {
-			this._deleteTodo(todo.id);
-		});
-
-		if (!isAtTop) {
-			moveUpBtn.addEventListener("click", () => {
-				this._moveTodo(todo.id, -1);
-			});
-		}
-
-		if (!isAtBottom) {
-			moveDownBtn.addEventListener("click", () => {
-				this._moveTodo(todo.id, 1);
-			});
-		}
-
-		return li;
+		const item = document.createElement('list-item');
+		item.itemId = todo.id;
+		item.text = todo.text;
+		item.completed = todo.completed;
+		item.index = index;
+		item.total = total;
+		item.style.viewTransitionName = `todo-${todo.id}`;
+		return item;
 	}
 
 	_updateFooter() {

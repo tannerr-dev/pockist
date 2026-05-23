@@ -344,6 +344,32 @@
 	background-color: color-mix(in srgb, var(--text) 5%, transparent);
 }
 
+.list-item.edit-mode {
+	background-color: color-mix(in srgb, var(--accent) 8%, transparent);
+}
+
+.list-item .todo-delete {
+	display: none;
+}
+
+.list-item.edit-mode .todo-delete {
+	display: flex;
+}
+
+.list-item.edit-mode .todo-text:hover {
+	background-color: color-mix(in srgb, var(--text) 10%, transparent);
+	border-radius: 4px;
+	padding: 0.125rem 0.25rem;
+	margin: -0.125rem -0.25rem;
+}
+
+.list-item.edit-mode .todo-text:focus {
+	background-color: color-mix(in srgb, var(--text) 15%, transparent);
+	border-radius: 4px;
+	padding: 0.125rem 0.25rem;
+	margin: -0.125rem -0.25rem;
+}
+
 .todo-item.completed .todo-text {
 	text-decoration: line-through;
 	opacity: 0.6;
@@ -366,18 +392,29 @@
 	word-break: break-word;
 }
 
-.todo-text:hover {
-	background-color: color-mix(in srgb, var(--text) 10%, transparent);
+.list-item-edit-btn {
+	width: 28px;
+	height: 28px;
+	border: none;
+	background: transparent;
+	color: var(--text);
+	opacity: 0.5;
+	font-size: 1rem;
+	cursor: pointer;
 	border-radius: 4px;
-	padding: 0.125rem 0.25rem;
-	margin: -0.125rem -0.25rem;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
 }
 
-.todo-text:focus {
+.list-item:hover .list-item-edit-btn {
+	opacity: 1;
+}
+
+.list-item-edit-btn:hover {
+	opacity: 1;
 	background-color: color-mix(in srgb, var(--text) 15%, transparent);
-	border-radius: 4px;
-	padding: 0.125rem 0.25rem;
-	margin: -0.125rem -0.25rem;
 }
 
 .todo-delete {
@@ -407,12 +444,6 @@
 	display: flex;
 	gap: 0.25rem;
 	flex-shrink: 0;
-	opacity: 0;
-	/* transition: opacity 0.2s; */
-}
-
-.todo-item:hover .todo-reorder {
-	opacity: 1;
 }
 
 .todo-move-up,
@@ -451,9 +482,9 @@
 	cursor: default;
 }
 
-/* Always show reorder buttons on touch devices */
+/* Always show edit buttons on touch devices */
 @media (hover: none) {
-	.todo-reorder {
+	.list-item .list-item-edit-btn {
 		opacity: 1;
 	}
 }
@@ -485,7 +516,6 @@
 	color: var(--text);
 	opacity: 0.5;
 	font-style: italic;
-	list-style-type: none;
 }
 
 .todo-footer {

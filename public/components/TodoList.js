@@ -14,95 +14,95 @@ export class TodoList extends ListBase {
 	}
 
 	_onAfterAdd(todo, list) {
-		let ul = this._listsContainerEl.querySelector('.todo-list-ul');
+		let container = this._listsContainerEl.querySelector('.todo-list-ul');
 
-		if (!ul) {
+		if (!container) {
 			this._listsContainerEl.innerHTML = '';
-			ul = document.createElement('ul');
-			ul.className = 'todo-list-ul';
-			this._listsContainerEl.appendChild(ul);
+			container = document.createElement('div');
+			container.className = 'todo-list-ul';
+			this._listsContainerEl.appendChild(container);
 		}
 
-		const li = this._createTodoElement(todo, 0, list.todos.length);
-		li.style.opacity = '0';
-		li.style.transform = 'translateY(-10px)';
-		ul.insertBefore(li, ul.firstChild);
+		const item = this._createTodoElement(todo, 0, list.todos.length);
+		item.style.opacity = '0';
+		item.style.transform = 'translateY(-10px)';
+		container.insertBefore(item, container.firstChild);
 
 		requestAnimationFrame(() => {
-			li.style.transition = 'opacity 0.2s, transform 0.2s';
-			li.style.opacity = '1';
-			li.style.transform = 'translateY(0)';
+			item.style.transition = 'opacity 0.2s, transform 0.2s';
+			item.style.opacity = '1';
+			item.style.transform = 'translateY(0)';
 		});
 
-		this.#updateMoveButtons();
+		this.#updateItemIndices();
 		this._updateFooter();
 	}
 
 	_onAfterDelete(todoId) {
-		const li = this._listsContainerEl.querySelector(`[data-todo-id="${todoId}"]`);
+		const item = this._listsContainerEl.querySelector(`list-item[item-id="${todoId}"]`);
 		const list = this._getCurrentList();
 
-		if (li) {
-			li.style.transition = 'opacity 0.2s, transform 0.2s';
-			li.style.opacity = '0';
-			li.style.transform = 'translateX(20px)';
+		if (item) {
+			item.style.transition = 'opacity 0.2s, transform 0.2s';
+			item.style.opacity = '0';
+			item.style.transform = 'translateX(20px)';
 
 			setTimeout(() => {
-				li.remove();
+				item.remove();
 				if (list?.todos.length === 0) {
-					this._listsContainerEl.innerHTML = '<li class="todo-empty">No todos yet. Add one above!</li>';
+					this._listsContainerEl.innerHTML = '<div class="todo-empty">No todos yet. Add one above!</div>';
 				}
 			}, 200);
 		}
 
-		this.#updateMoveButtons();
+		this.#updateItemIndices();
 		this._updateFooter();
 	}
 
 	_onAfterMove(todoId, direction, oldIndex, newIndex) {
-		const items = Array.from(this._listsContainerEl.querySelectorAll('.todo-item'));
-		const currentLi = items.find(li => li.dataset.todoId === todoId);
-		if (!currentLi) return;
+		const items = Array.from(this._listsContainerEl.querySelectorAll('list-item'));
+		const currentItem = items.find(item => item.itemId === todoId);
+		if (!currentItem) return;
 
-		const targetLi = direction === -1
-			? currentLi.previousElementSibling
-			: currentLi.nextElementSibling;
-		if (!targetLi) return;
+		const targetItem = direction === -1
+			? currentItem.previousElementSibling
+			: currentItem.nextElementSibling;
+		if (!targetItem || targetItem.classList.contains('todo-empty')) return;
 
-		currentLi.style.transition = 'transform 0.2s';
-		targetLi.style.transition = 'transform 0.2s';
+		currentItem.style.transition = 'transform 0.2s';
+		targetItem.style.transition = 'transform 0.2s';
 
 		if (direction === -1) {
-			currentLi.parentNode.insertBefore(currentLi, targetLi);
+			currentItem.parentNode.insertBefore(currentItem, targetItem);
 		} else {
-			currentLi.parentNode.insertBefore(targetLi, currentLi);
+			currentItem.parentNode.insertBefore(targetItem, currentItem);
 		}
 
-		this.#updateMoveButtons();
+		this.#updateItemIndices();
 	}
 
 	_onAfterClear(completedIds) {
 		const list = this._getCurrentList();
 
 		completedIds.forEach((id, index) => {
-			const li = this._listsContainerEl.querySelector(`[data-todo-id="${id}"]`);
-			if (li) {
-				li.style.transition = 'opacity 0.2s, transform 0.2s';
-				li.style.opacity = '0';
-				li.style.transform = 'translateX(20px)';
+			const item = this._listsContainerEl.querySelector(`list-item[item-id="${id}"]`);
+			if (item) {
+				item.style.transition = 'opacity 0.2s, transform 0.2s';
+				item.style.opacity = '0';
+				item.style.transform = 'translateX(20px)';
 
 				setTimeout(() => {
-					li.remove();
+					item.remove();
 				}, 200 + (index * 50));
 			}
 		});
 
-		this.#updateMoveButtons();
+		this.#updateItemIndices();
 		this._updateFooter();
 
 		if (list?.todos.length === 0) {
 			setTimeout(() => {
-				this._listsContainerEl.innerHTML = '<li class="todo-empty">No todos yet. Add one above!</li>';
+				this._listsContainerEl.innerHTML = '<div class="todo-empty">No todos yet. Add one above!</div>';
 			}, 200 + (completedIds.length * 50));
 		}
 	}
@@ -127,42 +127,30 @@ export class TodoList extends ListBase {
 		this._listsContainerEl.innerHTML = "";
 
 		if (!list || list.todos.length === 0) {
-			this._listsContainerEl.innerHTML = '<li class="todo-empty">No todos yet. Add one above!</li>';
+			this._listsContainerEl.innerHTML = '<div class="todo-empty">No todos yet. Add one above!</div>';
 		} else {
-			const ul = document.createElement('ul');
-			ul.className = 'todo-list-ul';
+			const div = document.createElement('div');
+			div.className = 'todo-list-ul';
 
 			list.todos.forEach((todo, index) => {
-				const li = this._createTodoElement(todo, index, list.todos.length);
-				ul.appendChild(li);
+				const item = this._createTodoElement(todo, index, list.todos.length);
+				div.appendChild(item);
 			});
 
-			this._listsContainerEl.appendChild(ul);
+			this._listsContainerEl.appendChild(div);
 		}
 
 		this._updateFooter();
 	}
 
-	#updateMoveButtons() {
+	#updateItemIndices() {
 		const list = this._getCurrentList();
 		if (!list || !this._listsContainerEl) return;
 
-		const items = this._listsContainerEl.querySelectorAll('.todo-item');
-		items.forEach((li, index) => {
-			const moveUpBtn = li.querySelector('.todo-move-up');
-			const moveDownBtn = li.querySelector('.todo-move-down');
-
-			if (moveUpBtn) {
-				const isAtTop = index === 0;
-				moveUpBtn.disabled = isAtTop;
-				moveUpBtn.classList.toggle('disabled', isAtTop);
-			}
-
-			if (moveDownBtn) {
-				const isAtBottom = index === items.length - 1;
-				moveDownBtn.disabled = isAtBottom;
-				moveDownBtn.classList.toggle('disabled', isAtBottom);
-			}
+		const items = this._listsContainerEl.querySelectorAll('list-item');
+		items.forEach((item, index) => {
+			item.index = index;
+			item.total = items.length;
 		});
 	}
 }
