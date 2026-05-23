@@ -174,4 +174,19 @@ home-page{
     font-size: 1.3rem;
 }
 
+/* Lists widget section on home page */
+.lists-widget-section {
+    width: 100%;
+    max-width: 500px;
+    margin: 1.5rem auto;
+}
+
+.lists-header-link {
+    text-decoration: none;
+    color: var(--text);
+    display: block;
+    margin-bottom: 0.5rem;
+    font-size: 1.3rem;
+}
+
 

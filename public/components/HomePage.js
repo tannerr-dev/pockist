@@ -3,6 +3,7 @@ import { DBManager } from "../services/DBManager.js";
 import { Router } from "../services/Router.js";
 import './weather/WeatherCurrent.js';
 import './TodoList.js';
+import './TodoListWidget.js';
 import './LocalNotes.js';
 
 export class HomePage extends HTMLElement {
@@ -55,6 +56,17 @@ export class HomePage extends HTMLElement {
                 wrapper.innerHTML = `
                     <a href="/note" class="notes-header-link pwa">
                         <h2>Notes</h2>
+                    </a>
+                `;
+                const el = document.createElement(widget.tag);
+                wrapper.appendChild(el);
+                zoneEl.appendChild(wrapper);
+            } else if (widgetId === 'todo-widget') {
+                const wrapper = document.createElement('section');
+                wrapper.className = 'lists-widget-section';
+                wrapper.innerHTML = `
+                    <a href="/list" class="lists-header-link pwa">
+                        <h2>Lists</h2>
                     </a>
                 `;
                 const el = document.createElement(widget.tag);

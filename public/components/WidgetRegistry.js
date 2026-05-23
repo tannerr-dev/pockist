@@ -23,6 +23,13 @@ export const WIDGET_REGISTRY = [
         props: {},
     },
     {
+        id: 'todo-widget',
+        tag: 'todo-list-widget',
+        name: 'List Widget',
+        defaultEnabled: false,
+        props: {},
+    },
+    {
         id: 'notes',
         tag: 'local-notes',
         name: 'Notes',

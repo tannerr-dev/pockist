@@ -354,6 +354,32 @@
       </div>
     </template>
 
+    <template id="todo-list-widget">
+      <div class="todo-list-container todo-widget">
+        <div class="todo-list-selector-row">
+          <h2><a href="/list" class="todo-heading-link">Lists</a></h2>
+          <div class="todo-list-selector-controls">
+            <button id="list-selector-btn" class="list-selector-btn" title="Select list">
+              <span class="list-selector-name">Loading...</span>
+              <span class="list-selector-arrow">▼</span>
+            </button>
+            <div id="list-actions" class="list-actions"></div>
+          </div>
+        </div>
+        <div class="todo-input-row">
+          <input type="text" id="todo-input" placeholder="Add a new task..." autocomplete="off">
+          <button id="add-btn" type="button">Add</button>
+        </div>
+        <div id="lists-container" class="todo-widget-slots"></div>
+        <div class="todo-footer" id="single-list-footer">
+          <div class="todo-footer-actions">
+            <button id="clear-completed" class="button-link">Clear completed</button>
+            <button id="sort-todos" class="button-link">Sort</button>
+          </div>
+        </div>
+      </div>
+    </template>
+
     <template id="todo-list-page">
       <h1>Todo List</h1>
       <todo-list></todo-list>
