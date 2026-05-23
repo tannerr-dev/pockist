@@ -1,0 +1,17 @@
+# Static assets (these are copied separately after go build for caching)
+# Note: Do NOT exclude public/ from build context — the Dockerfile copies it after the build
+
+# Data & runtime
+data/
+tmp/
+
+# Git & config
+.git/
+.env
+.air.toml
+
+# Documentation & packaging
+*.md
+*.tar.gz
+pockist.tar.gz
+docker-compose.yml

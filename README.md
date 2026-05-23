@@ -34,6 +34,20 @@ scp pockist.tar.gz user@server:/opt/pockist/
 ssh user@server "cd /opt/pockist && docker load < pockist.tar.gz && docker stop pockist && docker rm pockist && docker run -d --name pockist -p 8080:8080 pockist:latest"
 Note: The scripts assume you have SSH access to your server and Docker is installed there. Update SERVER_HOST, SERVER_USER, and other variables as needed.
 
+## Docker Build Cache
+
+The `Dockerfile` is optimized so that changes to the `public/` directory (static assets) do not force a full `go build` recompile.
+
+How it works:
+- `COPY` instructions explicitly list only the Go source files (`main.go`, `handlers/`, `pkg/`, `token/`) before the build step.
+- `.dockerignore` excludes `data/`, `.git/`, `.env`, `.air.toml`, docs, and packaging files from the build context.
+- `public/` is copied into the builder stage **after** the binary is compiled.
+- The final stage pulls both the binary and `public/` from the builder.
+
+**Why:** If you change a CSS file or a JS component, Docker will reuse the cached compiled binary and only rebuild the layers that copy assets into the final image.
+
+**Note:** If you add a new Go package directory, add a corresponding `COPY` line in the Dockerfile before the `go build` step.
+
 ## Fully Manual Deploy
 
 ### Local: Build and package
