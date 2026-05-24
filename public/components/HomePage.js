@@ -64,11 +64,11 @@ export class HomePage extends HTMLElement {
             } else if (widgetId === 'todo-widget') {
                 const wrapper = document.createElement('section');
                 wrapper.className = 'lists-widget-section';
-                wrapper.innerHTML = `
-                    <a href="/list" class="lists-header-link pwa">
-                        <h2>Lists</h2>
-                    </a>
-                `;
+                // wrapper.innerHTML = `
+                //     <a href="/list" class="lists-header-link pwa">
+                //         <h2>Lists</h2>
+                //     </a>
+                // `;
                 const el = document.createElement(widget.tag);
                 wrapper.appendChild(el);
                 zoneEl.appendChild(wrapper);

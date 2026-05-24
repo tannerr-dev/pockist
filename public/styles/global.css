@@ -53,7 +53,7 @@ body {
     }
 }
 main {
-    padding: 60px 20px;
+    padding: 64px 20px 0px 20px;
     display:flex;
     flex-direction:column;
     justify-content:center;
@@ -177,8 +177,8 @@ home-page{
 /* Lists widget section on home page */
 .lists-widget-section {
     width: 100%;
-    max-width: 500px;
-    margin: 1.5rem auto;
+    /* max-width: 500px; */
+    /* margin: 1.5rem auto; */
 }
 
 .lists-header-link {

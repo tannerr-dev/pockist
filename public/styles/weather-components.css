@@ -288,9 +288,9 @@ weather-controls .error-message:not(:empty) {
 }
 
 /* Homepage Widget Section */
-.widgets-section {
-    margin-bottom: 20px;
-}
+/* .widgets-section { */
+/*     margin-bottom: 20px; */
+/* } */
 
 .widgets-section weather-current {
     cursor: pointer;
