@@ -5,9 +5,8 @@
 
 home-settings-drawer {
     position: fixed;
-    top: 0;
+    top: 60px;
     right: -200px;
-    bottom: 0;
     width: 200px;
     background-color: var(--bg);
     z-index: 3;
@@ -17,12 +16,12 @@ home-settings-drawer {
     padding: 16px;
     gap: 10px;
     overflow-y: auto;
+    border-bottom-left-radius: 12px;
 }
 
 home-settings-drawer[open] {
     right: 0;
     display: flex;
-    border-bottom-left-radius: 12px;
 }
 
 /* Section title - small, muted, centered */
