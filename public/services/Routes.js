@@ -1,7 +1,8 @@
 import { HomePage } from "../components/HomePage.js";
 import { LocalNotes } from "../components/LocalNotes.js";
 import { WeatherPage } from "../components/WeatherPage.js";
-import { TodoListPage } from "../components/TodoListPage.js";
+import { TodoListIndexPage } from "../components/TodoListIndexPage.js";
+import { TodoListDetailPage } from "../components/TodoListDetailPage.js";
 import { AboutPage } from "../components/AboutPage.js";
 import { ShareView } from "../components/ShareView.js";
 
@@ -20,7 +21,11 @@ export const routes = [
   },
   {
     path: "/list",
-    component: TodoListPage,
+    component: TodoListIndexPage,
+  },
+  {
+    path: /^\/list\/(.+)$/,  // Matches /list/:listId
+    component: TodoListDetailPage,
   },
   {
     path: "/about",

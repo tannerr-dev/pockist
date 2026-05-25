@@ -93,6 +93,12 @@ export class ListBase extends HTMLElement {
 			});
 		}
 
+		// When list-id is locked (detail page), hide the selector row and heading
+		if (this.hasAttribute('list-id')) {
+			const selectorRow = this.querySelector('.todo-list-selector-row');
+			if (selectorRow) selectorRow.style.display = 'none';
+		}
+
 		this._init();
 	}
 
@@ -102,13 +108,22 @@ export class ListBase extends HTMLElement {
 	async _init() {
 		if (this._initialized) return;
 
+		// If list-id attribute is set externally, lock to that list
+		const attrListId = this.getAttribute('list-id');
+
 		try {
 			await DBManager.init();
 			await DBManager.migrateFromTodoDB();
 
 			this._listMetadata = await DBManager.getListMetadata();
 
-			if (this._listMetadata.length === 0) {
+			if (attrListId) {
+				this._currentListId = attrListId;
+				const exists = this._listMetadata.some(m => m.id === attrListId);
+				if (!exists) {
+					this._currentListId = null;
+				}
+			} else if (this._listMetadata.length === 0) {
 				const newList = await DBManager.createList({
 					name: "My Todos",
 					isDefault: true

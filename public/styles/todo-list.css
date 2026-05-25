@@ -646,3 +646,221 @@
 	background-color: color-mix(in srgb, var(--text) 5%, transparent);
 	opacity: 1;
 }
+
+/* ============================================================================
+   LISTS INDEX PAGE
+   ============================================================================ */
+
+.lists-index-container {
+	width: 100%;
+}
+
+.lists-index-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 1rem;
+	gap: 1rem;
+	flex-wrap: wrap;
+}
+
+.lists-index-header h1 {
+	position: static;
+	display: block;
+	margin: 0;
+	font-size: 1.8rem;
+}
+
+.lists-index-new-btn {
+	min-width: auto;
+	padding: 0.5rem 1rem;
+	font-size: 0.95rem;
+}
+
+.lists-index-grid {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+}
+
+.list-index-card {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1rem;
+	padding: 1rem;
+	background-color: var(--bg-2);
+	border: 1px solid var(--border-color);
+	border-radius: 10px;
+	cursor: pointer;
+}
+
+.list-index-card:hover {
+	background-color: var(--bg-3);
+}
+
+.list-index-card.is-default {
+	border-left: 4px solid var(--accent);
+}
+
+.list-index-card-content {
+	flex: 1;
+	min-width: 0;
+}
+
+.list-index-card-name {
+	font-size: 1.1rem;
+	font-weight: bold;
+	color: var(--text);
+	word-break: break-word;
+}
+
+.list-index-card-meta {
+	font-size: 0.85rem;
+	color: var(--text-muted);
+	margin-top: 0.25rem;
+}
+
+.list-index-card-actions {
+	display: flex;
+	align-items: center;
+	gap: 0.35rem;
+	flex-shrink: 0;
+}
+
+.list-index-card-actions button {
+	width: 32px;
+	height: 32px;
+	border: none;
+	background: transparent;
+	color: var(--text);
+	opacity: 0.5;
+	font-size: 1rem;
+	cursor: pointer;
+	border-radius: 6px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0;
+}
+
+.list-index-card:hover .list-index-card-actions button {
+	opacity: 0.8;
+}
+
+.list-index-card-actions button:hover {
+	opacity: 1;
+	background-color: color-mix(in srgb, var(--text) 15%, transparent);
+}
+
+.list-index-set-default:hover {
+	color: var(--accent);
+}
+
+.list-index-delete:hover {
+	color: var(--error);
+}
+
+/* Disabled move buttons */
+.list-index-move-up:disabled,
+.list-index-move-down:disabled {
+	opacity: 0.15;
+	cursor: default;
+}
+
+.lists-index-empty {
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	padding: 3rem 1rem;
+	gap: 1rem;
+	text-align: center;
+	color: var(--text-muted);
+}
+
+.lists-index-empty p {
+	margin: 0;
+	font-size: 1.1rem;
+}
+
+.lists-index-new-btn-empty {
+	min-width: auto;
+}
+
+/* ============================================================================
+   LIST DETAIL PAGE
+   ============================================================================ */
+
+.list-detail-container {
+	width: 100%;
+}
+
+.list-detail-header {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+	margin-bottom: 1rem;
+	flex-wrap: wrap;
+}
+
+.list-detail-back {
+	background: none;
+	border: none;
+	color: var(--accent);
+	cursor: pointer;
+	font-size: 0.9rem;
+	padding: 0.25rem 0.5rem;
+}
+
+.list-detail-back:hover {
+	opacity: 0.8;
+}
+
+.list-detail-heading {
+	margin: 0;
+	font-size: 1.5rem;
+	color: var(--text);
+	word-break: break-word;
+	padding: 0.25rem 0.5rem;
+	margin: -0.25rem -0.5rem;
+	border-radius: 4px;
+	cursor: text;
+	border-bottom: 1px dashed var(--border-color);
+}
+
+.list-detail-heading:hover {
+	background-color: color-mix(in srgb, var(--text) 8%, transparent);
+}
+
+.list-detail-heading:focus {
+	background-color: color-mix(in srgb, var(--text) 15%, transparent);
+	outline: none;
+	border-bottom-color: transparent;
+}
+
+.list-detail-share-btn {
+	margin-left: auto;
+}
+
+.list-detail-share-btn .share-btn {
+	background: transparent;
+	border: none;
+	color: var(--accent);
+	cursor: pointer;
+	font-size: 0.9rem;
+	padding: 0.25rem 0.5rem;
+	display: flex;
+	align-items: center;
+	gap: 0.35rem;
+}
+
+.list-detail-share-btn .share-btn:hover {
+	opacity: 0.8;
+}
+
+/* Always show card actions on touch devices */
+@media (hover: none) {
+	.list-index-card-actions button {
+		opacity: 0.8;
+	}
+}

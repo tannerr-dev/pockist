@@ -46,6 +46,11 @@ export class ShareButton extends HTMLElement {
     }
 
     async handleShare() {
+        // Re-read attributes in case they were set dynamically after connection
+        this.type = this.getAttribute('type') || 'note';
+        this.itemId = this.getAttribute('data-id');
+        this.itemTitle = this.getAttribute('title') || 'Untitled';
+
         try {
             // Get the data to share based on type
             const { DBManager } = await import('../services/DBManager.js');
