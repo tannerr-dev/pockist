@@ -129,6 +129,81 @@ export const DialogService = {
 		});
 	},
 
+	promptTextarea(message, defaultValue = "") {
+		return new Promise((resolve) => {
+			const dialog = document.createElement("dialog");
+			dialog.className = "dialog dialog--textarea";
+
+			dialog.innerHTML = `
+				<div class="dialog-content">
+					<p class="app-dialog-message">${this.escapeHtml(message)}</p>
+					<textarea class="app-dialog-textarea" rows="5">${this.escapeHtml(defaultValue)}</textarea>
+					<div class="dialog-footer">
+						<button class="dialog-btn dialog-btn--secondary" type="button">Cancel</button>
+						<button class="dialog-btn dialog-btn--primary" type="button">Save</button>
+					</div>
+				</div>
+			`;
+
+			document.body.appendChild(dialog);
+
+			const textarea = dialog.querySelector(".app-dialog-textarea");
+			const cancelBtn = dialog.querySelector(".dialog-btn--secondary");
+			const confirmBtn = dialog.querySelector(".dialog-btn--primary");
+
+			// Focus textarea after dialog is shown and place cursor at end
+			setTimeout(() => {
+				textarea.focus();
+				textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+			}, 0);
+
+			const cleanup = () => {
+				dialog.remove();
+			};
+
+			const handleCancel = () => {
+				dialog.close();
+				cleanup();
+				resolve(null);
+			};
+
+			const handleConfirm = () => {
+				const value = textarea.value.trim();
+				dialog.close();
+				cleanup();
+				resolve(value || null);
+			};
+
+			cancelBtn.addEventListener("click", handleCancel);
+			confirmBtn.addEventListener("click", handleConfirm);
+
+			textarea.addEventListener("keydown", (e) => {
+				if (e.key === "Enter" && e.ctrlKey) {
+					e.preventDefault();
+					e.stopPropagation();
+					handleConfirm();
+				} else if (e.key === "Escape") {
+					e.preventDefault();
+					e.stopPropagation();
+					handleCancel();
+				}
+			});
+
+			dialog.addEventListener("click", (e) => {
+				if (e.target === dialog) {
+					handleCancel();
+				}
+			});
+
+			dialog.addEventListener("close", () => {
+				cleanup();
+				resolve(null);
+			});
+
+			dialog.showModal();
+		});
+	},
+
 	escapeHtml(text) {
 		const div = document.createElement("div");
 		div.textContent = text;

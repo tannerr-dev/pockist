@@ -330,6 +330,36 @@
 	/* transition: background-color 0.2s; */
 }
 
+.list-item {
+	height: 48px;
+	padding: 0 1rem;
+	flex-shrink: 0;
+}
+
+.list-item .todo-text {
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+	cursor: text;
+	word-break: break-word;
+}
+
+.list-item.is-overflowing .todo-text {
+	cursor: pointer;
+}
+
+.list-item.edit-mode {
+	height: auto;
+	padding: 0.875rem 1rem;
+}
+
+.list-item.edit-mode .todo-text {
+	display: block;
+	-webkit-line-clamp: unset;
+	overflow: visible;
+}
+
 /* Highlight effect when reorder buttons are clicked */
 .todo-item:has(.todo-move-up:active),
 .todo-item:has(.todo-move-down:active) {
@@ -602,6 +632,16 @@
 }
 
 .todo-widget .todo-item {
+	padding: 0.625rem 0.75rem;
+}
+
+.todo-widget .list-item {
+	height: 48px;
+	padding: 0 0.75rem;
+}
+
+.todo-widget .list-item.edit-mode {
+	height: auto;
 	padding: 0.625rem 0.75rem;
 }
 

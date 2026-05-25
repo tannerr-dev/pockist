@@ -1,3 +1,5 @@
+import { DialogService } from '../services/DialogService.js';
+
 /**
  * ListItem - A single list item component with edit-mode toggle.
  *
@@ -11,6 +13,7 @@ export class ListItem extends HTMLElement {
 	_moveDownBtn = null;
 	_deleteBtn = null;
 	_editBtn = null;
+	_resizeObserver = null;
 
 	static get observedAttributes() {
 		return ['item-id', 'text', 'completed', 'index', 'total'];
@@ -74,6 +77,17 @@ export class ListItem extends HTMLElement {
 
 		this._setupEventListeners();
 		this._updateReorderButtons();
+		this._checkOverflow();
+
+		this._resizeObserver = new ResizeObserver(() => this._checkOverflow());
+		if (this._textEl) this._resizeObserver.observe(this._textEl);
+	}
+
+	disconnectedCallback() {
+		if (this._resizeObserver) {
+			this._resizeObserver.disconnect();
+			this._resizeObserver = null;
+		}
 	}
 
 	_setupEventListeners() {
@@ -119,6 +133,28 @@ export class ListItem extends HTMLElement {
 				this._enterEditMode();
 			}
 		});
+
+		this._textEl.addEventListener('click', () => {
+			if (this.classList.contains('edit-mode')) return;
+			if (!this.classList.contains('is-overflowing')) return;
+			this._openEditDialog();
+		});
+	}
+
+	_checkOverflow() {
+		if (!this._textEl) return;
+		const isOverflowing = this._textEl.scrollHeight > this._textEl.clientHeight;
+		this.classList.toggle('is-overflowing', isOverflowing);
+	}
+
+	async _openEditDialog() {
+		const newText = await DialogService.promptTextarea('Edit item', this.text || '');
+		if (newText !== null && newText !== this.text) {
+			this.dispatchEvent(new CustomEvent('list-edit', {
+				bubbles: true,
+				detail: { itemId: this.itemId, text: newText }
+			}));
+		}
 	}
 
 	_enterEditMode() {
