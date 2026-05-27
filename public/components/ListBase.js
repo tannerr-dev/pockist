@@ -287,6 +287,10 @@ export class ListBase extends HTMLElement {
 
 		try {
 			await DBManager.saveList(list);
+			const item = this._listsContainerEl.querySelector(`list-item[item-id="${todoId}"]`);
+			if (item) {
+				item.text = trimmedText;
+			}
 			this._onAfterEdit(todoId);
 		} catch (error) {
 			console.error(`[${this.constructor.name}] Error saving after edit:`, error);

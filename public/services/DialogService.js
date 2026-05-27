@@ -129,7 +129,7 @@ export const DialogService = {
 		});
 	},
 
-	promptTextarea(message, defaultValue = "") {
+	promptTextarea(message, defaultValue = "", onChange = null) {
 		return new Promise((resolve) => {
 			const dialog = document.createElement("dialog");
 			dialog.className = "dialog dialog--textarea";
@@ -139,8 +139,7 @@ export const DialogService = {
 					<p class="app-dialog-message">${this.escapeHtml(message)}</p>
 					<textarea class="app-dialog-textarea" rows="5">${this.escapeHtml(defaultValue)}</textarea>
 					<div class="dialog-footer">
-						<button class="dialog-btn dialog-btn--secondary" type="button">Cancel</button>
-						<button class="dialog-btn dialog-btn--primary" type="button">Save</button>
+						<button class="dialog-btn dialog-btn--secondary" type="button">Close</button>
 					</div>
 				</div>
 			`;
@@ -148,50 +147,57 @@ export const DialogService = {
 			document.body.appendChild(dialog);
 
 			const textarea = dialog.querySelector(".app-dialog-textarea");
-			const cancelBtn = dialog.querySelector(".dialog-btn--secondary");
-			const confirmBtn = dialog.querySelector(".dialog-btn--primary");
+			const closeBtn = dialog.querySelector(".dialog-btn--secondary");
 
-			// Focus textarea after dialog is shown and place cursor at end
-			setTimeout(() => {
-				textarea.focus();
-				textarea.setSelectionRange(textarea.value.length, textarea.value.length);
-			}, 0);
+			let debounceTimer = null;
+			let lastSavedValue = defaultValue;
+
+			const doSave = (value) => {
+				if (value === lastSavedValue) return;
+				lastSavedValue = value;
+				if (onChange) onChange(value);
+			};
+
+			const debouncedSave = (value) => {
+				clearTimeout(debounceTimer);
+				debounceTimer = setTimeout(() => doSave(value), 300);
+			};
 
 			const cleanup = () => {
+				clearTimeout(debounceTimer);
 				dialog.remove();
 			};
 
-			const handleCancel = () => {
+			const handleClose = () => {
+				// Flush any pending save
+				const value = textarea.value.trim();
+				if (value && value !== lastSavedValue) {
+					doSave(value);
+				}
 				dialog.close();
 				cleanup();
 				resolve(null);
 			};
 
-			const handleConfirm = () => {
-				const value = textarea.value.trim();
-				dialog.close();
-				cleanup();
-				resolve(value || null);
-			};
+			closeBtn.addEventListener("click", handleClose);
 
-			cancelBtn.addEventListener("click", handleCancel);
-			confirmBtn.addEventListener("click", handleConfirm);
+			textarea.addEventListener("input", () => {
+				const value = textarea.value.trim();
+				if (!value) return;
+				debouncedSave(value);
+			});
 
 			textarea.addEventListener("keydown", (e) => {
-				if (e.key === "Enter" && e.ctrlKey) {
+				if (e.key === "Escape") {
 					e.preventDefault();
 					e.stopPropagation();
-					handleConfirm();
-				} else if (e.key === "Escape") {
-					e.preventDefault();
-					e.stopPropagation();
-					handleCancel();
+					handleClose();
 				}
 			});
 
 			dialog.addEventListener("click", (e) => {
 				if (e.target === dialog) {
-					handleCancel();
+					handleClose();
 				}
 			});
 

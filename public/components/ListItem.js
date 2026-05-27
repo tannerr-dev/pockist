@@ -1,10 +1,9 @@
 import { DialogService } from '../services/DialogService.js';
 
 /**
- * ListItem - A single list item component with edit-mode toggle.
+ * ListItem - A single list item component.
  *
- * Default mode: checkbox + read-only text + Edit button.
- * Edit mode: editable text + reorder buttons + delete button + Done button.
+ * Tapping the text opens a dialog for editing.
  */
 export class ListItem extends HTMLElement {
 	_checkbox = null;
@@ -12,7 +11,6 @@ export class ListItem extends HTMLElement {
 	_moveUpBtn = null;
 	_moveDownBtn = null;
 	_deleteBtn = null;
-	_editBtn = null;
 	_resizeObserver = null;
 
 	static get observedAttributes() {
@@ -60,12 +58,11 @@ export class ListItem extends HTMLElement {
 		this.innerHTML = `
 			<input type="checkbox" class="todo-checkbox" ${this.completed ? 'checked' : ''}>
 			<span class="todo-text">${this._escapeHtml(this.text || '')}</span>
-			<button class="todo-delete" aria-label="Delete todo">×</button>
 			<div class="todo-reorder">
 				<button class="todo-move-up" aria-label="Move up">▲</button>
 				<button class="todo-move-down" aria-label="Move down">▼</button>
 			</div>
-			<button class="list-item-edit-btn" aria-label="Edit todo">✎</button>
+			<button class="todo-delete" aria-label="Delete todo">×</button>
 		`;
 
 		this._checkbox = this.querySelector('.todo-checkbox');
@@ -73,7 +70,6 @@ export class ListItem extends HTMLElement {
 		this._moveUpBtn = this.querySelector('.todo-move-up');
 		this._moveDownBtn = this.querySelector('.todo-move-down');
 		this._deleteBtn = this.querySelector('.todo-delete');
-		this._editBtn = this.querySelector('.list-item-edit-btn');
 
 		this._setupEventListeners();
 		this._updateReorderButtons();
@@ -98,13 +94,6 @@ export class ListItem extends HTMLElement {
 			}));
 		});
 
-		this._textEl.addEventListener('keydown', (e) => {
-			if (e.key === 'Enter') {
-				e.preventDefault();
-				this._exitEditMode();
-			}
-		});
-
 		this._deleteBtn.addEventListener('click', () => {
 			this.dispatchEvent(new CustomEvent('list-delete', {
 				bubbles: true,
@@ -126,17 +115,7 @@ export class ListItem extends HTMLElement {
 			}));
 		});
 
-		this._editBtn.addEventListener('click', () => {
-			if (this.classList.contains('edit-mode')) {
-				this._exitEditMode();
-			} else {
-				this._enterEditMode();
-			}
-		});
-
 		this._textEl.addEventListener('click', () => {
-			if (this.classList.contains('edit-mode')) return;
-			if (!this.classList.contains('is-overflowing')) return;
 			this._openEditDialog();
 		});
 	}
@@ -148,48 +127,14 @@ export class ListItem extends HTMLElement {
 	}
 
 	async _openEditDialog() {
-		const newText = await DialogService.promptTextarea('Edit item', this.text || '');
-		if (newText !== null && newText !== this.text) {
-			this.dispatchEvent(new CustomEvent('list-edit', {
-				bubbles: true,
-				detail: { itemId: this.itemId, text: newText }
-			}));
-		}
-	}
-
-	_enterEditMode() {
-		if (this.classList.contains('edit-mode')) return;
-
-		this.classList.add('edit-mode');
-		this._editBtn.textContent = '✓';
-		this._editBtn.setAttribute('aria-label', 'Done editing');
-		this._textEl.contentEditable = 'true';
-		this._textEl.focus();
-
-		// Move cursor to the end of the text
-		const range = document.createRange();
-		range.selectNodeContents(this._textEl);
-		range.collapse(false);
-		const sel = window.getSelection();
-		sel.removeAllRanges();
-		sel.addRange(range);
-	}
-
-	_exitEditMode() {
-		if (!this.classList.contains('edit-mode')) return;
-
-		this.classList.remove('edit-mode');
-		this._editBtn.textContent = '✎';
-		this._editBtn.setAttribute('aria-label', 'Edit todo');
-		this._textEl.contentEditable = 'false';
-
-		const newText = this._textEl.textContent.trim();
-		if (newText && newText !== this.text) {
-			this.dispatchEvent(new CustomEvent('list-edit', {
-				bubbles: true,
-				detail: { itemId: this.itemId, text: newText }
-			}));
-		}
+		await DialogService.promptTextarea('Edit item', this.text || '', (value) => {
+			if (value && value !== this.text) {
+				this.dispatchEvent(new CustomEvent('list-edit', {
+					bubbles: true,
+					detail: { itemId: this.itemId, text: value }
+				}));
+			}
+		});
 	}
 
 	_updateReorderButtons() {
