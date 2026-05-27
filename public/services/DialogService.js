@@ -207,6 +207,7 @@ export const DialogService = {
 			});
 
 			dialog.showModal();
+			closeBtn.focus();
 		});
 	},
 
