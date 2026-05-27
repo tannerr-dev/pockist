@@ -6,23 +6,23 @@ import { ImportExportService } from "./services/ImportExportService.js";
 import './components/ShareView.js';
 import './components/HomeSettingsDrawer.js';
 
-navigator.serviceWorker.addEventListener("message", (event) => {
-    if (event.data && event.data.type === "CACHE_UPDATED") {
-        console.log("[App] Cache updated:", event.data.url);
-    }
-});
+// navigator.serviceWorker.addEventListener("message", (event) => {
+//     if (event.data && event.data.type === "CACHE_UPDATED") {
+//         console.log("[App] Cache updated:", event.data.url);
+//     }
+// });
 
 window.addEventListener("DOMContentLoaded", async () => {
-    console.log('[App] DOMContentLoaded event fired');
+    // console.log('[App] DOMContentLoaded event fired');
     
     // Run database migrations before initializing the router
     // Order matters: first migrate from oldest DB, then migrate to multi-note format, then repair
-    console.log('[App] Starting database migrations...');
+    // console.log('[App] Starting database migrations...');
     
     try {
-        console.log('[App] Step 1: Running migrateFromOldDB (textAreaDB -> pockist-db)...');
+        // console.log('[App] Step 1: Running migrateFromOldDB (textAreaDB -> pockist-db)...');
         const oldDBResult = await DBManager.migrateFromOldDB();
-        console.log('[App] migrateFromOldDB result:', oldDBResult);
+        // console.log('[App] migrateFromOldDB result:', oldDBResult);
     } catch (err) {
         console.error("[App] migrateFromOldDB failed:", err);
         console.error("[App] Error stack:", err.stack);
@@ -30,35 +30,35 @@ window.addEventListener("DOMContentLoaded", async () => {
     }
     
     try {
-        console.log('[App] Step 2: Running migrateToMultiNoteFormat (v2 -> v3)...');
+        // console.log('[App] Step 2: Running migrateToMultiNoteFormat (v2 -> v3)...');
         const multiNoteResult = await DBManager.migrateToMultiNoteFormat();
-        console.log('[App] migrateToMultiNoteFormat result:', multiNoteResult);
+        // console.log('[App] migrateToMultiNoteFormat result:', multiNoteResult);
     } catch (err) {
         console.error("[App] migrateToMultiNoteFormat failed:", err);
         console.error("[App] Error stack:", err.stack);
         // Continue anyway
     }
     
-    console.log('[App] All migrations completed');
+    // console.log('[App] All migrations completed');
 
 
     
     // Now initialize the router
-    console.log('[App] Initializing router...');
+    // console.log('[App] Initializing router...');
     try {
         app.Router.init();
-        console.log('[App] Router initialized successfully');
+        // console.log('[App] Router initialized successfully');
     } catch (err) {
         console.error("[App] Router initialization failed:", err);
     }
     
     // Register service worker
-    console.log('[App] Registering service worker...');
+    // console.log('[App] Registering service worker...');
     navigator.serviceWorker.register("/sw.js").then(registration => {
-        console.log('[App] Service worker registered');
+        // console.log('[App] Service worker registered');
         
         const showUpdatePrompt = () => {
-            console.log('[App] Showing update prompt');
+            // console.log('[App] Showing update prompt');
             const banner = document.createElement("div");
             banner.id = "update-banner";
             banner.innerHTML = `
@@ -92,10 +92,10 @@ window.addEventListener("DOMContentLoaded", async () => {
     });
 
     // Setup import/export handlers
-    console.log('[App] Setting up import/export handlers...');
+    // console.log('[App] Setting up import/export handlers...');
     setupImportExportHandlers();
 
-    console.log('[App] DOMContentLoaded handler complete');
+    // console.log('[App] DOMContentLoaded handler complete');
 });
 
 /**
@@ -108,10 +108,10 @@ function setupImportExportHandlers() {
 
     if (exportBtn) {
         exportBtn.addEventListener('click', async () => {
-            console.log('[App] Export button clicked');
+            // console.log('[App] Export button clicked');
             try {
                 const result = await ImportExportService.exportAll();
-                console.log('[App] Export successful:', result);
+                // console.log('[App] Export successful:', result);
             } catch (error) {
                 console.error('[App] Export failed:', error);
                 app.showError(`Export failed: ${error.message}`, false);
@@ -121,7 +121,7 @@ function setupImportExportHandlers() {
 
     if (importBtn && importInput) {
         importBtn.addEventListener('click', () => {
-            console.log('[App] Import button clicked');
+            // console.log('[App] Import button clicked');
             importInput.click();
         });
 
@@ -129,13 +129,13 @@ function setupImportExportHandlers() {
             const file = event.target.files[0];
             if (!file) return;
 
-            console.log('[App] Import file selected:', file.name);
+            // console.log('[App] Import file selected:', file.name);
             try {
                 const result = await ImportExportService.importFromFile(file);
-                console.log('[App] Import result:', result);
+                // console.log('[App] Import result:', result);
 
                 if (result.cancelled) {
-                    console.log('[App] Import was cancelled by user');
+                    // console.log('[App] Import was cancelled by user');
                 } else if (result.success) {
                     // Reload the page to show imported data
                     window.location.reload();
@@ -156,17 +156,17 @@ window.app = {
     API,
     Store,
     showError: (message="There was an error.", goToHome=true)=>{
-        console.log('[App] showError called:', message, goToHome);
+        // console.log('[App] showError called:', message, goToHome);
         document.getElementById("alert-modal").showModal()
         document.querySelector("#alert-modal p").textContent = message;
         if (goToHome) app.Router.go("/");
     },
     closeError: ()=>{
-        console.log('[App] closeError called');
+        // console.log('[App] closeError called');
         document.getElementById("alert-modal").close()
     },
     login: async (event) => {
-        console.log('[App] login called');
+        // console.log('[App] login called');
         event.preventDefault();
         let errors = [];
         const email = document.getElementById("login-email").value;
@@ -187,7 +187,7 @@ window.app = {
         }
     },
     logout: () => {
-        console.log('[App] logout called');
+        // console.log('[App] logout called');
         Store.jwt = null;
         app.Router.go("/");
     },
