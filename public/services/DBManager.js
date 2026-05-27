@@ -60,12 +60,12 @@ export class DBManager {
      * @returns {Promise<IDBDatabase>} The database connection
      */
     static async init() {
-        console.log('[DBManager] init() called');
+        // console.log('[DBManager] init() called');
         if (this.#db) {
-            console.log('[DBManager] Using existing database connection');
+            // console.log('[DBManager] Using existing database connection');
             return this.#db;
         }
-        console.log('[DBManager] Opening database...');
+        // console.log('[DBManager] Opening database...');
         return this.#openDB();
     }
 
@@ -76,7 +76,7 @@ export class DBManager {
      * @returns {Promise<Object|null>} The note object {id, content, updatedAt} or null if not found
      */
     static async getNote(id) {
-        console.log(`[DBManager] getNote(${id}) called`);
+        // console.log(`[DBManager] getNote(${id}) called`);
         await this.init();
 
         return new Promise((resolve, reject) => {
@@ -91,7 +91,7 @@ export class DBManager {
             const request = store.get(id);
 
             request.onsuccess = () => {
-                console.log(`[DBManager] getNote(${id}) success:`, request.result);
+                // console.log(`[DBManager] getNote(${id}) success:`, request.result);
                 resolve(request.result || null);
             };
 
@@ -111,7 +111,7 @@ export class DBManager {
      * @returns {Promise<void>}
      */
     static async saveNote(id, content) {
-        console.log(`[DBManager] saveNote(${id}) called`);
+        // console.log(`[DBManager] saveNote(${id}) called`);
         await this.init();
 
         return new Promise((resolve, reject) => {
@@ -143,7 +143,7 @@ export class DBManager {
             const request = store.put(note);
 
             request.onsuccess = () => {
-                console.log(`[DBManager] saveNote(${id}) success`);
+                // console.log(`[DBManager] saveNote(${id}) success`);
                 resolve();
             };
 
@@ -160,7 +160,7 @@ export class DBManager {
      * @returns {Promise<Array>} Array of note objects
      */
     static async getAllNotes() {
-        console.log('[DBManager] getAllNotes() called');
+        // console.log('[DBManager] getAllNotes() called');
         await this.init();
 
         return new Promise((resolve, reject) => {
@@ -175,7 +175,7 @@ export class DBManager {
             const request = store.getAll();
 
             request.onsuccess = () => {
-                console.log(`[DBManager] getAllNotes() success, found ${request.result.length} notes`);
+                // console.log(`[DBManager] getAllNotes() success, found ${request.result.length} notes`);
                 resolve(request.result);
             };
 
@@ -193,7 +193,7 @@ export class DBManager {
      * @returns {Promise<void>}
      */
     static async deleteNote(id) {
-        console.log(`[DBManager] deleteNote(${id}) called`);
+        // console.log(`[DBManager] deleteNote(${id}) called`);
         await this.init();
 
         return new Promise((resolve, reject) => {
@@ -208,7 +208,7 @@ export class DBManager {
             const request = store.delete(id);
 
             request.onsuccess = () => {
-                console.log(`[DBManager] deleteNote(${id}) success`);
+                // console.log(`[DBManager] deleteNote(${id}) success`);
                 resolve();
             };
 
@@ -231,13 +231,13 @@ export class DBManager {
      * @returns {Promise<Array>} Array of list objects with todos
      */
     static async getLists() {
-        console.log('[DBManager] getLists() called (legacy wrapper)');
+        // console.log('[DBManager] getLists() called (legacy wrapper)');
         await this.init();
 
         try {
             // Use new granular methods: get metadata first, then load each list
             const metadata = await this.getListMetadata();
-            console.log(`[DBManager] getLists() loading ${metadata.length} lists via metadata`);
+            // console.log(`[DBManager] getLists() loading ${metadata.length} lists via metadata`);
             
             // Load each list individually
             const lists = [];
@@ -251,7 +251,7 @@ export class DBManager {
             // Sort by order to ensure consistency
             lists.sort((a, b) => (a.order || 0) - (b.order || 0));
             
-            console.log(`[DBManager] getLists() loaded ${lists.length} lists`);
+            // console.log(`[DBManager] getLists() loaded ${lists.length} lists`);
             return lists;
         } catch (error) {
             console.error('[DBManager] getLists() error:', error);
@@ -268,7 +268,7 @@ export class DBManager {
      * @returns {Promise<void>}
      */
     static async saveLists(lists) {
-        console.log('[DBManager] saveLists() called with', lists.length, 'lists (legacy wrapper)');
+        // console.log('[DBManager] saveLists() called with', lists.length, 'lists (legacy wrapper)');
         await this.init();
 
         try {
@@ -276,7 +276,7 @@ export class DBManager {
             for (const list of lists) {
                 await this.saveList(list);
             }
-            console.log('[DBManager] saveLists() success - saved', lists.length, 'lists individually');
+            // console.log('[DBManager] saveLists() success - saved', lists.length, 'lists individually');
         } catch (error) {
             console.error('[DBManager] saveLists() error:', error);
             throw error;
@@ -296,7 +296,7 @@ export class DBManager {
      * @returns {Promise<Object|null>} The list object or null if not found
      */
     static async getList(listId) {
-        console.log(`[DBManager] getList(${listId}) called`);
+        // console.log(`[DBManager] getList(${listId}) called`);
         await this.init();
 
         return new Promise((resolve, reject) => {
@@ -311,7 +311,7 @@ export class DBManager {
             const request = store.get(listId);
 
             request.onsuccess = () => {
-                console.log(`[DBManager] getList(${listId}) success:`, request.result ? 'found' : 'not found');
+                // console.log(`[DBManager] getList(${listId}) success:`, request.result ? 'found' : 'not found');
                 resolve(request.result || null);
             };
 
@@ -331,7 +331,7 @@ export class DBManager {
      * @returns {Promise<void>}
      */
     static async saveList(list) {
-        console.log(`[DBManager] saveList(${list.id}) called`);
+        // console.log(`[DBManager] saveList(${list.id}) called`);
         await this.init();
 
         return new Promise((resolve, reject) => {
@@ -356,7 +356,7 @@ export class DBManager {
             const listRequest = store.put(listToSave, list.id);
 
             listRequest.onsuccess = () => {
-                console.log(`[DBManager] saveList(${list.id}) - list saved`);
+                // console.log(`[DBManager] saveList(${list.id}) - list saved`);
                 
                 // Update metadata index
                 const metaRequest = store.get('list-metadata');
@@ -383,7 +383,7 @@ export class DBManager {
                     // Sort by order before saving
                     metadata.sort((a, b) => a.order - b.order);
                     store.put(metadata, 'list-metadata');
-                    console.log(`[DBManager] saveList(${list.id}) - metadata updated`);
+                    // console.log(`[DBManager] saveList(${list.id}) - metadata updated`);
                 };
 
                 metaRequest.onerror = () => {
@@ -397,7 +397,7 @@ export class DBManager {
             };
 
             transaction.oncomplete = () => {
-                console.log(`[DBManager] saveList(${list.id}) transaction complete`);
+                // console.log(`[DBManager] saveList(${list.id}) transaction complete`);
                 resolve();
             };
 
@@ -416,7 +416,7 @@ export class DBManager {
      * @returns {Promise<void>}
      */
     static async deleteList(listId) {
-        console.log(`[DBManager] deleteList(${listId}) called`);
+        // console.log(`[DBManager] deleteList(${listId}) called`);
         await this.init();
 
         return new Promise((resolve, reject) => {
@@ -433,7 +433,7 @@ export class DBManager {
             const deleteRequest = store.delete(listId);
 
             deleteRequest.onsuccess = () => {
-                console.log(`[DBManager] deleteList(${listId}) - list deleted`);
+                // console.log(`[DBManager] deleteList(${listId}) - list deleted`);
                 
                 // Update metadata to remove this list
                 const metaRequest = store.get('list-metadata');
@@ -441,7 +441,7 @@ export class DBManager {
                     let metadata = metaRequest.result || [];
                     metadata = metadata.filter(m => m.id !== listId);
                     store.put(metadata, 'list-metadata');
-                    console.log(`[DBManager] deleteList(${listId}) - metadata updated`);
+                    // console.log(`[DBManager] deleteList(${listId}) - metadata updated`);
                 };
             };
 
@@ -462,7 +462,7 @@ export class DBManager {
      * @returns {Promise<Array>} Array of metadata objects
      */
     static async getListMetadata() {
-        console.log('[DBManager] getListMetadata() called');
+        // console.log('[DBManager] getListMetadata() called');
         await this.init();
 
         return new Promise((resolve, reject) => {
@@ -480,7 +480,7 @@ export class DBManager {
                 let metadata = request.result || [];
                 // Ensure sorted by order
                 metadata.sort((a, b) => a.order - b.order);
-                console.log(`[DBManager] getListMetadata() success: ${metadata.length} lists`);
+                // console.log(`[DBManager] getListMetadata() success: ${metadata.length} lists`);
                 resolve(metadata);
             };
 
@@ -497,7 +497,7 @@ export class DBManager {
      * @returns {Promise<string|null>} The default list ID or null
      */
     static async getDefaultListId() {
-        console.log('[DBManager] getDefaultListId() called');
+        // console.log('[DBManager] getDefaultListId() called');
         const metadata = await this.getListMetadata();
         const defaultList = metadata.find(m => m.isDefault);
         return defaultList ? defaultList.id : (metadata[0] ? metadata[0].id : null);
@@ -512,7 +512,7 @@ export class DBManager {
      * @returns {Promise<void>}
      */
     static async updateListOrder(listId, newOrder) {
-        console.log(`[DBManager] updateListOrder(${listId}, ${newOrder}) called`);
+        // console.log(`[DBManager] updateListOrder(${listId}, ${newOrder}) called`);
         await this.init();
 
         return new Promise((resolve, reject) => {
@@ -532,7 +532,7 @@ export class DBManager {
                     list.order = newOrder;
                     list.updatedAt = Date.now();
                     store.put(list, listId);
-                    console.log(`[DBManager] updateListOrder - list updated`);
+                    // console.log(`[DBManager] updateListOrder - list updated`);
                 }
             };
 
@@ -547,7 +547,7 @@ export class DBManager {
                     // Re-sort and save
                     metadata.sort((a, b) => a.order - b.order);
                     store.put(metadata, 'list-metadata');
-                    console.log(`[DBManager] updateListOrder - metadata updated`);
+                    // console.log(`[DBManager] updateListOrder - metadata updated`);
                 }
             };
 
@@ -564,7 +564,7 @@ export class DBManager {
      * @returns {Promise<void>}
      */
     static async setDefaultList(listId) {
-        console.log(`[DBManager] setDefaultList(${listId}) called`);
+        // console.log(`[DBManager] setDefaultList(${listId}) called`);
         await this.init();
 
         return new Promise((resolve, reject) => {
@@ -599,7 +599,7 @@ export class DBManager {
                 });
 
                 store.put(metadata, 'list-metadata');
-                console.log(`[DBManager] setDefaultList - default set to ${listId}`);
+                // console.log(`[DBManager] setDefaultList - default set to ${listId}`);
             };
 
             transaction.oncomplete = () => resolve();
@@ -615,7 +615,7 @@ export class DBManager {
      * @returns {Promise<void>}
      */
     static async updateLastAccessed(listId) {
-        console.log(`[DBManager] updateLastAccessed(${listId}) called`);
+        // console.log(`[DBManager] updateLastAccessed(${listId}) called`);
         await this.init();
 
         return new Promise((resolve, reject) => {
@@ -663,7 +663,7 @@ export class DBManager {
      * @returns {Promise<Object>} The created list object
      */
     static async createList(listData) {
-        console.log('[DBManager] createList() called with:', listData);
+        // console.log('[DBManager] createList() called with:', listData);
         await this.init();
 
         const now = Date.now();
@@ -694,7 +694,7 @@ export class DBManager {
         }
 
         await this.saveList(newList);
-        console.log(`[DBManager] createList() created: ${newList.id}`);
+        // console.log(`[DBManager] createList() created: ${newList.id}`);
         return newList;
     }
 
@@ -706,7 +706,7 @@ export class DBManager {
      * @returns {Promise<Array>} The rebuilt metadata array
      */
     static async rebuildMetadata() {
-        console.log('[DBManager] rebuildMetadata() called');
+        // console.log('[DBManager] rebuildMetadata() called');
         await this.init();
 
         return new Promise((resolve, reject) => {
@@ -725,7 +725,7 @@ export class DBManager {
                 const allKeys = keysRequest.result || [];
                 const listKeys = allKeys.filter(key => key !== 'list-metadata');
                 
-                console.log(`[DBManager] rebuildMetadata() found ${listKeys.length} list records`);
+                // console.log(`[DBManager] rebuildMetadata() found ${listKeys.length} list records`);
                 
                 // Load each list and build metadata
                 const metadata = [];
@@ -768,7 +768,7 @@ export class DBManager {
                             const writeStore = writeTransaction.objectStore(DB_CONFIG.STORES.LISTS);
                             writeStore.put(metadata, 'list-metadata');
                             
-                            console.log(`[DBManager] rebuildMetadata() rebuilt ${metadata.length} entries`);
+                            // console.log(`[DBManager] rebuildMetadata() rebuilt ${metadata.length} entries`);
                             resolve(metadata);
                         }
                     };
@@ -805,7 +805,7 @@ export class DBManager {
      * @returns {Promise<Object|null>} The import record if found, null otherwise
      */
     static async hasImportBeenProcessed(exportId) {
-        console.log(`[DBManager] hasImportBeenProcessed(${exportId}) called`);
+        // console.log(`[DBManager] hasImportBeenProcessed(${exportId}) called`);
         await this.init();
 
         return new Promise((resolve, reject) => {
@@ -820,7 +820,7 @@ export class DBManager {
             const request = store.get(exportId);
 
             request.onsuccess = () => {
-                console.log(`[DBManager] hasImportBeenProcessed(${exportId}) success:`, request.result ? 'found' : 'not found');
+                // console.log(`[DBManager] hasImportBeenProcessed(${exportId}) success:`, request.result ? 'found' : 'not found');
                 resolve(request.result || null);
             };
 
@@ -841,7 +841,7 @@ export class DBManager {
      * @param {Object} importRecord.summary - Summary of what was imported
      */
     static async recordImport(importRecord) {
-        console.log(`[DBManager] recordImport(${importRecord.id}) called`);
+        // console.log(`[DBManager] recordImport(${importRecord.id}) called`);
         await this.init();
 
         return new Promise((resolve, reject) => {
@@ -856,7 +856,7 @@ export class DBManager {
             const request = store.put(importRecord);
 
             request.onsuccess = () => {
-                console.log(`[DBManager] recordImport(${importRecord.id}) success`);
+                // console.log(`[DBManager] recordImport(${importRecord.id}) success`);
                 resolve();
             };
 
@@ -872,7 +872,7 @@ export class DBManager {
      * @returns {Promise<Array>} Array of import records
      */
     static async getImportHistory() {
-        console.log('[DBManager] getImportHistory() called');
+        // console.log('[DBManager] getImportHistory() called');
         await this.init();
 
         return new Promise((resolve, reject) => {
@@ -887,7 +887,7 @@ export class DBManager {
             const request = store.getAll();
 
             request.onsuccess = () => {
-                console.log(`[DBManager] getImportHistory() success, found ${request.result.length} records`);
+                // console.log(`[DBManager] getImportHistory() success, found ${request.result.length} records`);
                 resolve(request.result);
             };
 
@@ -914,7 +914,7 @@ export class DBManager {
      * @returns {Promise<void>}
      */
     static async saveDeletionToken(shareId, token, expiresAt) {
-        console.log(`[DBManager] saveDeletionToken(${shareId}) called`);
+        // console.log(`[DBManager] saveDeletionToken(${shareId}) called`);
         await this.init();
 
         return new Promise((resolve, reject) => {
@@ -937,7 +937,7 @@ export class DBManager {
             const request = store.put(record);
 
             request.onsuccess = () => {
-                console.log(`[DBManager] saveDeletionToken(${shareId}) success`);
+                // console.log(`[DBManager] saveDeletionToken(${shareId}) success`);
                 resolve();
             };
 
@@ -954,7 +954,7 @@ export class DBManager {
      * @returns {Promise<string|null>} The deletion token or null if not found
      */
     static async getDeletionToken(shareId) {
-        console.log(`[DBManager] getDeletionToken(${shareId}) called`);
+        // console.log(`[DBManager] getDeletionToken(${shareId}) called`);
         await this.init();
 
         return new Promise((resolve, reject) => {
@@ -974,16 +974,16 @@ export class DBManager {
                     // Check if expired
                     const expiresAt = new Date(result.expiresAt);
                     if (expiresAt < new Date()) {
-                        console.log(`[DBManager] getDeletionToken(${shareId}) found but expired`);
+                        // console.log(`[DBManager] getDeletionToken(${shareId}) found but expired`);
                         // Clean up expired token
                         this.deleteDeletionToken(shareId);
                         resolve(null);
                     } else {
-                        console.log(`[DBManager] getDeletionToken(${shareId}) success`);
+                        // console.log(`[DBManager] getDeletionToken(${shareId}) success`);
                         resolve(result.token);
                     }
                 } else {
-                    console.log(`[DBManager] getDeletionToken(${shareId}) not found`);
+                    // console.log(`[DBManager] getDeletionToken(${shareId}) not found`);
                     resolve(null);
                 }
             };
@@ -1001,7 +1001,7 @@ export class DBManager {
      * @returns {Promise<void>}
      */
     static async deleteDeletionToken(shareId) {
-        console.log(`[DBManager] deleteDeletionToken(${shareId}) called`);
+        // console.log(`[DBManager] deleteDeletionToken(${shareId}) called`);
         await this.init();
 
         return new Promise((resolve, reject) => {
@@ -1016,7 +1016,7 @@ export class DBManager {
             const request = store.delete(shareId);
 
             request.onsuccess = () => {
-                console.log(`[DBManager] deleteDeletionToken(${shareId}) success`);
+                // console.log(`[DBManager] deleteDeletionToken(${shareId}) success`);
                 resolve();
             };
 
@@ -1053,45 +1053,45 @@ export class DBManager {
      * @returns {Promise<boolean>} true if migration was performed
      */
     static async migrateFromTodoDB() {
-        console.log('[DBManager] migrateFromTodoDB() starting...');
+        // console.log('[DBManager] migrateFromTodoDB() starting...');
         
         if (localStorage.getItem('todoDBMigrationComplete') === 'true') {
-            console.log('[DBManager] TodoDB migration already complete, skipping');
+            // console.log('[DBManager] TodoDB migration already complete, skipping');
             return false;
         }
 
         try {
-            console.log('[DBManager] Checking for old TodoDB...');
+            // console.log('[DBManager] Checking for old TodoDB...');
             const oldData = await this.#readFromTodoDB();
 
             if (!oldData) {
-                console.log('[DBManager] No old TodoDB data found, marking migration complete');
+                // console.log('[DBManager] No old TodoDB data found, marking migration complete');
                 localStorage.setItem('todoDBMigrationComplete', 'true');
                 return false;
             }
 
-            console.log('[DBManager] Found old TodoDB data:', oldData);
-            console.log('[DBManager] Initializing pockist-db...');
+            // console.log('[DBManager] Found old TodoDB data:', oldData);
+            // console.log('[DBManager] Initializing pockist-db...');
             await this.init();
             
-            console.log('[DBManager] Checking if lists store exists...');
+            // console.log('[DBManager] Checking if lists store exists...');
             if (!this.#db.objectStoreNames.contains(DB_CONFIG.STORES.LISTS)) {
                 console.error('[DBManager] Lists store not found in pockist-db!');
                 throw new Error('Lists store not found');
             }
 
             // Save the migrated data to the new location
-            console.log('[DBManager] Saving migrated data to pockist-db/lists...');
+            // console.log('[DBManager] Saving migrated data to pockist-db/lists...');
             await this.saveLists(oldData);
-            console.log('[DBManager] TodoDB data migrated to pockist-db/lists successfully');
+            // console.log('[DBManager] TodoDB data migrated to pockist-db/lists successfully');
 
             // Delete the old database
-            console.log('[DBManager] Deleting old TodoDB...');
+            // console.log('[DBManager] Deleting old TodoDB...');
             await this.#deleteTodoDB();
-            console.log('[DBManager] Old TodoDB deleted successfully');
+            // console.log('[DBManager] Old TodoDB deleted successfully');
 
             localStorage.setItem('todoDBMigrationComplete', 'true');
-            console.log('[DBManager] TodoDB migration completed and marked');
+            // console.log('[DBManager] TodoDB migration completed and marked');
             return true;
 
         } catch (error) {
@@ -1108,17 +1108,17 @@ export class DBManager {
      */
     static #readFromTodoDB() {
         return new Promise((resolve) => {
-            console.log('[DBManager] #readFromTodoDB() opening TodoDB...');
+            // console.log('[DBManager] #readFromTodoDB() opening TodoDB...');
             try {
                 const request = indexedDB.open(this.#TODO_DB_CONFIG.NAME);
 
                 request.onsuccess = (event) => {
                     const db = event.target.result;
-                    console.log('[DBManager] TodoDB opened successfully, version:', db.version);
+                    // console.log('[DBManager] TodoDB opened successfully, version:', db.version);
 
                     try {
                         if (!db.objectStoreNames.contains(this.#TODO_DB_CONFIG.STORE)) {
-                            console.log('[DBManager] TodoDB store not found, closing');
+                            // console.log('[DBManager] TodoDB store not found, closing');
                             db.close();
                             resolve(null);
                             return;
@@ -1129,7 +1129,7 @@ export class DBManager {
                         const getRequest = store.get(this.#TODO_DB_CONFIG.KEY);
 
                         getRequest.onsuccess = () => {
-                            console.log('[DBManager] TodoDB data read:', getRequest.result);
+                            // console.log('[DBManager] TodoDB data read:', getRequest.result);
                             db.close();
                             resolve(getRequest.result || null);
                         };
@@ -1153,7 +1153,7 @@ export class DBManager {
 
                 request.onupgradeneeded = () => {
                     // This means the DB didn't exist before, so no migration needed
-                    console.log('[DBManager] TodoDB onupgradeneeded - DB does not exist');
+                    // console.log('[DBManager] TodoDB onupgradeneeded - DB does not exist');
                     try {
                         request.transaction.abort();
                     } catch (e) {}
@@ -1173,11 +1173,11 @@ export class DBManager {
      */
     static #deleteTodoDB() {
         return new Promise((resolve) => {
-            console.log('[DBManager] #deleteTodoDB() deleting TodoDB...');
+            // console.log('[DBManager] #deleteTodoDB() deleting TodoDB...');
             const request = indexedDB.deleteDatabase(this.#TODO_DB_CONFIG.NAME);
 
             request.onsuccess = () => {
-                console.log('[DBManager] TodoDB deleted successfully');
+                // console.log('[DBManager] TodoDB deleted successfully');
                 resolve();
             };
 
@@ -1202,67 +1202,67 @@ export class DBManager {
      * @returns {Promise<IDBDatabase>} The database connection
      */
     static #openDB() {
-        console.log('[DBManager] #openDB() opening database:', DB_CONFIG.NAME, 'version:', DB_CONFIG.VERSION);
+        // console.log('[DBManager] #openDB() opening database:', DB_CONFIG.NAME, 'version:', DB_CONFIG.VERSION);
         
         return new Promise((resolve, reject) => {
             const request = indexedDB.open(DB_CONFIG.NAME, DB_CONFIG.VERSION);
 
             request.onupgradeneeded = (event) => {
-                console.log('[DBManager] onupgradeneeded triggered, old version:', event.oldVersion, 'new version:', event.newVersion);
+                // console.log('[DBManager] onupgradeneeded triggered, old version:', event.oldVersion, 'new version:', event.newVersion);
                 const db = event.target.result;
 
                 if (!db.objectStoreNames.contains(DB_CONFIG.STORES.NOTES)) {
-                    console.log('[DBManager] Creating notes store...');
+                    // console.log('[DBManager] Creating notes store...');
                     db.createObjectStore(DB_CONFIG.STORES.NOTES, { 
                         keyPath: 'id' 
                     });
-                    console.log('[DBManager] Notes store created');
+                    // console.log('[DBManager] Notes store created');
                 } else {
-                    console.log('[DBManager] Notes store already exists');
+                    // console.log('[DBManager] Notes store already exists');
                 }
 
                 if (!db.objectStoreNames.contains(DB_CONFIG.STORES.LISTS)) {
-                    console.log('[DBManager] Creating lists store...');
+                    // console.log('[DBManager] Creating lists store...');
                     db.createObjectStore(DB_CONFIG.STORES.LISTS);
-                    console.log('[DBManager] Lists store created');
+                    // console.log('[DBManager] Lists store created');
                 } else {
-                    console.log('[DBManager] Lists store already exists');
+                    // console.log('[DBManager] Lists store already exists');
                 }
 
                 if (!db.objectStoreNames.contains(DB_CONFIG.STORES.IMPORTS)) {
-                    console.log('[DBManager] Creating imports store...');
+                    // console.log('[DBManager] Creating imports store...');
                     db.createObjectStore(DB_CONFIG.STORES.IMPORTS, {
                         keyPath: 'id'
                     });
-                    console.log('[DBManager] Imports store created');
+                    // console.log('[DBManager] Imports store created');
                 } else {
-                    console.log('[DBManager] Imports store already exists');
+                    // console.log('[DBManager] Imports store already exists');
                 }
 
                 if (!db.objectStoreNames.contains(DB_CONFIG.STORES.DELETION_TOKENS)) {
-                    console.log('[DBManager] Creating deletionTokens store...');
+                    // console.log('[DBManager] Creating deletionTokens store...');
                     db.createObjectStore(DB_CONFIG.STORES.DELETION_TOKENS, {
                         keyPath: 'id'
                     });
-                    console.log('[DBManager] DeletionTokens store created');
+                    // console.log('[DBManager] DeletionTokens store created');
                 } else {
-                    console.log('[DBManager] DeletionTokens store already exists');
+                    // console.log('[DBManager] DeletionTokens store already exists');
                 }
 
                 if (!db.objectStoreNames.contains(DB_CONFIG.STORES.SETTINGS)) {
-                    console.log('[DBManager] Creating settings store...');
+                    // console.log('[DBManager] Creating settings store...');
                     db.createObjectStore(DB_CONFIG.STORES.SETTINGS);
-                    console.log('[DBManager] Settings store created');
+                    // console.log('[DBManager] Settings store created');
                 } else {
-                    console.log('[DBManager] Settings store already exists');
+                    // console.log('[DBManager] Settings store already exists');
                 }
 
-                console.log('[DBManager] Stores after upgrade:', Array.from(db.objectStoreNames));
+                // console.log('[DBManager] Stores after upgrade:', Array.from(db.objectStoreNames));
 
                 // Version 7 migration: Split monolithic lists array into individual records
                 // Also creates metadata index for efficient list management
                 if (event.oldVersion < 7 && db.objectStoreNames.contains(DB_CONFIG.STORES.LISTS)) {
-                    console.log('[DBManager] Running v6->v7 migration: Splitting lists into individual records');
+                    // console.log('[DBManager] Running v6->v7 migration: Splitting lists into individual records');
                     
                     const transaction = event.target.transaction;
                     const store = transaction.objectStore(DB_CONFIG.STORES.LISTS);
@@ -1272,7 +1272,7 @@ export class DBManager {
                     oldDataRequest.onsuccess = () => {
                         if (oldDataRequest.result && Array.isArray(oldDataRequest.result)) {
                             const lists = oldDataRequest.result;
-                            console.log(`[DBManager] Migrating ${lists.length} lists to individual records`);
+                            // console.log(`[DBManager] Migrating ${lists.length} lists to individual records`);
                             
                             // Migrate each list to its own record keyed by list ID
                             lists.forEach(list => {
@@ -1287,7 +1287,7 @@ export class DBManager {
                                         lastAccessed: list.lastAccessed || list.createdAt || now
                                     };
                                     store.put(migratedList, list.id);
-                                    console.log(`[DBManager] Migrated list: ${list.id} - ${list.name}`);
+                                    // console.log(`[DBManager] Migrated list: ${list.id} - ${list.name}`);
                                 }
                             });
                             
@@ -1306,15 +1306,15 @@ export class DBManager {
                             // Sort metadata by order before saving
                             metadata.sort((a, b) => a.order - b.order);
                             store.put(metadata, 'list-metadata');
-                            console.log('[DBManager] Created list-metadata index');
+                            // console.log('[DBManager] Created list-metadata index');
                             
                             // Clean up old monolithic key after successful migration
                             store.delete('todoLists');
-                            console.log('[DBManager] Cleaned up old todoLists key');
+                            // console.log('[DBManager] Cleaned up old todoLists key');
                             
                         } else {
                             // No old data found, create fresh metadata with default list
-                            console.log('[DBManager] No old data found, creating fresh metadata with default list');
+                            // console.log('[DBManager] No old data found, creating fresh metadata with default list');
                             const now = Date.now();
                             const defaultList = {
                                 id: 'default',
@@ -1341,7 +1341,7 @@ export class DBManager {
                             }];
                             
                             store.put(metadata, 'list-metadata');
-                            console.log('[DBManager] Created default list and metadata');
+                            // console.log('[DBManager] Created default list and metadata');
                         }
                     };
                     
@@ -1353,9 +1353,9 @@ export class DBManager {
 
             request.onsuccess = (event) => {
                 this.#db = event.target.result;
-                console.log('[DBManager] Database opened successfully');
-                console.log('[DBManager] Database version:', this.#db.version);
-                console.log('[DBManager] Available stores:', Array.from(this.#db.objectStoreNames));
+                // console.log('[DBManager] Database opened successfully');
+                // console.log('[DBManager] Database version:', this.#db.version);
+                // console.log('[DBManager] Available stores:', Array.from(this.#db.objectStoreNames));
                 
                 // Verify stores exist
                 const hasNotes = this.#db.objectStoreNames.contains(DB_CONFIG.STORES.NOTES);
@@ -1399,29 +1399,29 @@ export class DBManager {
      * @returns {Promise<boolean>} true if migration was performed
      */
     static async migrateFromOldDB() {
-        console.log('[DBManager] migrateFromOldDB() starting...');
+        // console.log('[DBManager] migrateFromOldDB() starting...');
         
         if (localStorage.getItem('migrationComplete') === 'true') {
-            console.log('[DBManager] OldDB migration already complete, skipping');
+            // console.log('[DBManager] OldDB migration already complete, skipping');
             return false;
         }
 
         try {
-            console.log('[DBManager] Checking if old textAreaDB exists...');
+            // console.log('[DBManager] Checking if old textAreaDB exists...');
             const oldDBExists = await this.#checkOldDBExists();
-            console.log('[DBManager] Old DB exists:', oldDBExists);
+            // console.log('[DBManager] Old DB exists:', oldDBExists);
             
             if (!oldDBExists) {
-                console.log('[DBManager] No old DB found, marking migration complete');
+                // console.log('[DBManager] No old DB found, marking migration complete');
                 localStorage.setItem('migrationComplete', 'true');
                 return false;
             }
 
-            console.log('[DBManager] Reading data from old DB...');
+            // console.log('[DBManager] Reading data from old DB...');
             const oldData = await this.#readFromOldDB();
-            console.log('[DBManager] Old DB data:', oldData);
+            // console.log('[DBManager] Old DB data:', oldData);
             
-            console.log('[DBManager] Initializing pockist-db...');
+            // console.log('[DBManager] Initializing pockist-db...');
             await this.init();
             
             if (!this.#db.objectStoreNames.contains(DB_CONFIG.STORES.NOTES)) {
@@ -1430,19 +1430,19 @@ export class DBManager {
             }
 
             if (oldData !== null && oldData !== undefined && oldData !== '') {
-                console.log('[DBManager] Saving old data to notes store...');
+                // console.log('[DBManager] Saving old data to notes store...');
                 await this.saveNote(1, oldData);
-                console.log('[DBManager] Data saved successfully');
+                // console.log('[DBManager] Data saved successfully');
             } else {
-                console.log('[DBManager] No data to migrate');
+                // console.log('[DBManager] No data to migrate');
             }
 
-            console.log('[DBManager] Deleting old textAreaDB...');
+            // console.log('[DBManager] Deleting old textAreaDB...');
             await this.#deleteOldDB();
-            console.log('[DBManager] Old DB deleted');
+            // console.log('[DBManager] Old DB deleted');
             
             localStorage.setItem('migrationComplete', 'true');
-            console.log('[DBManager] OldDB migration completed');
+            // console.log('[DBManager] OldDB migration completed');
             return true;
 
         } catch (error) {
@@ -1457,14 +1457,14 @@ export class DBManager {
             if (indexedDB.databases) {
                 indexedDB.databases().then(databases => {
                     const exists = databases.some(db => db.name === OLD_DB_CONFIG.NAME);
-                    console.log('[DBManager] indexedDB.databases() found old DB:', exists);
+                    // console.log('[DBManager] indexedDB.databases() found old DB:', exists);
                     resolve(exists);
                 }).catch(() => {
-                    console.log('[DBManager] indexedDB.databases() failed, trying open method');
+                    // console.log('[DBManager] indexedDB.databases() failed, trying open method');
                     resolve(this.#tryOpenOldDB());
                 });
             } else {
-                console.log('[DBManager] indexedDB.databases not supported, trying open method');
+                // console.log('[DBManager] indexedDB.databases not supported, trying open method');
                 resolve(this.#tryOpenOldDB());
             }
         });
@@ -1476,7 +1476,7 @@ export class DBManager {
                 const request = indexedDB.open(OLD_DB_CONFIG.NAME);
                 
                 request.onsuccess = () => {
-                    console.log('[DBManager] Old DB opened successfully');
+                    // console.log('[DBManager] Old DB opened successfully');
                     request.result.close();
                     resolve(true);
                 };
@@ -1502,16 +1502,16 @@ export class DBManager {
 
     static #readFromOldDB() {
         return new Promise((resolve, reject) => {
-            console.log('[DBManager] #readFromOldDB() starting...');
+            // console.log('[DBManager] #readFromOldDB() starting...');
             const request = indexedDB.open(OLD_DB_CONFIG.NAME);
 
             request.onsuccess = (event) => {
                 const db = event.target.result;
-                console.log('[DBManager] Old DB opened for reading');
+                // console.log('[DBManager] Old DB opened for reading');
                 
                 try {
                     if (!db.objectStoreNames.contains(OLD_DB_CONFIG.STORE)) {
-                        console.log('[DBManager] Old DB store not found');
+                        // console.log('[DBManager] Old DB store not found');
                         db.close();
                         resolve(null);
                         return;
@@ -1525,7 +1525,7 @@ export class DBManager {
                         db.close();
                         
                         if (getRequest.result && typeof getRequest.result.value !== 'undefined') {
-                            console.log('[DBManager] Old DB data read successfully');
+                            // console.log('[DBManager] Old DB data read successfully');
                             resolve(getRequest.result.value);
                         } else {
                             console.log('[DBManager] Old DB record not found');
@@ -1554,11 +1554,11 @@ export class DBManager {
 
     static #deleteOldDB() {
         return new Promise((resolve) => {
-            console.log('[DBManager] #deleteOldDB() starting...');
+            // console.log('[DBManager] #deleteOldDB() starting...');
             const request = indexedDB.deleteDatabase(OLD_DB_CONFIG.NAME);
 
             request.onsuccess = () => {
-                console.log('[DBManager] Old DB deleted successfully');
+                // console.log('[DBManager] Old DB deleted successfully');
                 resolve();
             };
 
@@ -1589,23 +1589,23 @@ export class DBManager {
      * @returns {Promise<boolean>} true if migration was performed
      */
     static async migrateToMultiNoteFormat() {
-        console.log('[DBManager] migrateToMultiNoteFormat() starting...');
+        // console.log('[DBManager] migrateToMultiNoteFormat() starting...');
         
         // Check if migration was already completed - but re-run if DB version changed
         const currentVersion = DB_CONFIG.VERSION.toString();
         const lastMigratedVersion = localStorage.getItem('multiNoteMigrationVersion');
 
-        console.log('[DBManager] Current DB version:', currentVersion);
-        console.log('[DBManager] Last migrated version:', lastMigratedVersion);
-        console.log('[DBManager] multiNoteMigrationComplete:', localStorage.getItem('multiNoteMigrationComplete'));
+        // console.log('[DBManager] Current DB version:', currentVersion);
+        // console.log('[DBManager] Last migrated version:', lastMigratedVersion);
+        // console.log('[DBManager] multiNoteMigrationComplete:', localStorage.getItem('multiNoteMigrationComplete'));
 
         if (localStorage.getItem('multiNoteMigrationComplete') === 'true' && lastMigratedVersion === currentVersion) {
-            console.log('[DBManager] Multi-note migration already complete for this version, skipping');
+            // console.log('[DBManager] Multi-note migration already complete for this version, skipping');
             return false;
         }
 
         try {
-            console.log('[DBManager] Initializing database...');
+            // console.log('[DBManager] Initializing database...');
             await this.init();
 
             if (!this.#db.objectStoreNames.contains(DB_CONFIG.STORES.NOTES)) {
@@ -1616,9 +1616,9 @@ export class DBManager {
             }
 
             // Get all notes
-            console.log('[DBManager] Getting all notes for migration...');
+            // console.log('[DBManager] Getting all notes for migration...');
             const allNotes = await this.getAllNotes();
-            console.log('[DBManager] Found', allNotes.length, 'notes');
+            // console.log('[DBManager] Found', allNotes.length, 'notes');
 
             // Find notes with numeric IDs (old format) OR notes with invalid string content
             const oldFormatNotes = allNotes.filter(note => {
@@ -1629,25 +1629,25 @@ export class DBManager {
                 return false;
             });
 
-            console.log('[DBManager] Found', oldFormatNotes.length, 'old-format notes to migrate');
+            // console.log('[DBManager] Found', oldFormatNotes.length, 'old-format notes to migrate');
 
             if (oldFormatNotes.length === 0) {
                 // No old-format notes to migrate
-                console.log('[DBManager] No old-format notes found, marking migration complete');
+                // console.log('[DBManager] No old-format notes found, marking migration complete');
                 localStorage.setItem('multiNoteMigrationComplete', 'true');
                 localStorage.setItem('multiNoteMigrationVersion', currentVersion);
                 return false;
             }
 
-            console.log(`[DBManager] Migrating ${oldFormatNotes.length} old-format note(s) to multi-note format...`);
+            // console.log(`[DBManager] Migrating ${oldFormatNotes.length} old-format note(s) to multi-note format...`);
 
             // Migrate each old-format note
             for (const oldNote of oldFormatNotes) {
-                console.log('[DBManager] Migrating note:', oldNote.id);
+                // console.log('[DBManager] Migrating note:', oldNote.id);
                 await this.#migrateSingleNote(oldNote);
             }
 
-            console.log('[DBManager] Multi-note migration completed successfully');
+            // console.log('[DBManager] Multi-note migration completed successfully');
             localStorage.setItem('multiNoteMigrationComplete', 'true');
             localStorage.setItem('multiNoteMigrationVersion', currentVersion);
             return true;
@@ -1696,7 +1696,7 @@ export class DBManager {
         // Delete old note
         await this.deleteNote(oldNote.id);
 
-        console.log(`[DBManager] Migrated note ${oldNote.id} -> ${newId}`);
+        // console.log(`[DBManager] Migrated note ${oldNote.id} -> ${newId}`);
     }
 
     /**
@@ -1779,7 +1779,7 @@ export class DBManager {
      * @returns {Promise<any|null>} The value or null if not found
      */
     static async getSetting(key) {
-        console.log(`[DBManager] getSetting(${key}) called`);
+        // console.log(`[DBManager] getSetting(${key}) called`);
         await this.init();
 
         return new Promise((resolve, reject) => {
@@ -1796,10 +1796,10 @@ export class DBManager {
             request.onsuccess = () => {
                 const result = request.result;
                 if (result === undefined) {
-                    console.log(`[DBManager] getSetting(${key}) - not found`);
+                    // console.log(`[DBManager] getSetting(${key}) - not found`);
                     resolve(null);
                 } else {
-                    console.log(`[DBManager] getSetting(${key}) success`);
+                    // console.log(`[DBManager] getSetting(${key}) success`);
                     resolve(result);
                 }
             };
@@ -1818,7 +1818,7 @@ export class DBManager {
      * @returns {Promise<void>}
      */
     static async saveSetting(key, value) {
-        console.log(`[DBManager] saveSetting(${key}) called`);
+        // console.log(`[DBManager] saveSetting(${key}) called`);
         await this.init();
 
         return new Promise((resolve, reject) => {
@@ -1833,7 +1833,7 @@ export class DBManager {
             const request = store.put(value, key);
 
             request.onsuccess = () => {
-                console.log(`[DBManager] saveSetting(${key}) success`);
+                // console.log(`[DBManager] saveSetting(${key}) success`);
                 resolve();
             };
 
