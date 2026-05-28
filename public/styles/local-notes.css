@@ -1,96 +1,54 @@
 /** Notes List View */
 #notes-list {
-    /* width: 100%; */
-    /* max-width: 600px; */
-    /* margin: 0 auto; */
-    padding:0;
+    padding: 0;
 }
 
 #notes-list h1 {
     text-align: center;
     margin-bottom: 1rem;
     color: var(--text);
+    display: none;
 }
 
 .notes-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 1rem;
-    padding: 0 0.5rem;
-}
-
-#new-note-btn {
-    background-color: var(--accent);
-    color: white;
-    border: none;
-    padding: 0.6rem 1.2rem;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 1rem;
-    /* transition: opacity 0.2s; */
-}
-
-#new-note-btn:hover {
-    opacity: 0.9;
+    margin-bottom: 0;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--border-color);
 }
 
 .notes-count {
-    color: var(--text);
-    opacity: 0.7;
-    font-size: 0.9rem;
+    color: var(--text-muted);
+    font-size: 14px;
 }
 
 /* Empty State */
 #empty-state {
     text-align: center;
     padding: 3rem 1rem;
-    color: var(--text);
-}
-
-#empty-state p {
-    margin-bottom: 1.5rem;
-    opacity: 0.7;
-}
-
-#create-first-note-btn {
-    background-color: var(--accent);
-    color: white;
-    border: none;
-    padding: 0.8rem 1.5rem;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 1rem;
-    /* transition: opacity 0.2s; */
-}
-
-#create-first-note-btn:hover {
-    opacity: 0.9;
+    color: var(--text-muted);
+    font-size: 15px;
 }
 
 /* Note Items List */
 #notes-items {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
 }
 
 .note-item {
-    margin-bottom:20px;
-    background-color: var(--bg-2);
-	border: 1px solid var(--border-color);
-	/* border-radius: 12px; */
-    border-radius: 8px;
-    padding: 1rem;
-    /* transition: transform 0.1s, box-shadow 0.1s; */
+    padding: 16px 0;
+    border-bottom: 1px solid var(--border-color);
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
     gap: 12px;
 }
 
-.note-item:hover {
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+.note-item:last-child {
+    border-bottom: none;
 }
 
 .note-item-content {
@@ -100,29 +58,28 @@
 }
 
 .note-item-title {
-    font-weight: bold;
-    font-size: 1.1rem;
+    font-weight: 600;
+    font-size: 17px;
     color: var(--text);
-    margin-bottom: 0.3rem;
+    margin-bottom: 4px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
 .note-item-preview {
-    color: var(--text);
-    opacity: 0.7;
-    font-size: 0.9rem;
-    margin-bottom: 0.3rem;
+    color: var(--text-muted);
+    font-size: 14px;
+    margin-bottom: 4px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
 .note-item-date {
-    color: var(--text);
-    opacity: 0.5;
-    font-size: 0.8rem;
+    color: var(--text-muted);
+    opacity: 0.7;
+    font-size: 13px;
 }
 
 /** Editor View */
@@ -136,79 +93,57 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 1rem;
-    padding: 0 0.5rem;
+    margin-bottom: 16px;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--border-color);
     flex-wrap: wrap;
-    gap: 0.5rem;
-}
-
-#back-btn {
-    background-color: transparent;
-    color: var(--accent);
-    border: 1px solid var(--accent);
-    padding: 0.4rem 0.8rem;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 0.9rem;
-    /* transition: all 0.2s; */
-}
-
-#back-btn:hover {
-    background-color: var(--accent);
-    color: white;
+    gap: 10px;
 }
 
 .editor-actions {
     display: flex;
     align-items: center;
-    gap: 1rem;
+    justify-content: space-between;
+    gap: 10px;
+    width: 100%;
+}
+
+.editor-actions-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
 #save-indicator {
-    color: var(--text);
-    opacity: 0.6;
-    font-size: 0.85rem;
-    min-width: 60px;
-    text-align: right;
-}
-
-#delete-btn {
-    background-color: transparent;
-    color: var(--error);
-    border: 1px solid var(--error);
-    padding: 0.4rem 0.8rem;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 0.9rem;
-    /* transition: all 0.2s; */
-}
-
-#delete-btn:hover {
-    background-color: var(--error);
-    color: white;
+    color: var(--text-muted);
+    font-size: 14px;
+    display: block;
+    padding: 4px 0 16px 0;
 }
 
 /* Title Input */
 #note-title {
     width: 100%;
-    padding: 0.8rem 1rem;
-    margin-bottom: 1rem;
+    padding: 12px 4px;
+    margin-bottom: 16px;
     border: none;
-    border-radius: 8px;
-    background-color: var(--bg-2);
+    border-bottom: 1px solid var(--border-color);
+    border-radius: 0;
+    background: transparent;
     color: var(--text);
-    font-size: 1.2rem;
-    font-weight: bold;
+    font-size: 20px;
+    font-weight: 600;
     box-sizing: border-box;
-	border: 1px solid var(--border-color);
+    transition: border-color 0.2s;
 }
 
 #note-title:focus {
-    outline: 2px solid var(--accent);
+    outline: none;
+    border-bottom-color: var(--accent);
 }
 
 #note-title::placeholder {
-    color: var(--text);
+    color: var(--text-muted);
     opacity: 0.5;
 }
 
@@ -218,21 +153,21 @@
     width: 100%;
     box-sizing: border-box;
     border: none;
-    border-radius: 8px;
+    border-radius: 0;
     outline: none;
-    padding: 1rem;
-    background-color: var(--bg-2);
-	border: 1px solid var(--border-color);
+    padding: 16px;
+    background: var(--bg-light);
     color: var(--text);
-    font-size: 1.1rem;
+    font-size: 16px;
+    line-height: 1.6;
     scrollbar-color: hsl(0 0% 100% /0.2) hsl(0 0% 0% /0);
     scrollbar-gutter: stable both-edges;
     resize: none;
-    margin-bottom: 1rem;
+    margin-bottom: 0;
 }
 
 #note-content:focus {
-    outline: 2px solid var(--accent);
+    outline: none;
 }
 
 /** Responsive */
@@ -240,18 +175,17 @@
     #notes-list,
     #note-editor {
         max-width: 100%;
-        /* padding: 0 0.5rem; */
     }
-    
+
     #note-content {
         height: 400px;
     }
-    
+
     .editor-header {
         flex-direction: column;
         align-items: stretch;
     }
-    
+
     .editor-actions {
         justify-content: space-between;
     }
@@ -261,7 +195,6 @@
 @media (prefers-reduced-motion: reduce) {
     .note-item,
     #new-note-btn,
-    #create-first-note-btn,
     #back-btn,
     #delete-btn {
         transition: none;

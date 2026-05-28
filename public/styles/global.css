@@ -194,4 +194,130 @@ home-page{
     font-size: 1.3rem;
 }
 
+/* ───────────────────────────────────────────────
+   Shared Design System Classes
+   ─────────────────────────────────────────────── */
+
+.section-divider {
+    border-bottom: 1px solid var(--border-color);
+    padding: 16px 0;
+}
+
+.section-divider:last-child {
+    border-bottom: none;
+}
+
+.section-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 10px;
+}
+
+.data-grid {
+    display: grid;
+    gap: 0;
+}
+
+.data-grid--2 {
+    grid-template-columns: repeat(2, 1fr);
+}
+
+.data-grid--3 {
+    grid-template-columns: repeat(3, 1fr);
+}
+
+.data-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+}
+
+.data-row-label {
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+.data-row-value {
+    font-size: 13px;
+    font-weight: 500;
+}
+
+/* Skeleton State */
+.skeleton-text {
+    opacity: 0.35;
+    animation: skeleton-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes skeleton-pulse {
+    0%, 100% { opacity: 0.25; }
+    50% { opacity: 0.5; }
+}
+
+/* ───────────────────────────────────────────────
+   Shared Button Styles
+   ─────────────────────────────────────────────── */
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+    background: transparent;
+    white-space: nowrap;
+}
+
+.btn-outline {
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    background: transparent;
+}
+
+.btn-outline:hover {
+    background: var(--accent);
+    color: var(--bg);
+}
+
+.btn-outline-danger {
+    color: var(--error);
+    border: 1px solid var(--error);
+    background: transparent;
+}
+
+.btn-outline-danger:hover {
+    background: var(--error);
+    color: var(--bg);
+}
+
+.btn-ghost {
+    color: var(--text-muted);
+    border: 1px solid var(--border-color);
+    background: transparent;
+}
+
+.btn-ghost:hover {
+    background: var(--bg-3);
+    color: var(--text);
+    border-color: var(--border-color);
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-icon {
+    padding: 10px;
+}
+
 

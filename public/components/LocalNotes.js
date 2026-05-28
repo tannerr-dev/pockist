@@ -24,6 +24,7 @@ export class LocalNotes extends HTMLElement {
 		this.titleInput = null;
 		this.contentTextarea = null;
 		this.emptyState = null;
+		this.editorShareBtn = null;
 	}
 
 	async connectedCallback() {
@@ -42,6 +43,7 @@ export class LocalNotes extends HTMLElement {
 		this.emptyState = this.querySelector("#empty-state");
 		this.titleInput = this.querySelector("#note-title");
 		this.contentTextarea = this.querySelector("#note-content");
+		this.editorShareBtn = this.querySelector("#editor-share-btn");
 		
 		if (!this.listContainer || !this.editorContainer) {
 			console.error("LocalNotes: Required containers not found in template");
@@ -87,12 +89,6 @@ export class LocalNotes extends HTMLElement {
 		const newNoteBtn = this.querySelector("#new-note-btn");
 		if (newNoteBtn) {
 			newNoteBtn.addEventListener("click", () => this.#createNewNote());
-		}
-
-		// Empty state button
-		const emptyStateBtn = this.querySelector("#create-first-note-btn");
-		if (emptyStateBtn) {
-			emptyStateBtn.addEventListener("click", () => this.#createNewNote());
 		}
 
 		// Back button
@@ -349,6 +345,12 @@ export class LocalNotes extends HTMLElement {
 		// Ensure we're working with strings
 		this.titleInput.value = note.title || '';
 		this.contentTextarea.value = note.content || '';
+
+		// Update editor share button
+		if (this.editorShareBtn) {
+			this.editorShareBtn.setAttribute('data-id', note.id);
+			this.editorShareBtn.setAttribute('title', note.title || 'Untitled');
+		}
 
 		// Clear any save indicator
 		this.#updateSaveIndicator('');

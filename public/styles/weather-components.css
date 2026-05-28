@@ -25,69 +25,6 @@
 }
 
 /* ───────────────────────────────────────────────
-   Shared / Reusable Design System Classes
-   ─────────────────────────────────────────────── */
-
-.section-divider {
-    border-bottom: 1px solid var(--border-color);
-    padding: var(--weather-space-md) 0;
-}
-
-.section-divider:last-child {
-    border-bottom: none;
-}
-
-.section-label {
-    font-size: 12px;
-    font-weight: 500;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: var(--weather-space-sm);
-}
-
-.data-grid {
-    display: grid;
-    gap: 0;
-}
-
-.data-grid--2 {
-    grid-template-columns: repeat(2, 1fr);
-}
-
-.data-grid--3 {
-    grid-template-columns: repeat(3, 1fr);
-}
-
-.data-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: var(--weather-space-xs) 0;
-}
-
-.data-row-label {
-    font-size: 13px;
-    color: var(--text-muted);
-}
-
-.data-row-value {
-    font-size: 13px;
-    font-weight: 500;
-}
-
-/* Skeleton State */
-.skeleton-text {
-    opacity: 0.35;
-    animation: skeleton-pulse 1.5s ease-in-out infinite;
-}
-
-@keyframes skeleton-pulse {
-    0%, 100% { opacity: 0.25; }
-    50% { opacity: 0.5; }
-}
-
-/* ───────────────────────────────────────────────
    Weather Current Component
    ─────────────────────────────────────────────── */
 weather-current {
@@ -333,6 +270,16 @@ weather-controls #unitBtn:hover {
     border-color: var(--border-color);
 }
 
+weather-controls input[type="text"]:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+weather-controls button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
 weather-controls .error-message {
     color: var(--error);
     font-size: 14px;
@@ -344,15 +291,9 @@ weather-controls .error-message:not(:empty) {
     display: block;
 }
 
-.loading-message {
-    color: var(--text-muted);
-    font-size: 14px;
-    padding: var(--weather-space-xs) 0;
-    display: none;
-}
-
-.loading-message:not(:empty) {
-    display: block;
+weather-controls .fetch-btn {
+    min-width: 110px;
+    white-space: nowrap;
 }
 
 /* Homepage Widget Section */

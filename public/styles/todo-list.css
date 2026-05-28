@@ -809,19 +809,14 @@
 }
 
 .list-detail-share-btn .share-btn {
-	background: transparent;
-	border: none;
-	color: var(--accent);
-	cursor: pointer;
-	font-size: 0.9rem;
-	padding: 0.25rem 0.5rem;
-	display: flex;
-	align-items: center;
-	gap: 0.35rem;
+	border: 1px solid var(--secondary);
+	color: var(--secondary);
 }
 
 .list-detail-share-btn .share-btn:hover {
-	opacity: 0.8;
+	background: var(--secondary);
+	color: var(--bg);
+	border-color: var(--secondary);
 }
 
 /* Always show card actions on touch devices */

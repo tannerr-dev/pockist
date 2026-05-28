@@ -12,7 +12,6 @@ export class WeatherControls extends HTMLElement {
         this._fetchBtn = null;
         this._unitBtn = null;
         this._errorEl = null;
-        this._loadingEl = null;
     }
 
     static get observedAttributes() {
@@ -50,7 +49,6 @@ export class WeatherControls extends HTMLElement {
         this._fetchBtn = this.querySelector('.fetch-btn');
         this._unitBtn = this.querySelector('#unitBtn');
         this._errorEl = this.querySelector('#error');
-        this._loadingEl = this.querySelector('#loading');
 
         // Subscribe to weather service updates for unit changes
         this.unsubscribe = weatherService.subscribe((update) => {
@@ -108,6 +106,19 @@ export class WeatherControls extends HTMLElement {
         }
     }
 
+    _setLoading(isLoading) {
+        if (this._fetchBtn) {
+            this._fetchBtn.textContent = isLoading ? 'Loading...' : 'Fetch';
+            this._fetchBtn.disabled = isLoading;
+        }
+        if (this._cityInput) {
+            this._cityInput.disabled = isLoading;
+        }
+        if (this._unitBtn) {
+            this._unitBtn.disabled = isLoading;
+        }
+    }
+
     async handleSearch() {
         if (!this._cityInput || !this._errorEl) return;
 
@@ -120,12 +131,12 @@ export class WeatherControls extends HTMLElement {
 
         try {
             this._errorEl.textContent = '';
-            if (this._loadingEl) this._loadingEl.textContent = 'Searching...';
+            this._setLoading(true);
 
             await weatherService.searchAndFetchCity(cityName);
 
-            if (this._loadingEl) this._loadingEl.textContent = '';
-            
+            this._setLoading(false);
+
             // Emit custom event for parent components
             this.dispatchEvent(new CustomEvent('weather-search-success', {
                 detail: { cityName },
@@ -134,7 +145,7 @@ export class WeatherControls extends HTMLElement {
 
         } catch (error) {
             if (this._errorEl) this._errorEl.textContent = error.message;
-            if (this._loadingEl) this._loadingEl.textContent = '';
+            this._setLoading(false);
 
             // Emit custom event for error handling
             this.dispatchEvent(new CustomEvent('weather-search-error', {
@@ -171,18 +182,6 @@ export class WeatherControls extends HTMLElement {
     clearError() {
         if (this._errorEl) {
             this._errorEl.textContent = '';
-        }
-    }
-
-    setLoading(message) {
-        if (this._loadingEl) {
-            this._loadingEl.textContent = message;
-        }
-    }
-
-    clearLoading() {
-        if (this._loadingEl) {
-            this._loadingEl.textContent = '';
         }
     }
 

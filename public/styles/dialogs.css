@@ -158,27 +158,14 @@
 
 /* Share Button */
 .share-btn {
-	display: inline-flex;
-	align-items: center;
-	gap: 6px;
-	padding: 6px 12px;
-	background-color: var(--accent-2);
-	border: none;
-	border-radius: 6px;
-	color: var(--text);
-	font-size: 14px;
-	cursor: pointer;
-	transition: background-color 0.2s;
+	border: 1px solid var(--secondary);
+	color: var(--secondary);
 }
 
 .share-btn:hover {
-	background-color: var(--accent);
+	background: var(--secondary);
 	color: var(--bg);
-}
-
-.share-btn svg {
-	width: 16px;
-	height: 16px;
+	border-color: var(--secondary);
 }
 
 /* Share Dialog specific overrides */
