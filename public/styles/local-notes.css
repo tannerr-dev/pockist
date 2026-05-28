@@ -1,7 +1,6 @@
 /** Notes List View */
 #notes-list {
     padding: 0;
-    border-top: 1px solid var(--border-color);
 }
 
 #notes-list h1 {
