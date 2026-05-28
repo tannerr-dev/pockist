@@ -16,17 +16,10 @@ export const WIDGET_REGISTRY = [
         props: { clickable: true, 'show-city': true },
     },
     {
-        id: 'todo',
-        tag: 'todo-list',
+        id: 'lists',
+        tag: 'todo-list-widget',
         name: 'Lists',
         defaultEnabled: true,
-        props: {},
-    },
-    {
-        id: 'todo-widget',
-        tag: 'todo-list-widget',
-        name: 'List Widget',
-        defaultEnabled: false,
         props: {},
     },
     {

@@ -61,7 +61,7 @@ export class HomePage extends HTMLElement {
                 const el = document.createElement(widget.tag);
                 wrapper.appendChild(el);
                 zoneEl.appendChild(wrapper);
-            } else if (widgetId === 'todo-widget') {
+            } else if (widgetId === 'lists') {
                 const wrapper = document.createElement('section');
                 wrapper.className = 'lists-widget-section';
                 // wrapper.innerHTML = `
