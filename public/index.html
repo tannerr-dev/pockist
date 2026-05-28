@@ -236,31 +236,27 @@
 
     <template id="weather-current">
         <div class="weather-current-inner">
-            <div class="no-data-message">
-                <span>Click to set up weather</span>
-            </div>
-            <div class="error-message" style="display: none;">
-                <span>Unable to load weather data</span>
-            </div>
-            <div class="weather-data-content" style="display: none;">
-                <div class="city-name skeleton-text">--</div>
-                <div class="current">
-                    <div class="current-main">
-                        <div class="current-temp skeleton-text">--°</div>
-                        <div class="current-condition skeleton-text">Loading weather...</div>
-                    </div>
-                    <div class="current-stats">
-                        <div class="current-stat">
-                            <span class="current-stat-label">Humidity</span>
-                            <span class="current-stat-value humidity skeleton-text">--%</span>
+            <div class="weather-body">
+                <div class="weather-left">
+                    <div class="city-name skeleton-text">--</div>
+                    <div class="current-condition skeleton-text">--</div>
+                </div>
+                <div class="weather-center">
+                    <div class="current-temp skeleton-text">--°</div>
+                </div>
+                <div class="weather-right">
+                    <div class="weather-stats">
+                        <div class="stat-item">
+                            <span class="stat-label">Humidity</span>
+                            <span class="stat-value humidity skeleton-text">--%</span>
                         </div>
-                        <div class="current-stat">
-                            <span class="current-stat-label">Rain</span>
-                            <span class="current-stat-value precipitation skeleton-text">--mm</span>
+                        <div class="stat-item">
+                            <span class="stat-label">Rain</span>
+                            <span class="stat-value precipitation skeleton-text">--mm</span>
                         </div>
-                        <div class="current-stat">
-                            <span class="current-stat-label">Wind</span>
-                            <span class="current-stat-value wind skeleton-text">--m/s</span>
+                        <div class="stat-item">
+                            <span class="stat-label">Wind</span>
+                            <span class="stat-value wind skeleton-text">--m/s</span>
                         </div>
                     </div>
                 </div>

@@ -9,11 +9,9 @@ export class WeatherCurrent extends HTMLElement {
         this._cityName = '';
         this._clickable = false;
         this.unsubscribe = null;
-        
+        this._hasAttemptedLoad = false;
+
         // Cached element references
-        this._noDataEl = null;
-        this._contentEl = null;
-        this._errorEl = null;
         this._cityEl = null;
         this._tempEl = null;
         this._conditionEl = null;
@@ -57,9 +55,6 @@ export class WeatherCurrent extends HTMLElement {
         this.appendChild(content);
 
         // Cache element references
-        this._noDataEl = this.querySelector('.no-data-message');
-        this._contentEl = this.querySelector('.weather-data-content');
-        this._errorEl = this.querySelector('.error-message');
         this._cityEl = this.querySelector('.city-name');
         this._tempEl = this.querySelector('.current-temp');
         this._conditionEl = this.querySelector('.current-condition');
@@ -121,26 +116,21 @@ export class WeatherCurrent extends HTMLElement {
             await weatherService.loadSavedCityWeather();
         } catch (error) {
             console.log('No saved weather data or failed to load');
-            this._showError();
+        } finally {
+            this._hasAttemptedLoad = true;
+            this._updateView();
         }
     }
 
     _showError() {
-        if (this._noDataEl) {
-            this._noDataEl.style.display = 'none';
-        }
-        if (this._contentEl) {
-            this._contentEl.style.display = 'none';
-        }
-        if (this._errorEl) {
-            this._errorEl.style.display = '';
+        if (this._cityEl) {
+            this._cityEl.textContent = 'Unable to load weather';
+            this._cityEl.classList.remove('skeleton-text');
         }
     }
 
     _clearError() {
-        if (this._errorEl) {
-            this._errorEl.style.display = 'none';
-        }
+        // Error state is cleared on next _updateView call
     }
 
     getWeatherInfo() {
@@ -151,25 +141,20 @@ export class WeatherCurrent extends HTMLElement {
         const weatherInfo = this.getWeatherInfo();
 
         if (!weatherInfo) {
-            // No data - show no-data message
-            if (this._noDataEl) {
-                this._noDataEl.style.display = '';
-            }
-            if (this._contentEl) {
-                this._contentEl.style.display = 'none';
+            // No data yet — keep skeleton on values, show prompt if load finished
+            if (this._cityEl) {
+                if (this._hasAttemptedLoad) {
+                    this._cityEl.textContent = 'Click to set up weather';
+                    this._cityEl.classList.remove('skeleton-text');
+                } else {
+                    this._cityEl.textContent = '--';
+                    this._cityEl.classList.add('skeleton-text');
+                }
             }
             return;
         }
 
-        // Has data - show content
-        if (this._noDataEl) {
-            this._noDataEl.style.display = 'none';
-        }
-        if (this._contentEl) {
-            this._contentEl.style.display = '';
-        }
-
-        // Update city name - get from attribute or from saved city
+        // Update city name — get from attribute or from saved city
         if (this._cityEl) {
             let displayCityName = this._cityName;
             if (this._showCity && !displayCityName) {
