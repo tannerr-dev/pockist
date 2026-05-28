@@ -501,9 +501,9 @@ export class ImportExportService {
                 : `${parsed.content.length} characters`;
             
             const dialog = document.createElement('dialog');
-            dialog.className = 'share-dialog';
+            dialog.className = 'dialog';
             dialog.innerHTML = `
-                <div class="share-dialog-content">
+                <div class="dialog-content">
                     <h3>Import Markdown ${typeLabel}</h3>
                     <p class="share-title">"${this.#escapeHtml(parsed.title)}"</p>
                     <div class="share-info">
@@ -522,7 +522,7 @@ export class ImportExportService {
                         </button>
                     </div>
                     <div class="share-actions">
-                        <button class="share-cancel-btn" type="button">Cancel</button>
+                        <button class="btn btn-ghost" type="button">Cancel</button>
                     </div>
                 </div>
             `;
@@ -532,7 +532,7 @@ export class ImportExportService {
             
             const createBtn = dialog.querySelector('.share-option-create');
             const mergeBtn = dialog.querySelector('.share-option-merge');
-            const cancelBtn = dialog.querySelector('.share-cancel-btn');
+            const cancelBtn = dialog.querySelector('.btn.btn-ghost');
             
             const cleanup = () => {
                 dialog.close();
@@ -575,22 +575,22 @@ export class ImportExportService {
         
         return new Promise((resolve) => {
             const dialog = document.createElement('dialog');
-            dialog.className = 'share-dialog';
+            dialog.className = 'dialog';
             
             if (items.length === 0) {
                 dialog.innerHTML = `
-                    <div class="share-dialog-content">
+                    <div class="dialog-content">
                         <h3>Merge Into Existing ${typeLabel}</h3>
                         <p class="share-title">No existing ${typeLabel.toLowerCase()}s found.</p>
                         <div class="share-actions">
-                            <button class="share-cancel-btn" type="button">Close</button>
+                            <button class="btn btn-ghost" type="button">Close</button>
                         </div>
                     </div>
                 `;
                 document.body.appendChild(dialog);
                 dialog.showModal();
                 
-                const closeBtn = dialog.querySelector('.share-cancel-btn');
+                const closeBtn = dialog.querySelector('.btn.btn-ghost');
                 const cleanup = () => {
                     dialog.close();
                     document.body.removeChild(dialog);
@@ -614,14 +614,14 @@ export class ImportExportService {
             }).join('');
             
             dialog.innerHTML = `
-                <div class="share-dialog-content">
+                <div class="dialog-content">
                     <h3>Merge Into Existing ${typeLabel}</h3>
                     <p class="share-title">Choose a ${typeLabel.toLowerCase()} to append to:</p>
                     <div class="share-options">
                         ${itemListHtml}
                     </div>
                     <div class="share-actions">
-                        <button class="share-cancel-btn" type="button">Cancel</button>
+                        <button class="btn btn-ghost" type="button">Cancel</button>
                     </div>
                 </div>
             `;
@@ -630,7 +630,7 @@ export class ImportExportService {
             dialog.showModal();
             
             const itemBtns = dialog.querySelectorAll('.share-merge-item');
-            const cancelBtn = dialog.querySelector('.share-cancel-btn');
+            const cancelBtn = dialog.querySelector('.btn.btn-ghost');
             
             const cleanup = () => {
                 dialog.close();

@@ -116,7 +116,7 @@ export class ShareButton extends HTMLElement {
                     </button>
                 </div>
                 <div class="share-actions">
-                    <button class="share-cancel-btn" type="button">Cancel</button>
+                    <button class="btn btn-ghost" type="button">Cancel</button>
                 </div>
             </div>
         `;
@@ -127,7 +127,7 @@ export class ShareButton extends HTMLElement {
         const linkBtn = dialog.querySelector('.share-option-link');
         const jsonBtn = dialog.querySelector('.share-option-json');
         const mdBtn = dialog.querySelector('.share-option-md');
-        const cancelBtn = dialog.querySelector('.share-cancel-btn');
+        const cancelBtn = dialog.querySelector('.btn.btn-ghost');
 
         const cleanup = () => {
             dialog.close();
@@ -157,8 +157,8 @@ export class ShareButton extends HTMLElement {
                             <span class="share-result-meta">Link expires in ${result.expiresIn}</span>
                         </div>
                         <div class="dialog-footer">
-                            <button class="dialog-btn dialog-btn--secondary share-close-btn" type="button">Close</button>
-                            <button class="dialog-btn dialog-btn--primary share-copy-btn" type="button">Copy Link</button>
+                            <button class="btn btn-ghost share-close-btn" type="button">Close</button>
+                            <button class="btn btn-outline share-copy-btn" type="button">Copy Link</button>
                         </div>
                     </div>
                 `;

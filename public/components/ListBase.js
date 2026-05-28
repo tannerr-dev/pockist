@@ -550,10 +550,10 @@ export class ListBase extends HTMLElement {
 		if (!list) return;
 
 		const dialog = document.createElement('dialog');
-		dialog.className = 'dialog share-dialog';
-		dialog.innerHTML = `
-			<div class="dialog-content share-dialog-content">
-				<h3>Share List</h3>
+			dialog.className = 'dialog';
+			dialog.innerHTML = `
+				<div class="dialog-content">
+					<h3>Share List</h3>
 				<p class="share-title">"${this._escapeHtml(list.name || 'Untitled List')}"</p>
 				<div class="share-options">
 					<button class="share-option-btn share-option-link" type="button">
@@ -573,7 +573,7 @@ export class ListBase extends HTMLElement {
 					</button>
 				</div>
 				<div class="share-actions">
-					<button class="share-cancel-btn" type="button">Cancel</button>
+					<button class="btn btn-ghost" type="button">Cancel</button>
 				</div>
 			</div>
 		`;
@@ -584,7 +584,7 @@ export class ListBase extends HTMLElement {
 		const linkBtn = dialog.querySelector('.share-option-link');
 		const jsonBtn = dialog.querySelector('.share-option-json');
 		const mdBtn = dialog.querySelector('.share-option-md');
-		const cancelBtn = dialog.querySelector('.share-cancel-btn');
+		const cancelBtn = dialog.querySelector('.btn.btn-ghost');
 
 		const cleanup = () => {
 			dialog.close();
@@ -629,9 +629,9 @@ export class ListBase extends HTMLElement {
 			const fullUrl = `${window.location.origin}${result.url}`;
 
 			const dialog = document.createElement('dialog');
-			dialog.className = 'dialog share-dialog';
+			dialog.className = 'dialog';
 			dialog.innerHTML = `
-				<div class="dialog-content share-dialog-content">
+				<div class="dialog-content">
 					<h3>List Shared!</h3>
 					<p class="share-title">"${this._escapeHtml(list.name || 'Untitled List')}"</p>
 					<div class="share-result-card">
@@ -641,8 +641,8 @@ export class ListBase extends HTMLElement {
 						<span class="share-result-meta">Link expires in ${result.expiresIn}</span>
 					</div>
 					<div class="dialog-footer">
-						<button class="dialog-btn dialog-btn--secondary share-close-btn" type="button">Close</button>
-						<button class="dialog-btn dialog-btn--primary share-copy-btn" type="button">Copy Link</button>
+						<button class="btn btn-ghost share-close-btn" type="button">Close</button>
+						<button class="btn btn-outline share-copy-btn" type="button">Copy Link</button>
 					</div>
 				</div>
 			`;
