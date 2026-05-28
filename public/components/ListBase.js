@@ -702,10 +702,10 @@ export class ListBase extends HTMLElement {
 						${isDefault ? '<span class="list-selector-item-badge">default</span>' : ''}
 					</div>
 					<div class="list-selector-item-actions">
-						<button class="list-selector-move-up ${isFirst ? 'disabled' : ''}" data-list-id="${meta.id}" ${isFirst ? 'disabled' : ''} title="Move up">▲</button>
-						<button class="list-selector-move-down ${isLast ? 'disabled' : ''}" data-list-id="${meta.id}" ${isLast ? 'disabled' : ''} title="Move down">▼</button>
-						${!isDefault ? `<button class="list-selector-set-default" data-list-id="${meta.id}" title="Set as default">★</button>` : ''}
-						<button class="list-selector-delete" data-list-id="${meta.id}" title="Delete list">×</button>
+						<button class="btn btn-icon btn-ghost list-selector-move-up ${isFirst ? 'disabled' : ''}" data-list-id="${meta.id}" ${isFirst ? 'disabled' : ''} title="Move up">▲</button>
+						<button class="btn btn-icon btn-ghost list-selector-move-down ${isLast ? 'disabled' : ''}" data-list-id="${meta.id}" ${isLast ? 'disabled' : ''} title="Move down">▼</button>
+						${!isDefault ? `<button class="btn btn-icon btn-ghost list-selector-set-default" data-list-id="${meta.id}" title="Set as default">★</button>` : ''}
+						<button class="btn btn-icon btn-outline-danger list-selector-delete" data-list-id="${meta.id}" title="Delete list">×</button>
 					</div>
 				</div>
 			`;
@@ -718,7 +718,7 @@ export class ListBase extends HTMLElement {
 					${listItemsHtml}
 				</div>
 				<div class="dialog-footer">
-					<button class="list-selector-create-btn button" type="button">+ New List</button>
+					<button class="list-selector-create-btn btn btn-outline" type="button">+ New List</button>
 				</div>
 			</div>
 		`;
@@ -861,7 +861,7 @@ export class ListBase extends HTMLElement {
 
 		if (this._listActionsEl) {
 			this._listActionsEl.innerHTML = `
-				<button class="button-link share-list-btn" title="Share list">Share</button>
+				<button class="btn btn-outline share-list-btn" title="Share list">Share</button>
 			`;
 
 			const shareBtn = this._listActionsEl.querySelector('.share-list-btn');

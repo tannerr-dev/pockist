@@ -1,6 +1,7 @@
 /** Notes List View */
 #notes-list {
     padding: 0;
+    border-top: 1px solid var(--border-color);
 }
 
 #notes-list h1 {
@@ -87,6 +88,7 @@
     width: 100%;
     max-width: 600px;
     margin: 0 auto;
+    border-top: 1px solid var(--border-color);
 }
 
 .editor-header {

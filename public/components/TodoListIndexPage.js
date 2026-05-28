@@ -51,10 +51,10 @@ export class TodoListIndexPage extends HTMLElement {
 						<div class="list-index-card-meta">${total} item${total !== 1 ? 's' : ''}${meta.isDefault ? ' &middot; default' : ''}</div>
 					</div>
 					<div class="list-index-card-actions">
-						${!meta.isDefault ? `<button class="list-index-set-default" data-list-id="${meta.id}" title="Set as default">&#9734;</button>` : ''}
-						<button class="list-index-move-up ${isFirst ? 'disabled' : ''}" data-list-id="${meta.id}" ${isFirst ? 'disabled' : ''} title="Move up">&#9650;</button>
-						<button class="list-index-move-down ${isLast ? 'disabled' : ''}" data-list-id="${meta.id}" ${isLast ? 'disabled' : ''} title="Move down">&#9660;</button>
-						<button class="list-index-delete" data-list-id="${meta.id}" title="Delete list">&times;</button>
+						${!meta.isDefault ? `<button class="btn btn-icon btn-ghost list-index-set-default" data-list-id="${meta.id}" title="Set as default">&#9734;</button>` : ''}
+						<button class="btn btn-icon btn-ghost list-index-move-up ${isFirst ? 'disabled' : ''}" data-list-id="${meta.id}" ${isFirst ? 'disabled' : ''} title="Move up">&#9650;</button>
+						<button class="btn btn-icon btn-ghost list-index-move-down ${isLast ? 'disabled' : ''}" data-list-id="${meta.id}" ${isLast ? 'disabled' : ''} title="Move down">&#9660;</button>
+						<button class="btn btn-icon btn-outline-danger list-index-delete" data-list-id="${meta.id}" title="Delete list">&times;</button>
 					</div>
 				</div>
 			`;

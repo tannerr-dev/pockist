@@ -59,10 +59,10 @@ export class ListItem extends HTMLElement {
 			<input type="checkbox" class="todo-checkbox" ${this.completed ? 'checked' : ''}>
 			<span class="todo-text">${this._escapeHtml(this.text || '')}</span>
 			<div class="todo-reorder">
-				<button class="todo-move-up" aria-label="Move up">▲</button>
-				<button class="todo-move-down" aria-label="Move down">▼</button>
+				<button class="btn btn-icon btn-ghost todo-move-up" aria-label="Move up">▲</button>
+				<button class="btn btn-icon btn-ghost todo-move-down" aria-label="Move down">▼</button>
 			</div>
-			<button class="todo-delete" aria-label="Delete todo">×</button>
+			<button class="btn btn-icon btn-outline-danger todo-delete" aria-label="Delete todo">×</button>
 		`;
 
 		this._checkbox = this.querySelector('.todo-checkbox');

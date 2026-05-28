@@ -1,10 +1,4 @@
 .todo-list-container {
-	/* margin-bottom: 1.5rem; */
-	background-color: var(--bg-2);
-	border: 1px solid var(--border-color);
-	border-radius: 12px;
-	padding: 1rem;
-	box-shadow: 0 2px 8px color-mix(in srgb, var(--bg-dark) 10%, transparent);
 	display: flex;
 	flex-direction: column;
 	min-height: 200px;
@@ -26,13 +20,15 @@
 	flex-direction: row;
 	align-items: center;
 	justify-content: space-between;
-	margin-bottom: 0.75rem;
-	gap: 1rem;
+	margin-bottom: 16px;
+	padding-top: 16px;
+	border-top: 1px solid var(--border-color);
+	gap: 12px;
 	flex-wrap: wrap;
 }
 
 .todo-list-selector-row h2 {
-	font-size: 1.1rem;
+	font-size: 17px;
 	color: var(--text);
 	margin: 0;
 	white-space: nowrap;
@@ -43,7 +39,6 @@
 	color: var(--text);
 	text-decoration: none;
 	cursor: pointer;
-	/* transition: opacity 0.2s; */
 }
 
 .todo-heading-link:hover {
@@ -54,7 +49,7 @@
 .todo-list-selector-controls {
 	display: flex;
 	align-items: center;
-	gap: 1rem;
+	gap: 12px;
 	flex: 1;
 	min-width: 0;
 	justify-content: flex-end;
@@ -64,58 +59,38 @@
 .list-actions {
 	display: flex;
 	align-items: center;
-	gap: 0.25rem;
+	gap: 4px;
 	flex-shrink: 0;
-}
-
-.list-actions .button-link {
-	font-size: 0.75rem;
-	padding: 0.3rem 0.5rem;
-	white-space: nowrap;
-}
-
-.list-actions .button-link:disabled {
-	opacity: 0.3;
-	cursor: default;
 }
 
 .todo-input-row {
 	display: flex;
-	flex-direction: column;
-	gap: 0.5rem;
-	margin-bottom: 0.75rem;
+	flex-direction: row;
+	align-items: center;
+	gap: 10px;
+	margin: 8px 0 16px 0;
 }
 
 .todo-input-row input[type="text"] {
 	flex: 1;
-	padding: 0.75rem 1rem;
-	border: 1px solid var(--border-color);
-	border-radius: 8px;
-	background-color: var(--bg);
+	padding: 10px 4px;
+	border: none;
+	border-bottom: 1px solid var(--border-color);
+	border-radius: 0;
+	background: transparent;
 	color: var(--text);
-	font-size: 1rem;
+	font-size: 15px;
 	outline: none;
+	transition: border-color 0.2s;
+}
+
+.todo-input-row input[type="text"]:focus {
+	border-bottom-color: var(--accent);
 }
 
 .todo-input-row input[type="text"]::placeholder {
-	color: var(--text);
+	color: var(--text-muted);
 	opacity: 0.5;
-}
-
-.todo-input-row button {
-	padding: 0.5rem 1rem;
-	border: none;
-	border-radius: 8px;
-	background-color: var(--accent);
-	color: white;
-	font-size: 0.9rem;
-	cursor: pointer;
-	width: 100%;
-	/* transition: opacity 0.2s; */
-}
-
-.todo-input-row button:hover {
-	opacity: 0.9;
 }
 
 /* New list row styling */
@@ -123,27 +98,23 @@
 .list-selector-btn {
 	display: flex;
 	align-items: center;
-	gap: 0.5rem;
-	padding: 0.5rem 0.75rem;
-	border: 1px solid var(--border-color);
-	border-radius: 8px;
-	background-color: var(--bg);
+	gap: 8px;
+	padding: 8px 12px;
+	border: none;
+	border-bottom: 1px solid var(--border-color);
+	border-radius: 0;
+	background: transparent;
 	color: var(--text);
-	font-size: 0.95rem;
+	font-size: 14px;
 	cursor: pointer;
 	outline: none;
 	flex: 1;
 	min-width: 120px;
 	max-width: 200px;
-	/* transition: background-color 0.2s, border-color 0.2s; */
 }
 
 .list-selector-btn:hover {
-	background-color: color-mix(in srgb, var(--text) 10%, transparent);
-}
-
-.list-selector-btn:active {
-	background-color: color-mix(in srgb, var(--text) 15%, transparent);
+	border-bottom-color: var(--accent);
 }
 
 .list-selector-name {
@@ -155,14 +126,14 @@
 }
 
 .list-selector-arrow {
-	font-size: 0.7rem;
+	font-size: 11px;
 	opacity: 0.7;
 	flex-shrink: 0;
 }
 
 .list-selector-list {
 	overflow-y: auto;
-	padding: 0.5rem;
+	padding: 0;
 	flex: 1;
 }
 
@@ -170,40 +141,42 @@
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	padding: 0.75rem;
-	border-radius: 8px;
+	padding: 12px 0;
+	border-bottom: 1px solid var(--border-color);
 	cursor: pointer;
-	/* transition: background-color 0.2s; */
-	margin-bottom: 0.25rem;
+}
+
+.list-selector-item:last-child {
+	border-bottom: none;
 }
 
 .list-selector-item:hover {
-	background-color: color-mix(in srgb, var(--text) 10%, transparent);
+	background-color: color-mix(in srgb, var(--text) 5%, transparent);
 }
 
 .list-selector-item.selected {
-	background-color: color-mix(in srgb, var(--text) 15%, transparent);
+	background-color: color-mix(in srgb, var(--text) 8%, transparent);
 }
 
 .list-selector-item-info {
 	display: flex;
 	align-items: center;
-	gap: 0.5rem;
+	gap: 8px;
 	flex: 1;
 	overflow: hidden;
 }
 
 .list-selector-item-name {
 	font-weight: 500;
+	font-size: 14px;
 	color: var(--text);
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
 	cursor: text;
-	padding: 0.25rem 0.5rem;
-	margin: -0.25rem -0.5rem;
+	padding: 4px 8px;
+	margin: -4px -8px;
 	border-radius: 4px;
-	/* transition: background-color 0.2s; */
 }
 
 .list-selector-item-name:hover {
@@ -216,8 +189,8 @@
 }
 
 .list-selector-item-badge {
-	font-size: 0.65rem;
-	padding: 0.15rem 0.35rem;
+	font-size: 11px;
+	padding: 2px 6px;
 	background-color: var(--accent);
 	color: white;
 	border-radius: 4px;
@@ -228,9 +201,8 @@
 .list-selector-item-actions {
 	display: flex;
 	align-items: center;
-	gap: 0.25rem;
+	gap: 4px;
 	opacity: 0;
-	/* transition: opacity 0.2s; */
 }
 
 .list-selector-item:hover .list-selector-item-actions {
@@ -238,19 +210,18 @@
 }
 
 .list-selector-item-actions button {
-	width: 28px;
-	height: 28px;
+	width: 32px;
+	height: 32px;
 	border: none;
 	background: transparent;
 	color: var(--text);
 	opacity: 0.5;
-	font-size: 0.85rem;
+	font-size: 14px;
 	cursor: pointer;
 	border-radius: 4px;
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	/* transition: all 0.15s ease; */
 	padding: 0;
 }
 
@@ -273,7 +244,7 @@
 }
 
 .list-selector-create-btn {
-	font-size: 0.9rem;
+	font-size: 14px;
 	width: 100%;
 }
 
@@ -285,10 +256,6 @@
 }
 
 /* Todo list container */
-/* #lists-container { */
-/* 	view-transition-name: todo-list-content; */
-/* } */
-
 #lists-container {
 	width: 100%;
 }
@@ -297,62 +264,24 @@
 	list-style: none;
 	padding: 0;
 	margin: 0;
-	background-color: var(--bg);
-	border-radius: 8px;
-	overflow: hidden;
 	width: 100%;
 }
-
-/* Smooth transitions for list items reordering */
-/* #lists-container ul:has(.todo-item) { */
-	/* transition: all 0.2s ease; */
-/* } */
 
 .todo-list-ul {
 	list-style: none;
 	padding: 0;
 	margin: 0;
-	background-color: var(--bg);
-	border-radius: 8px;
-	overflow: hidden;
 	width: 100%;
-	/* transition: all 0.2s ease; */
 }
 
 .todo-item {
 	display: flex;
 	align-items: center;
-	gap: 0.75rem;
-	padding: 0.875rem 1rem;
+	gap: 12px;
+	padding: 12px 12px;
 	border-bottom: 1px solid var(--border-color);
 	width: 100%;
 	box-sizing: border-box;
-	/* transition: background-color 0.2s; */
-}
-
-.list-item {
-	height: 48px;
-	padding: 0 1rem;
-	flex-shrink: 0;
-}
-
-.list-item .todo-text {
-	display: -webkit-box;
-	-webkit-line-clamp: 2;
-	-webkit-box-orient: vertical;
-	overflow: hidden;
-	cursor: text;
-	word-break: break-word;
-}
-
-.list-item.is-overflowing .todo-text {
-	cursor: pointer;
-}
-
-/* Highlight effect when reorder buttons are clicked */
-.todo-item:has(.todo-move-up:active),
-.todo-item:has(.todo-move-down:active) {
-	background-color: color-mix(in srgb, var(--text) 10%, transparent);
 }
 
 .todo-item:last-child {
@@ -378,7 +307,7 @@
 
 .todo-text {
 	flex: 1;
-	font-size: 1rem;
+	font-size: 15px;
 	color: var(--text);
 	outline: none;
 	cursor: text;
@@ -386,97 +315,67 @@
 }
 
 .todo-delete {
-	width: 28px;
-	height: 28px;
-	border: none;
+	width: 32px;
+	height: 32px;
+	border: 1px solid var(--error);
 	background: transparent;
-	color: var(--text);
-	opacity: 0.5;
-	font-size: 1.25rem;
+	color: var(--error);
+	font-size: 18px;
 	cursor: pointer;
-	border-radius: 4px;
+	border-radius: 8px;
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	/* transition: all 0.2s; */
 	flex-shrink: 0;
+	transition: all 0.2s;
 }
 
 .todo-delete:hover {
-	opacity: 1;
-	background-color: color-mix(in srgb, var(--error) 20%, transparent);
-	color: var(--error);
+	background: var(--error);
+	color: var(--bg);
 }
 
 .todo-reorder {
 	display: flex;
-	gap: 0.25rem;
+	gap: 4px;
 	flex-shrink: 0;
 }
 
 .todo-move-up,
 .todo-move-down {
-	width: 24px;
-	height: 24px;
-	border: none;
+	width: 28px;
+	height: 28px;
+	border: 1px solid var(--border-color);
 	background: transparent;
-	color: var(--text);
-	opacity: 0.5;
-	font-size: 0.7rem;
+	color: var(--text-muted);
+	font-size: 12px;
 	cursor: pointer;
-	border-radius: 4px;
+	border-radius: 8px;
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	/* transition: all 0.15s ease; */
 	padding: 0;
+	transition: all 0.2s;
 }
 
 .todo-move-up:hover:not(:disabled),
 .todo-move-down:hover:not(:disabled) {
-	opacity: 1;
-	background-color: color-mix(in srgb, var(--text) 15%, transparent);
-	transform: scale(1.1);
-}
-
-.todo-move-up:active:not(:disabled),
-.todo-move-down:active:not(:disabled) {
-	transform: scale(0.95);
+	background: var(--bg-3);
+	color: var(--text);
+	border-color: var(--border-color);
 }
 
 .todo-move-up:disabled,
 .todo-move-down:disabled {
-	opacity: 0.15;
+	opacity: 0.25;
 	cursor: default;
 }
-
-/* View Transitions API styles */
-/* Scoped to list container only - prevents white flash on full page */
-/* ::view-transition-group(todo-list-content) { */
-/* 	animation-duration: 0.25s; */
-/* } */
-
-/* ::view-transition-old(todo-list-content), */
-/* ::view-transition-new(todo-list-content) { */
-/* 	animation-duration: 0.25s; */
-/* } */
-
-/* Todo item transitions for reorder/delete operations */
-/* ::view-transition-group(todo-item) { */
-/* 	animation-duration: 0.2s; */
-/* } */
-
-/* ::view-transition-old(todo-item), */
-/* ::view-transition-new(todo-item) { */
-/* 	animation-duration: 0.2s; */
-/* } */
 
 .todo-empty {
 	padding: 2rem 1rem;
 	text-align: center;
-	color: var(--text);
-	opacity: 0.5;
-	font-style: italic;
+	color: var(--text-muted);
+	font-size: 15px;
 }
 
 .todo-footer {
@@ -484,48 +383,22 @@
 	flex-direction: column;
 	justify-content: center;
 	align-items: center;
-	gap: 0.5rem;
-	padding: 0.75rem 0;
-	font-size: 0.875rem;
-	color: var(--text);
-	opacity: 0.7;
+	gap: 8px;
+	padding: 12px 0;
+	font-size: 14px;
+	color: var(--text-muted);
 	text-align: center;
-}
-
-.button-link {
-	background: none;
-	border: none;
-	color: var(--accent);
-	cursor: pointer;
-	font-size: 0.875rem;
-	padding: 0.25rem 0.5rem;
-	border-radius: 4px;
-	/* transition: background-color 0.2s; */
-}
-
-.button-link:hover:not(:disabled) {
-	background-color: color-mix(in srgb, var(--text) 10%, transparent);
-}
-
-.button-link:disabled {
-	opacity: 0.3;
-	cursor: default;
 }
 
 /* Footer actions container for Sort and Clear Completed buttons */
 .todo-footer-actions {
 	display: flex;
-	gap: 0.5rem;
+	gap: 8px;
 	align-items: center;
 }
 
-.todo-footer-actions .button-link {
-	font-size: 0.8rem;
-	padding: 0.3rem 0.6rem;
-}
-
 /* Footer buttons - use visibility to reserve space and prevent layout shift */
-.button-link.hidden {
+.btn.hidden {
 	visibility: hidden;
 	pointer-events: none;
 }
@@ -536,56 +409,43 @@
 
 .todo-widget {
 	min-height: auto;
-	padding: 0.75rem;
+	padding: 0;
 }
 
 .todo-widget .todo-list-selector-row {
-	margin-bottom: 0.5rem;
+	margin-bottom: 8px;
 }
 
 .todo-widget .todo-list-selector-row h2 {
-	font-size: 1rem;
+	font-size: 15px;
 }
 
 .todo-widget .todo-input-row {
-	margin-bottom: 0.5rem;
-	gap: 0.35rem;
+	margin: 6px 0 12px 0;
+	gap: 8px;
 }
 
 .todo-widget .todo-input-row input[type="text"] {
-	padding: 0.5rem 0.75rem;
-	font-size: 0.9rem;
-}
-
-.todo-widget .todo-input-row button {
-	padding: 0.4rem 0.75rem;
-	font-size: 0.85rem;
+	padding: 8px 4px;
+	font-size: 14px;
 }
 
 .todo-widget .todo-item {
-	padding: 0.625rem 0.75rem;
-}
-
-.todo-widget .list-item {
-	height: 48px;
-	padding: 0 0.75rem;
+	padding: 10px 8px;
 }
 
 .todo-widget .todo-empty {
 	padding: 1.25rem 0.75rem;
-	font-size: 0.9rem;
+	font-size: 14px;
 }
 
 .todo-widget .todo-footer {
-	padding: 0.5rem 0;
+	padding: 8px 0;
 }
 
 .todo-widget-slots {
 	display: flex;
 	flex-direction: column;
-	border-radius: 8px;
-	overflow: hidden;
-	background-color: var(--bg);
 }
 
 /* Nav bar slot */
@@ -593,13 +453,13 @@
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	padding: 0.625rem 0.75rem;
+	padding: 10px 0;
 	min-height: 3rem;
 	box-sizing: border-box;
 	cursor: pointer;
 	color: var(--accent);
-	font-size: 0.8rem;
-	gap: 0.35rem;
+	font-size: 13px;
+	gap: 4px;
 	opacity: 0.7;
 	border-bottom: 1px solid var(--border-color);
 }
@@ -625,8 +485,10 @@
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
-	margin-bottom: 1rem;
-	gap: 1rem;
+	margin-bottom: 0;
+	padding: 16px 0;
+	border-bottom: 1px solid var(--border-color);
+	gap: 12px;
 	flex-wrap: wrap;
 }
 
@@ -634,39 +496,35 @@
 	position: static;
 	display: block;
 	margin: 0;
-	font-size: 1.8rem;
-}
-
-.lists-index-new-btn {
-	min-width: auto;
-	padding: 0.5rem 1rem;
-	font-size: 0.95rem;
+	font-size: 20px;
 }
 
 .lists-index-grid {
 	display: flex;
 	flex-direction: column;
-	gap: 0.75rem;
 }
 
 .list-index-card {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	gap: 1rem;
-	padding: 1rem;
-	background-color: var(--bg-2);
-	border: 1px solid var(--border-color);
-	border-radius: 10px;
+	gap: 12px;
+	padding: 16px 12px;
+	border-bottom: 1px solid var(--border-color);
 	cursor: pointer;
 }
 
+.list-index-card:last-child {
+	border-bottom: none;
+}
+
 .list-index-card:hover {
-	background-color: var(--bg-3);
+	background-color: color-mix(in srgb, var(--text) 5%, transparent);
 }
 
 .list-index-card.is-default {
-	border-left: 4px solid var(--accent);
+	border-left: 3px solid var(--accent);
+	padding-left: 12px;
 }
 
 .list-index-card-content {
@@ -675,39 +533,39 @@
 }
 
 .list-index-card-name {
-	font-size: 1.1rem;
-	font-weight: bold;
+	font-size: 17px;
+	font-weight: 600;
 	color: var(--text);
 	word-break: break-word;
 }
 
 .list-index-card-meta {
-	font-size: 0.85rem;
+	font-size: 13px;
 	color: var(--text-muted);
-	margin-top: 0.25rem;
+	margin-top: 4px;
 }
 
 .list-index-card-actions {
 	display: flex;
 	align-items: center;
-	gap: 0.35rem;
+	gap: 4px;
 	flex-shrink: 0;
 }
 
 .list-index-card-actions button {
 	width: 32px;
 	height: 32px;
-	border: none;
+	border: 1px solid var(--border-color);
 	background: transparent;
-	color: var(--text);
-	opacity: 0.5;
-	font-size: 1rem;
+	color: var(--text-muted);
+	font-size: 14px;
 	cursor: pointer;
-	border-radius: 6px;
+	border-radius: 8px;
 	display: flex;
 	align-items: center;
 	justify-content: center;
 	padding: 0;
+	transition: all 0.2s;
 }
 
 .list-index-card:hover .list-index-card-actions button {
@@ -716,21 +574,25 @@
 
 .list-index-card-actions button:hover {
 	opacity: 1;
-	background-color: color-mix(in srgb, var(--text) 15%, transparent);
+	background: var(--bg-3);
+	color: var(--text);
+	border-color: var(--border-color);
 }
 
 .list-index-set-default:hover {
 	color: var(--accent);
+	border-color: var(--accent);
 }
 
 .list-index-delete:hover {
 	color: var(--error);
+	border-color: var(--error);
 }
 
 /* Disabled move buttons */
 .list-index-move-up:disabled,
 .list-index-move-down:disabled {
-	opacity: 0.15;
+	opacity: 0.25;
 	cursor: default;
 }
 
@@ -742,15 +604,11 @@
 	gap: 1rem;
 	text-align: center;
 	color: var(--text-muted);
+	font-size: 15px;
 }
 
 .lists-index-empty p {
 	margin: 0;
-	font-size: 1.1rem;
-}
-
-.lists-index-new-btn-empty {
-	min-width: auto;
 }
 
 /* ============================================================================
@@ -764,31 +622,20 @@
 .list-detail-header {
 	display: flex;
 	align-items: center;
-	gap: 0.75rem;
-	margin-bottom: 1rem;
+	gap: 12px;
+	margin-bottom: 16px;
+	padding: 16px 0;
+	border-bottom: 1px solid var(--border-color);
 	flex-wrap: wrap;
-}
-
-.list-detail-back {
-	background: none;
-	border: none;
-	color: var(--accent);
-	cursor: pointer;
-	font-size: 0.9rem;
-	padding: 0.25rem 0.5rem;
-}
-
-.list-detail-back:hover {
-	opacity: 0.8;
 }
 
 .list-detail-heading {
 	margin: 0;
-	font-size: 1.5rem;
+	font-size: 20px;
 	color: var(--text);
 	word-break: break-word;
-	padding: 0.25rem 0.5rem;
-	margin: -0.25rem -0.5rem;
+	padding: 4px 8px;
+	margin: -4px -8px;
 	border-radius: 4px;
 	cursor: text;
 	border-bottom: 1px dashed var(--border-color);
@@ -823,5 +670,16 @@
 @media (hover: none) {
 	.list-index-card-actions button {
 		opacity: 0.8;
+	}
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+	.todo-input-row {
+		gap: 8px;
+	}
+
+	.todo-input-row input[type="text"] {
+		font-size: 14px;
 	}
 }

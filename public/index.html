@@ -360,15 +360,15 @@
         </div>
         <div class="todo-input-row">
           <input type="text" id="todo-input" placeholder="Add a new task..." autocomplete="off">
-          <button id="add-btn">Add</button>
+          <button id="add-btn" class="btn btn-outline" type="button">Add</button>
         </div>
         <div class="todo-scroll-container">
           <div id="lists-container"></div>
         </div>
         <div class="todo-footer" id="single-list-footer">
           <div class="todo-footer-actions">
-            <button id="clear-completed" class="button-link">Clear completed</button>
-            <button id="sort-todos" class="button-link">Sort</button>
+            <button id="clear-completed" class="btn btn-ghost">Clear completed</button>
+            <button id="sort-todos" class="btn btn-ghost">Sort</button>
           </div>
         </div>
       </div>
@@ -388,13 +388,13 @@
         </div>
         <form class="todo-input-row" id="todo-input-form">
           <input type="text" id="todo-input" placeholder="Add a new task..." autocomplete="off">
-          <button id="add-btn" type="submit">Add</button>
+          <button id="add-btn" class="btn btn-outline" type="submit">Add</button>
         </form>
         <div id="lists-container" class="todo-widget-slots"></div>
         <div class="todo-footer" id="single-list-footer">
           <div class="todo-footer-actions">
-            <button id="clear-completed" class="button-link">Clear completed</button>
-            <button id="sort-todos" class="button-link">Sort</button>
+            <button id="clear-completed" class="btn btn-ghost">Clear completed</button>
+            <button id="sort-todos" class="btn btn-ghost">Sort</button>
           </div>
         </div>
       </div>
@@ -409,12 +409,12 @@
       <div class="lists-index-container">
         <div class="lists-index-header">
           <h1>Lists</h1>
-          <button class="lists-index-new-btn button" type="button">+ New List</button>
+          <button class="lists-index-new-btn btn btn-outline" type="button">+ New List</button>
         </div>
         <div class="lists-index-grid"></div>
         <div class="lists-index-empty" style="display: none;">
           <p>No lists yet.</p>
-          <button class="lists-index-new-btn-empty button" type="button">Create your first list</button>
+          <button class="lists-index-new-btn-empty btn btn-outline" type="button">Create your first list</button>
         </div>
       </div>
     </template>
@@ -422,7 +422,12 @@
     <template id="todo-list-detail-page">
       <div class="list-detail-container">
         <div class="list-detail-header">
-          <button class="list-detail-back button-link" type="button">&larr; Back</button>
+          <button class="list-detail-back btn btn-outline btn-icon" type="button" title="Back">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M19 12H5"/>
+              <path d="M12 19l-7-7 7-7"/>
+            </svg>
+          </button>
           <h2 class="list-detail-heading" contenteditable="true"></h2>
           <share-button type="list" class="list-detail-share-btn"></share-button>
         </div>
