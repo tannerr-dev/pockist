@@ -65,13 +65,14 @@ function detectColorScheme() {
 		console.log("Setthing theme to dark");
 	}
 
-	const themeColor = localStorage.getItem("hue");
+	const themeColor = localStorage.getItem("hue") || '360';
 	console.log("Setting hue to ", themeColor);
 	if (colorSlider) {
 		colorSlider.value = themeColor;
 	}
 	root.style.setProperty("--hue", themeColor);
-    if (colorSlider.value == '360') {
+	localStorage.setItem("hue", themeColor);
+    if (themeColor == '360') {
         root.style.setProperty("--mod", 0);
         root.style.setProperty("--secondary-mod", 0.3);
         root.style.setProperty("--error-mod", 0.3);
