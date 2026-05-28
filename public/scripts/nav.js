@@ -23,9 +23,13 @@ function hueCheck(hue){
     root.style.setProperty("--hue", hue);
     if (hue == '360') {
         root.style.setProperty("--mod", 0);
+        root.style.setProperty("--secondary-mod", 0.3);
+        root.style.setProperty("--error-mod", 0.3);
         localStorage.setItem("mod", 0);
     } else {
         root.style.setProperty("--mod", 1);
+        root.style.setProperty("--secondary-mod", 1);
+        root.style.setProperty("--error-mod", 1);
         localStorage.setItem("mod", 1);
     }
 }
@@ -69,9 +73,13 @@ function detectColorScheme() {
 	root.style.setProperty("--hue", themeColor);
     if (colorSlider.value == '360') {
         root.style.setProperty("--mod", 0);
+        root.style.setProperty("--secondary-mod", 0.3);
+        root.style.setProperty("--error-mod", 0.3);
         localStorage.setItem("mod", 0);
     } else {
         root.style.setProperty("--mod", 1);
+        root.style.setProperty("--secondary-mod", 1);
+        root.style.setProperty("--error-mod", 1);
         localStorage.setItem("mod", 1);
     }
 }
