@@ -1,10 +1,10 @@
 /* Weather Component Variables */
 :root {
-    --weather-space-xs: 4px;
-    --weather-space-sm: 8px;
-    --weather-space-md: 12px;
-    --weather-space-lg: 16px;
-    --weather-space-xl: 20px;
+    --weather-space-xs: 6px;
+    --weather-space-sm: 10px;
+    --weather-space-md: 16px;
+    --weather-space-lg: 20px;
+    --weather-space-xl: 24px;
     --weather-radius: 8px;
     --weather-radius-lg: 12px;
 }
@@ -24,79 +24,55 @@
     opacity: 0.6;
 }
 
-/* Weather Current Component */
-weather-current {
-    display: block;
+/* ───────────────────────────────────────────────
+   Shared / Reusable Design System Classes
+   ─────────────────────────────────────────────── */
+
+.section-divider {
+    border-bottom: 1px solid var(--border-color);
+    padding: var(--weather-space-md) 0;
 }
 
-.weather-current-inner {
-    padding: 12px 0;
-    margin-bottom: 8px;
+.section-divider:last-child {
+    border-bottom: none;
 }
 
-.city-name {
+.section-label {
     font-size: 12px;
     font-weight: 500;
     color: var(--text-muted);
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    margin-bottom: var(--weather-space-sm);
 }
 
-.weather-body {
+.data-grid {
     display: grid;
-    grid-template-columns: 1fr auto 1fr;
-    gap: 12px;
-    align-items: center;
+    gap: 0;
 }
 
-.weather-left {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
+.data-grid--2 {
+    grid-template-columns: repeat(2, 1fr);
 }
 
-.current-condition {
-    font-size: 15px;
-    color: var(--text);
-    opacity: 0.85;
+.data-grid--3 {
+    grid-template-columns: repeat(3, 1fr);
 }
 
-.weather-center {
-    text-align: center;
-}
-
-.current-temp {
-    font-size: 40px;
-    font-weight: 300;
-    line-height: 1;
-}
-
-.weather-right {
-    display: flex;
-    justify-content: flex-end;
-}
-
-.weather-stats {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    min-width: 100px;
-}
-
-.stat-item {
+.data-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 12px;
+    padding: var(--weather-space-xs) 0;
 }
 
-.stat-label {
-    font-size: 12px;
+.data-row-label {
+    font-size: 13px;
     color: var(--text-muted);
 }
 
-.stat-value {
-    font-size: 12px;
+.data-row-value {
+    font-size: 13px;
     font-weight: 500;
 }
 
@@ -111,38 +87,111 @@ weather-current {
     50% { opacity: 0.5; }
 }
 
-/* Weather Meta Component */
+/* ───────────────────────────────────────────────
+   Weather Current Component
+   ─────────────────────────────────────────────── */
+weather-current {
+    display: block;
+}
+
+.weather-current-inner {
+    padding: var(--weather-space-md) 0;
+    margin-bottom: var(--weather-space-sm);
+}
+
+.city-name {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.weather-body {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: var(--weather-space-lg);
+    align-items: center;
+}
+
+.weather-left {
+    display: flex;
+    flex-direction: column;
+    gap: var(--weather-space-sm);
+}
+
+.current-condition {
+    font-size: 16px;
+    color: var(--text);
+    opacity: 0.85;
+}
+
+.weather-center {
+    text-align: center;
+}
+
+.current-temp {
+    font-size: 44px;
+    font-weight: 300;
+    line-height: 1;
+}
+
+.weather-right {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.weather-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 110px;
+}
+
+.stat-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--weather-space-lg);
+}
+
+.stat-label {
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+.stat-value {
+    font-size: 13px;
+    font-weight: 500;
+}
+
+/* ───────────────────────────────────────────────
+   Weather Meta Component
+   ─────────────────────────────────────────────── */
 weather-meta {
     display: block;
-    margin-top: 20px;
 }
 
 .weather-meta-inner {
-    background: var(--bg-2);
-	border: 1px solid var(--border-color);
-    border-radius: 12px;
-    padding: 20px;
+    padding: 0;
 }
 
 .meta-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 16px;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0;
 }
 
 .meta-item {
-    text-align: center;
-    padding: 12px;
-    background: var(--bg-3);
-    border-radius: 8px;
+    padding: var(--weather-space-xs) 0;
 }
 
 .meta-label {
-    font-size: 11px;
-    opacity: 0.6;
-    margin-bottom: 4px;
+    font-size: 12px;
+    color: var(--text-muted);
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    margin-bottom: 3px;
 }
 
 .meta-value {
@@ -150,118 +199,144 @@ weather-meta {
     font-weight: 500;
 }
 
-/* Weather Map Component */
+/* ───────────────────────────────────────────────
+   Weather Map Component
+   ─────────────────────────────────────────────── */
 weather-map {
     display: block;
-    margin-top: 20px;
 }
 
 .weather-map-inner {
-    background: var(--bg-2);
-	border: 1px solid var(--border-color);
-    border-radius: 12px;
-    padding: 16px;
-    overflow: hidden;
+    padding: var(--weather-space-md) 0;
 }
 
 #map {
-    height: 240px;
-    border-radius: 8px;
+    height: 260px;
+    border-radius: var(--weather-radius);
     overflow: hidden;
 }
 
 .map-attribution {
     text-align: center;
-    font-size: 11px;
+    font-size: 12px;
     opacity: 0.6;
-    margin-top: 12px;
+    margin-top: var(--weather-space-sm);
 }
 
 .map-attribution a {
     color: var(--accent);
 }
 
-/* Weather Debug Component */
+/* ───────────────────────────────────────────────
+   Weather Debug Component
+   ─────────────────────────────────────────────── */
 weather-debug {
     display: block;
-    margin-top: 20px;
 }
 
 weather-debug .debug-data {
-    background: var(--bg-2);
-    border-radius: 12px;
-	border: 1px solid var(--border-color);
+    border: none;
+    border-radius: 0;
     overflow: hidden;
 }
 
 weather-debug summary {
-    padding: 16px 20px;
-    background: var(--bg-3);
+    padding: var(--weather-space-md) 0;
     cursor: pointer;
-    font-size: 14px;
+    font-size: 12px;
     font-weight: 500;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid var(--border-color);
+    list-style: none;
+}
+
+weather-debug summary::-webkit-details-marker {
+    display: none;
 }
 
 weather-debug pre {
-    padding: 20px;
-    font-size: 11px;
+    padding: var(--weather-space-md) 0;
+    font-size: 12px;
     overflow-x: auto;
     margin: 0;
 }
 
-/* Weather Controls Component */
+/* ───────────────────────────────────────────────
+   Weather Controls Component
+   ─────────────────────────────────────────────── */
 weather-controls {
     display: block;
-    margin-bottom: 12px;
+    margin-bottom: var(--weather-space-sm);
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: var(--weather-space-md);
 }
 
 weather-controls .controls {
     display: flex;
-    gap: 8px;
-    margin-bottom: 12px;
+    gap: var(--weather-space-sm);
+    margin-bottom: var(--weather-space-sm);
 }
 
 weather-controls input[type="text"] {
     flex: 1;
-    padding: 12px 16px;
-    background: var(--bg-2);
+    padding: 12px 4px;
+    background: transparent;
     color: var(--text);
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    font-size: 14px;
+    border: none;
+    border-bottom: 1px solid var(--border-color);
+    border-radius: 0;
+    font-size: 15px;
+    transition: border-color 0.2s;
 }
 
 weather-controls input[type="text"]:focus {
     outline: none;
-    border-color: var(--accent);
-    box-shadow: 0 0 0 2px var(--accent-2);
+    border-bottom-color: var(--accent);
+    box-shadow: none;
+}
+
+weather-controls input[type="text"]::placeholder {
+    color: var(--text-muted);
+    opacity: 0.6;
 }
 
 weather-controls button {
-    padding: 12px 20px;
-    background: var(--accent);
-    color: white;
-    border: none;
-    border-radius: 8px;
+    padding: 10px 20px;
+    background: transparent;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    border-radius: var(--weather-radius);
     font-size: 14px;
+    font-weight: 500;
     cursor: pointer;
-    transition: opacity 0.2s;
+    transition: all 0.2s;
 }
 
 weather-controls button:hover {
-    opacity: 0.9;
+    background: var(--accent);
+    color: var(--bg);
 }
 
 weather-controls #unitBtn {
+    background: transparent;
+    color: var(--text-muted);
+    border-color: var(--border-color);
+    min-width: 48px;
+    padding: 10px 12px;
+}
+
+weather-controls #unitBtn:hover {
     background: var(--bg-3);
     color: var(--text);
-    min-width: 48px;
+    border-color: var(--border-color);
 }
 
 weather-controls .error-message {
     color: var(--error);
-    font-size: 13px;
-    padding: 8px 0;
+    font-size: 14px;
+    padding: var(--weather-space-xs) 0;
     display: none;
 }
 
@@ -271,8 +346,8 @@ weather-controls .error-message:not(:empty) {
 
 .loading-message {
     color: var(--text-muted);
-    font-size: 13px;
-    padding: 8px 0;
+    font-size: 14px;
+    padding: var(--weather-space-xs) 0;
     display: none;
 }
 
@@ -281,10 +356,6 @@ weather-controls .error-message:not(:empty) {
 }
 
 /* Homepage Widget Section */
-/* .widgets-section { */
-/*     margin-bottom: 20px; */
-/* } */
-
 .widgets-section weather-current {
     cursor: pointer;
     transition: transform 0.2s;
@@ -303,21 +374,12 @@ weather-controls .error-message:not(:empty) {
         padding: 12px 0;
     }
 
-    .meta-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-
     .current-temp {
-        font-size: 36px;
+        font-size: 38px;
     }
 
     #map {
-        height: 180px;
-    }
-
-    .weather-meta-inner,
-    .weather-map-inner {
-        padding: 16px;
+        height: 200px;
     }
 }
 
@@ -329,7 +391,7 @@ weather-controls .error-message:not(:empty) {
     .weather-body {
         grid-template-columns: 1fr auto;
         grid-template-rows: auto auto;
-        gap: 8px 12px;
+        gap: var(--weather-space-sm) var(--weather-space-md);
     }
 
     .weather-left {
@@ -351,15 +413,15 @@ weather-controls .error-message:not(:empty) {
 
     .weather-stats {
         flex-direction: row;
-        gap: 12px;
+        gap: var(--weather-space-md);
     }
 
     .stat-item {
-        gap: 4px;
+        gap: var(--weather-space-xs);
     }
 
     .current-temp {
-        font-size: 32px;
+        font-size: 34px;
     }
 
     weather-controls .controls {
@@ -368,7 +430,7 @@ weather-controls .error-message:not(:empty) {
 
     weather-controls input[type="text"] {
         width: 100%;
-        margin-bottom: 8px;
+        margin-bottom: var(--weather-space-xs);
     }
 }
 
@@ -377,5 +439,9 @@ weather-controls .error-message:not(:empty) {
     weather-controls button,
     .widgets-section weather-current {
         transition: none;
+    }
+
+    .skeleton-text {
+        animation: none;
     }
 }

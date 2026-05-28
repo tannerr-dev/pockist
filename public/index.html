@@ -266,30 +266,40 @@
 
     <template id="weather-meta">
         <div class="weather-meta-inner">
-            <div class="meta-grid">
-                <div class="meta-item">
-                    <div class="meta-label">Latitude</div>
-                    <div class="meta-value skeleton-text" data-meta="latitude">--</div>
+            <div class="section-divider">
+                <div class="meta-grid data-grid data-grid--2">
+                    <div class="meta-item data-row">
+                        <span class="meta-label data-row-label">Latitude</span>
+                        <span class="meta-value data-row-value skeleton-text" data-meta="latitude">--</span>
+                    </div>
+                    <div class="meta-item data-row">
+                        <span class="meta-label data-row-label">Longitude</span>
+                        <span class="meta-value data-row-value skeleton-text" data-meta="longitude">--</span>
+                    </div>
                 </div>
-                <div class="meta-item">
-                    <div class="meta-label">Longitude</div>
-                    <div class="meta-value skeleton-text" data-meta="longitude">--</div>
+            </div>
+            <div class="section-divider">
+                <div class="meta-grid data-grid data-grid--2">
+                    <div class="meta-item data-row">
+                        <span class="meta-label data-row-label">Timezone</span>
+                        <span class="meta-value data-row-value skeleton-text" data-meta="timezone">--</span>
+                    </div>
+                    <div class="meta-item data-row">
+                        <span class="meta-label data-row-label">Elevation</span>
+                        <span class="meta-value data-row-value skeleton-text" data-meta="elevation">--</span>
+                    </div>
                 </div>
-                <div class="meta-item">
-                    <div class="meta-label">Timezone</div>
-                    <div class="meta-value skeleton-text" data-meta="timezone">--</div>
-                </div>
-                <div class="meta-item">
-                    <div class="meta-label">Elevation</div>
-                    <div class="meta-value skeleton-text" data-meta="elevation">--</div>
-                </div>
-                <div class="meta-item">
-                    <div class="meta-label">UTC Offset</div>
-                    <div class="meta-value skeleton-text" data-meta="utc-offset">--</div>
-                </div>
-                <div class="meta-item">
-                    <div class="meta-label">Gen Time</div>
-                    <div class="meta-value skeleton-text" data-meta="gen-time">--</div>
+            </div>
+            <div class="section-divider">
+                <div class="meta-grid data-grid data-grid--2">
+                    <div class="meta-item data-row">
+                        <span class="meta-label data-row-label">UTC Offset</span>
+                        <span class="meta-value data-row-value skeleton-text" data-meta="utc-offset">--</span>
+                    </div>
+                    <div class="meta-item data-row">
+                        <span class="meta-label data-row-label">Gen Time</span>
+                        <span class="meta-value data-row-value skeleton-text" data-meta="gen-time">--</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -297,8 +307,9 @@
 
     <template id="weather-map">
         <div class="weather-map-inner">
+            <div class="section-label">Location</div>
             <div id="map"></div>
-            <div class="map-attribution" style="text-align:center;">
+            <div class="map-attribution">
                 <p><small>Data from <a href="https://open-meteo.com/">Open-Meteo</a> | Maps by <a href="https://leafletjs.com/">Leaflet</a></small></p>
                 <p><small id="mapAttr"></small></p>
             </div>

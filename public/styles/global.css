@@ -1,5 +1,6 @@
 :root {
 	--hue: 180;
+	--secondary-hue: 280;
 	--mod: 1;
 
 	--color: hsl(var(--hue), calc(50% * var(--mod)), 50%);
@@ -16,6 +17,10 @@
 	--accent-dark: hsl(var(--hue), calc(22% * var(--mod)), 28%);
 	--border-color: hsl(var(--hue), calc(30% * var(--mod)), 25%);
 	--error: hsl(0, calc(70% * var(--mod)), 55%);
+
+	--secondary: hsl(var(--secondary-hue), calc(50% * var(--mod)), 50%);
+	--secondary-muted: hsl(var(--secondary-hue), calc(40% * var(--mod)), 60%);
+	--secondary-accent: hsl(var(--secondary-hue), calc(32% * var(--mod)), 46%);
 }
 [data-theme="light"] {
 	--bg: hsl(var(--hue), calc(20% * var(--mod)), 88%);
