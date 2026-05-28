@@ -673,21 +673,6 @@
 	border-bottom-color: transparent;
 }
 
-.list-detail-share-btn {
-	margin-left: auto;
-}
-
-.list-detail-share-btn .share-btn {
-	border: 1px solid var(--secondary);
-	color: var(--secondary);
-}
-
-.list-detail-share-btn .share-btn:hover {
-	background: var(--secondary);
-	color: var(--bg);
-	border-color: var(--secondary);
-}
-
 /* Always show card actions on touch devices */
 @media (hover: none) {
 	.list-index-card-actions button {

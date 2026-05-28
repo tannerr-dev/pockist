@@ -37,7 +37,7 @@
 	--accent-2: hsl(var(--hue), calc(32% * var(--mod)), 32%);
 	--accent-dark: hsl(var(--hue), calc(22% * var(--mod)), 8%);
 	--border-color: hsl(var(--hue), calc(20% * var(--mod)), 70%);
-	--error: hsl(0, calc(70% * var(--mod)), 50%);
+	--error: hsl(0, calc(70% * var(--error-mod)), 50%);
 }
 html {
 	background: var(--bg);
@@ -323,6 +323,17 @@ home-page{
 
 .btn-icon {
     padding: 10px;
+}
+
+.share-btn {
+    border: 1px solid var(--secondary);
+    color: var(--secondary);
+}
+
+.share-btn:hover {
+    background: var(--secondary);
+    color: var(--bg);
+    border-color: var(--secondary);
 }
 
 
