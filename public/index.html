@@ -54,7 +54,12 @@
     <meta name="twitter:image" content="https://pockist.com/assets/preview.png">
   </head>
   <body>
-    <nav>
+    <my-nav></my-nav>
+    <main></main>
+    <home-settings-drawer></home-settings-drawer>
+
+    <!-- TEMPLATES -->
+    <template id="my-nav">
       <div id="home">
         <a href="/">
             <svg
@@ -141,18 +146,8 @@
         <button type="button" class="drawer-btn drawer-btn--import" id="drawer-import-btn">Import Data</button>
         <input type="file" id="drawer-import-input" accept=".json" style="display: none;">
       </div>
-    </nav>
+    </template>
 
-
-    <!-- ###############  END NAV SECTION, START OF MAIN ############ -->
-
-    <main>
-    </main>
-
-    <home-settings-drawer></home-settings-drawer>
-
-
-    <!-- TEMPLATES -->
     <template id="home-page">
       <h1>Pockist</h1>
       <section class="widgets-section" data-zone="main"></section>
@@ -443,9 +438,6 @@
       <button class="drawer-btn drawer-btn--import" type="button">Reset to Defaults</button>
     </template>
 
-    <!-- END OF TEMPLATES -->
-
-    <script src="/scripts/nav.js"></script>
     <script src="/app.js" type="module"></script>
   </body>
 </html>

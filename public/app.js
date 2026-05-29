@@ -5,6 +5,7 @@ import { DBManager } from "./services/DBManager.js";
 import { ImportExportService } from "./services/ImportExportService.js";
 import './components/ShareView.js';
 import './components/HomeSettingsDrawer.js';
+import './components/MyNav.js';
 
 // navigator.serviceWorker.addEventListener("message", (event) => {
 //     if (event.data && event.data.type === "CACHE_UPDATED") {
