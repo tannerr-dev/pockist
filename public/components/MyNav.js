@@ -43,17 +43,13 @@ export class MyNav extends HTMLElement {
 
         const colorSlider = document.getElementById("color-slider");
         colorSlider.addEventListener("input", () => {
-            console.log("color slider input")
             hueCheck(colorSlider.value)
         });
         let timeoutId = null;
-        colorSlider.addEventListener("pointerup", ()=>{
-            console.log("color slider pointerup")
-             // Clear existing timeout
+        colorSlider.addEventListener("change", ()=>{
             if (timeoutId) {
                 clearTimeout(timeoutId);
             }
-            // Debounce save
             timeoutId = setTimeout(async () => {
                 localStorage.setItem("hue", colorSlider.value);
             }, 1000);
