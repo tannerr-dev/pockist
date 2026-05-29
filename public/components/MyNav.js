@@ -41,9 +41,14 @@ export class MyNav extends HTMLElement {
             }
         }
 
-        let timeoutId = null;
         const colorSlider = document.getElementById("color-slider");
         colorSlider.addEventListener("input", () => {
+            console.log("color slider input")
+            hueCheck(colorSlider.value)
+        });
+        let timeoutId = null;
+        colorSlider.addEventListener("pointerup", ()=>{
+            console.log("color slider pointerup")
              // Clear existing timeout
             if (timeoutId) {
                 clearTimeout(timeoutId);
@@ -52,10 +57,7 @@ export class MyNav extends HTMLElement {
             timeoutId = setTimeout(async () => {
                 localStorage.setItem("hue", colorSlider.value);
             }, 1000);
-            // themeColor = colorSlider.value;
-            // console.log(colorSlider.value)
-            hueCheck(colorSlider.value)
-        });
+        })
 
         function detectColorScheme() {
             var theme = "dark";
