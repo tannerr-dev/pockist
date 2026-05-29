@@ -119,14 +119,16 @@ nav {
 }
 #drawer {
 	position: fixed;
+    /* top: 60px; */
 	position-anchor: --menu-btn;
 	position-area: bottom span-right;
 	margin: 0;
-	margin-block-start: 8px;
-	inset: auto;
+	margin-block-start: 9px;
+	/* inset: auto; */
 	width: 200px;
 	background-color: var(--bg);
-	border: 1px solid var(--border-color);
+	border-left: 1px solid var(--border-color);
+	border-bottom: 1px solid var(--border-color);
 	border-radius: 0;
 	padding: 0;
 	overflow: visible;

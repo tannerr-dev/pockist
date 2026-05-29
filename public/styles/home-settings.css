@@ -5,8 +5,12 @@
 
 home-settings-drawer {
     position: fixed;
-    top: 60px;
-    right: -200px;
+    /* top: 60px; */
+	position-anchor: --menu-btn;
+	position-area: bottom span-right;
+    margin:0;
+	margin-block-start: 9px;
+    /* right: -200px; */
     width: 200px;
     background-color: var(--bg);
     z-index: 3;
@@ -17,6 +21,7 @@ home-settings-drawer {
     overflow-y: auto;
     border-radius: 0;
     border-left: 1px solid var(--border-color);
+	border-bottom: 1px solid var(--border-color);
 }
 
 home-settings-drawer[open] {
