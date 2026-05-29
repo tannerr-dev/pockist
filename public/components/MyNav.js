@@ -1,4 +1,5 @@
 export class MyNav extends HTMLElement {
+
 	connectedCallback() {
 		const template = document.getElementById("my-nav");
 		const content = template.content.cloneNode(true);
@@ -39,9 +40,18 @@ export class MyNav extends HTMLElement {
                 localStorage.setItem("mod", 1);
             }
         }
+
+        let timeoutId = null;
         const colorSlider = document.getElementById("color-slider");
         colorSlider.addEventListener("input", () => {
-            localStorage.setItem("hue", colorSlider.value);
+             // Clear existing timeout
+            if (timeoutId) {
+                clearTimeout(timeoutId);
+            }
+            // Debounce save
+            timeoutId = setTimeout(async () => {
+                localStorage.setItem("hue", colorSlider.value);
+            }, 1000);
             // themeColor = colorSlider.value;
             // console.log(colorSlider.value)
             hueCheck(colorSlider.value)
