@@ -13,10 +13,10 @@ home-settings-drawer {
     transition: right 0.3s ease;
     display: none;
     flex-direction: column;
-    padding: 16px;
-    gap: 10px;
+    padding: 0;
     overflow-y: auto;
-    border-bottom-left-radius: 12px;
+    border-radius: 0;
+    border-left: 1px solid var(--border-color);
 }
 
 home-settings-drawer[open] {
@@ -30,15 +30,14 @@ home-settings-drawer[open] {
     text-align: center;
     font-size: 0.85rem;
     color: var(--text-muted);
-    font-family: monospace;
-    margin: 4px 0;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border-color);
 }
 
 /* Widget list container */
 .settings-widgets-list {
     display: flex;
     flex-direction: column;
-    gap: 6px;
 }
 
 /* Widget row - matches nav drawer item spacing */
@@ -46,8 +45,8 @@ home-settings-drawer[open] {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 10px 0;
-    border-bottom: 1px solid var(--accent-2);
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border-color);
 }
 
 .settings-widget-row:last-child {
@@ -55,8 +54,7 @@ home-settings-drawer[open] {
 }
 
 .settings-widget-name {
-    font-size: 16px;
-    font-family: monospace;
+    font-size: 15px;
     color: var(--text);
 }
 
@@ -82,7 +80,7 @@ home-settings-drawer[open] {
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: var(--accent-2);
+    background-color: var(--border-color);
     border-radius: 22px;
     transition: 0.2s;
 }
@@ -109,18 +107,16 @@ home-settings-drawer[open] {
 
 /* Back text */
 .settings-back {
+    display: block;
+    width: 100%;
     background: none;
     border: none;
+    border-bottom: 1px solid var(--border-color);
     color: var(--text-muted);
-    font-family: monospace;
     font-size: 0.85rem;
     cursor: pointer;
-    padding: 0;
+    padding: 12px 16px;
     text-align: left;
-    margin-bottom: 4px;
-}
-.settings-back:hover {
-    color: var(--text);
 }
 
 /* Gear icon in nav drawer */
