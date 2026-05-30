@@ -662,6 +662,10 @@
 	border-bottom-color: transparent;
 }
 
+.list-detail-share-btn {
+	margin-left: auto;
+}
+
 /* Always show card actions on touch devices */
 @media (hover: none) {
 	.list-index-card-actions button {
