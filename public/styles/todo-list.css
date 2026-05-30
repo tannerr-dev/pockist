@@ -419,12 +419,6 @@
 	align-items: center;
 }
 
-/* Footer buttons - use visibility to reserve space and prevent layout shift */
-.btn.hidden {
-	visibility: hidden;
-	pointer-events: none;
-}
-
 /* ============================================================================
    TODO LIST WIDGET (homepage paginated version)
    ============================================================================ */
@@ -468,31 +462,39 @@
 .todo-widget-slots {
 	display: flex;
 	flex-direction: column;
+	overflow: hidden;
+	height: 384px;
 }
 
-/* Nav bar slot */
-.todo-widget-nav {
+.todo-widget-slots .todo-empty {
+	flex: 1;
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	padding: 10px 0;
-	min-height: 3rem;
-	box-sizing: border-box;
-	cursor: pointer;
-	color: var(--accent);
+}
+
+/* Nav button row */
+.todo-widget-nav-container {
+	display: flex;
+	align-items: center;
+	padding: 8px 0;
+	border-top: 1px solid var(--border-color);
+	gap: 12px;
+	width: 100%;
+}
+
+.todo-widget-nav-container:empty {
+	display: none;
+}
+
+.todo-widget-nav-btn {
+	flex: 1;
 	font-size: 13px;
-	gap: 4px;
-	opacity: 0.7;
-	border-bottom: 1px solid var(--border-color);
 }
 
-.todo-widget-nav:last-child {
-	border-bottom: none;
-}
-
-.todo-widget-nav:hover {
-	background-color: color-mix(in srgb, var(--text) 5%, transparent);
-	opacity: 1;
+.todo-widget-nav-btn:disabled {
+	opacity: 0.3;
+	cursor: default;
 }
 
 /* ============================================================================
