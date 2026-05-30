@@ -19,9 +19,9 @@ home-settings-drawer {
     flex-direction: column;
     padding: 0;
     overflow-y: auto;
-    border-radius: 0;
     border-left: 1px solid var(--border-color);
 	border-bottom: 1px solid var(--border-color);
+	border-radius: 0 0 0 8px;
 }
 
 home-settings-drawer[open] {
