@@ -14,6 +14,7 @@
     <link href="/styles/weather-components.css" rel="stylesheet">
     <link href="/styles/list.css" rel="stylesheet">
     <link href="/styles/dialogs.css" rel="stylesheet">
+    <link href="/styles/archive.css" rel="stylesheet">
     <link href="/styles/home-settings.css" rel="stylesheet">
 
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -139,6 +140,7 @@
         <a href="/" class="drawer-btn" data-nav-link>Home</a>
         <a href="/list" class="drawer-btn" data-nav-link>Lists</a>
         <a href="/note" class="drawer-btn" data-nav-link>Notes</a>
+        <a href="/archive" class="drawer-btn" data-nav-link>Archive</a>
         <a href="/weather" class="drawer-btn" data-nav-link>Weather</a>
         <a href="/about" class="drawer-btn" data-nav-link>About</a>
         <div class="drawer-divider"></div>
@@ -371,7 +373,7 @@
         </div>
         <div class="list-footer" id="single-list-footer">
           <div class="list-footer-actions">
-            <button id="clear-completed" class="btn btn-ghost">Clear complete</button>
+            <button id="clear-completed" class="btn btn-ghost">Archive complete</button>
             <button id="sort-items" class="btn btn-ghost">Sort complete</button>
           </div>
         </div>
@@ -398,7 +400,7 @@
         <div class="list-widget-nav-container"></div>
         <div class="list-footer" id="single-list-footer">
           <div class="list-footer-actions">
-            <button id="clear-completed" class="btn btn-ghost">Clear complete</button>
+            <button id="clear-completed" class="btn btn-ghost">Archive complete</button>
             <button id="sort-items" class="btn btn-ghost">Sort complete</button>
           </div>
         </div>
@@ -446,6 +448,27 @@
       <div class="settings-widgets-list"></div>
       <div class="drawer-divider"></div>
       <button class="drawer-btn drawer-btn--import" type="button">Reset to Defaults</button>
+    </template>
+
+    <template id="pockist-archive">
+      <div class="archive-container">
+        <h1>Archive</h1>
+        <div class="archive-empty" style="display: none;">
+          <p>Nothing archived yet.</p>
+        </div>
+        <div class="archive-section archive-section--notes">
+          <h2 class="archive-section-heading">Notes</h2>
+          <div class="archive-list"></div>
+        </div>
+        <div class="archive-section archive-section--lists">
+          <h2 class="archive-section-heading">Lists</h2>
+          <div class="archive-list"></div>
+        </div>
+        <div class="archive-section archive-section--items">
+          <h2 class="archive-section-heading">List Items</h2>
+          <div class="archive-list"></div>
+        </div>
+      </div>
     </template>
 
     <script src="/app.js" type="module"></script>

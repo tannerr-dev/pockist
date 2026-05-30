@@ -38,6 +38,7 @@ func main() {
 	server.HandleFunc("/list/", catchAllClientRoutesHandler)
 	server.HandleFunc("/weather", catchAllClientRoutesHandler)
 	server.HandleFunc("/about", catchAllClientRoutesHandler)
+	server.HandleFunc("/archive", catchAllClientRoutesHandler)
 	// Share view route (client-side route)
 	server.HandleFunc("/share/", catchAllClientRoutesHandler)
 

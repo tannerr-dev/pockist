@@ -146,13 +146,13 @@ export class NoteIndexPage extends NoteBase {
 		await this._reloadNotes();
 	}
 
-	async _doDeleteNote(noteId) {
+	async _doArchiveNote(noteId) {
 		const note = this._notes.find(n => n.id === noteId);
 		const title = note ? this._extractTitle(note.content) : 'this note';
-		const confirmed = await DialogService.confirm(`Delete "${title}"?`, 'Delete');
+		const confirmed = await DialogService.confirm(`Archive "${title}"?`, 'Archive');
 		if (!confirmed) return;
 
-		await DBManager.deleteItem(noteId);
+		await DBManager.archiveItem(noteId);
 		await this._reloadNotes();
 	}
 }

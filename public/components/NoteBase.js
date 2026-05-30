@@ -189,7 +189,7 @@ export class NoteBase extends HTMLElement {
 			{ label: 'Convert to List', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>', action: 'convert' },
 			{ label: 'Move to List', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>', action: 'move-to-list' },
 			{ label: 'Merge with Note', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>', action: 'merge' },
-			{ label: 'Delete', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>', action: 'delete', danger: true }
+			{ label: 'Archive', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>', action: 'archive', danger: true }
 		]);
 
 		if (!action) return;
@@ -208,9 +208,9 @@ export class NoteBase extends HTMLElement {
 				case 'merge':
 					await this._doMergeWithNote(noteId);
 					break;
-				case 'delete':
-					await this._doDeleteNote(noteId);
-					break;
+			case 'archive':
+				await this._doArchiveNote(noteId);
+				break;
 			}
 		} catch (error) {
 			console.error('Note action error:', error);
@@ -304,13 +304,13 @@ export class NoteBase extends HTMLElement {
 		await this._reloadNotes();
 	}
 
-	async _doDeleteNote(noteId) {
+	async _doArchiveNote(noteId) {
 		const note = this._notes.find(n => n.id === noteId);
 		const title = note ? this._extractTitle(note.content) : 'this note';
-		const confirmed = await DialogService.confirm(`Delete "${title}"?`, 'Delete');
+		const confirmed = await DialogService.confirm(`Archive "${title}"?`, 'Archive');
 		if (!confirmed) return;
 
-		await DBManager.deleteItem(noteId);
+		await DBManager.archiveItem(noteId);
 		await this._reloadNotes();
 	}
 

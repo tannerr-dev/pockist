@@ -172,7 +172,7 @@ export class ShareButton extends HTMLElement {
                 deleteBtn.addEventListener('click', async () => {
                     const confirmed = await DialogService.confirm(
                         'Are you sure you want to delete this share? This cannot be undone.',
-                        'Delete Share'
+                        'Remove Share'
                     );
                     if (!confirmed) return;
 

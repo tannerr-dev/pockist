@@ -144,7 +144,7 @@ export class ListBase extends HTMLElement {
 			this._editItem(e.detail.itemId, e.detail.text);
 		});
 		this._listsContainerEl?.addEventListener("list-delete", (e) => {
-			this._deleteItem(e.detail.itemId);
+			this._archiveItem(e.detail.itemId);
 		});
 		this._listsContainerEl?.addEventListener("list-move-up", (e) => {
 			this._moveItem(e.detail.itemId, -1);
@@ -179,7 +179,7 @@ export class ListBase extends HTMLElement {
 	}
 
 	_getLinkedItems() {
-		return this._linkedItems || [];
+		return (this._linkedItems || []).filter(i => !i.meta?.archived);
 	}
 
 	// Item CRUD
@@ -266,30 +266,22 @@ export class ListBase extends HTMLElement {
 		}
 	}
 
-	async _deleteItem(itemId) {
+	async _archiveItem(itemId) {
 		const item = this._linkedItems.find(i => i.id === itemId);
 		if (!item) return;
 
-		const confirmed = await DialogService.confirm(`Delete "${item.content}"? This cannot be undone.`, "Delete");
+		const confirmed = await DialogService.confirm(`Archive "${item.content}"?`, "Archive");
 		if (!confirmed) return;
 
 		const listItem = this._getCurrentListItem();
 		if (!listItem) return;
 
-		const deletedIndex = this._linkedItems.findIndex(i => i.id === itemId);
-		listItem.links = (listItem.links || []).filter(l => l.id !== itemId);
-
-		listItem.links.forEach((link, idx) => {
-			link.order = idx;
-		});
-
 		try {
-			await DBManager.saveItem(listItem);
-			await DBManager.hardDeleteItem(itemId);
+			await DBManager.archiveItem(itemId);
 			this._linkedItems = await DBManager.getLinkedItems(listItem.id);
 			this._onAfterDelete(itemId);
 		} catch (error) {
-			console.error(`[${this.constructor.name}] Error saving after delete:`, error);
+			console.error(`[${this.constructor.name}] Error archiving item:`, error);
 			await this._loadCurrentList();
 			this._renderContent();
 		}
@@ -331,8 +323,8 @@ export class ListBase extends HTMLElement {
 
 		const itemText = completedItems.length === 1 ? 'item' : 'items';
 		const confirmed = await DialogService.confirm(
-			`Clear ${completedItems.length} completed ${itemText}? This cannot be undone.`,
-			'Clear'
+			`Archive ${completedItems.length} completed ${itemText}?`,
+			'Archive'
 		);
 		if (!confirmed) return;
 
@@ -346,7 +338,7 @@ export class ListBase extends HTMLElement {
 		try {
 			await DBManager.saveItem(listItem);
 			for (const id of completedIds) {
-				await DBManager.hardDeleteItem(id);
+				await DBManager.archiveItem(id);
 			}
 			this._linkedItems = await DBManager.getLinkedItems(listItem.id);
 			this._onAfterClear(completedIds);
@@ -396,7 +388,7 @@ export class ListBase extends HTMLElement {
 			{ label: 'Move to List', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>', action: 'move-to-list' },
 			{ label: 'Convert to Note', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>', action: 'convert-to-note' },
 			{ label: 'Edit', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>', action: 'edit' },
-			{ label: 'Delete', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>', action: 'delete', danger: true }
+					{ label: 'Archive', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>', action: 'archive', danger: true }
 		]);
 
 		if (!action) return;
@@ -420,8 +412,8 @@ export class ListBase extends HTMLElement {
 					}
 					break;
 				}
-				case 'delete':
-					await this._deleteItem(itemId);
+				case 'archive':
+					await this._archiveItem(itemId);
 					break;
 			}
 		} catch (error) {
@@ -504,18 +496,13 @@ export class ListBase extends HTMLElement {
 		}
 	}
 
-	async _deleteList(listId) {
-		if (this._listItems.length <= 1) {
-			alert("Cannot delete the last list");
-			return;
-		}
-
+	async _archiveList(listId) {
 		const listMeta = this._listItems.find(item => item.id === listId);
-		const confirmed = await DialogService.confirm(`Delete "${listMeta?.content || 'this list'}"? This cannot be undone.`, "Delete");
+		const confirmed = await DialogService.confirm(`Archive "${listMeta?.content || 'this list'}"?`, "Archive");
 		if (!confirmed) return;
 
 		try {
-			await DBManager.deleteItem(listId);
+			await DBManager.archiveItem(listId);
 			this._listItems = this._listItems.filter(item => item.id !== listId);
 			if (this._currentListId === listId) {
 				const defaultList = this._listItems.find(item => item.meta?.isDefault);
@@ -524,7 +511,7 @@ export class ListBase extends HTMLElement {
 			}
 			this._render();
 		} catch (error) {
-			console.error(`[${this.constructor.name}] Error deleting list:`, error);
+			console.error(`[${this.constructor.name}] Error archiving list:`, error);
 		}
 	}
 
@@ -727,7 +714,7 @@ export class ListBase extends HTMLElement {
 					{ label: 'Move Down', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>', action: 'move-down', danger: false },
 					{ label: 'Rename', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>', action: 'rename', danger: false },
 					{ label: 'Merge into Another List', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>', action: 'merge', danger: false },
-					{ label: 'Delete', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>', action: 'delete', danger: true }
+			{ label: 'Archive', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>', action: 'archive', danger: true }
 				]);
 
 				if (!action) return;
@@ -753,8 +740,8 @@ export class ListBase extends HTMLElement {
 					document.body.removeChild(dialog);
 					await this._doMergeListIntoAnother(listId);
 					return;
-				} else if (action === 'delete') {
-					await this._deleteList(listId);
+				} else if (action === 'archive') {
+					await this._archiveList(listId);
 				}
 
 				dialog.close();

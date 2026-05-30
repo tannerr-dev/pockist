@@ -4,6 +4,7 @@ import { NoteDetailPage } from "../components/NoteDetailPage.js";
 import { WeatherPage } from "../components/WeatherPage.js";
 import { ListIndexPage } from "../components/ListIndexPage.js";
 import { ListDetailPage } from "../components/ListDetailPage.js";
+import { ArchivePage } from "../components/ArchivePage.js";
 import { AboutPage } from "../components/AboutPage.js";
 import { ShareView } from "../components/ShareView.js";
 
@@ -31,6 +32,10 @@ export const routes = [
   {
     path: /^\/list\/(.+)$/,  // Matches /list/:listId
     component: ListDetailPage,
+  },
+  {
+    path: "/archive",
+    component: ArchivePage,
   },
   {
     path: "/about",

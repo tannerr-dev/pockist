@@ -157,7 +157,7 @@ export class ListIndexPage extends HTMLElement {
 			{ label: 'Move Up', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>', action: 'move-up' },
 			{ label: 'Move Down', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>', action: 'move-down' },
 			{ label: 'Merge into Another List', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>', action: 'merge' },
-			{ label: 'Delete', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>', action: 'delete', danger: true }
+			{ label: 'Archive', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>', action: 'archive', danger: true }
 		]);
 
 		if (!action) return;
@@ -169,8 +169,8 @@ export class ListIndexPage extends HTMLElement {
 				await this._moveList(listId, 1);
 			} else if (action === 'merge') {
 				await this._doMergeList(listId);
-			} else if (action === 'delete') {
-				await this._deleteList(listId);
+			} else if (action === 'archive') {
+				await this._archiveList(listId);
 			}
 		} catch (error) {
 			console.error('List action error:', error);
@@ -204,24 +204,20 @@ export class ListIndexPage extends HTMLElement {
 		Router.go(`/list/${target.id}`);
 	}
 
-	async _deleteList(listId) {
-		if (this._lists.length <= 1) {
-			alert("Cannot delete the last list");
-			return;
-		}
+	async _archiveList(listId) {
 		const item = this._lists.find(l => l.id === listId);
 		const confirmed = await DialogService.confirm(
-			`Delete "${item?.content || 'this list'}"? This cannot be undone.`,
-			"Delete"
+			`Archive "${item?.content || 'this list'}"?`,
+			"Archive"
 		);
 		if (!confirmed) return;
 
 		try {
-			await DBManager.deleteItem(listId);
+			await DBManager.archiveItem(listId);
 			this._lists = this._lists.filter(l => l.id !== listId);
 			this._render();
 		} catch (error) {
-			console.error('[ListIndexPage] Error deleting list:', error);
+			console.error('[ListIndexPage] Error archiving list:', error);
 		}
 	}
 
