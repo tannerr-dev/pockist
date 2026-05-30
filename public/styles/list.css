@@ -1,11 +1,11 @@
-.todo-list-container {
+.list-container {
 	display: flex;
 	flex-direction: column;
 	min-height: 200px;
 }
 
 /* Fixed height scrollable container */
-.todo-scroll-container {
+.list-scroll-container {
 	max-height: 60svh;
 	overflow-y: auto;
 	overflow-x: hidden;
@@ -15,7 +15,7 @@
 	width: 100%;
 }
 
-.todo-list-selector-row {
+.list-selector-row {
 	display: flex;
 	flex-direction: row;
 	align-items: center;
@@ -25,7 +25,7 @@
 	flex-wrap: wrap;
 }
 
-.todo-list-selector-row h2 {
+.list-selector-row h2 {
 	font-size: 17px;
 	color: var(--text);
 	margin: 0;
@@ -33,17 +33,17 @@
 	flex-shrink: 0;
 }
 
-.todo-heading-link {
+.list-heading-link {
 	color: var(--text);
 	cursor: pointer;
 }
 
-.todo-heading-link:hover {
+.list-heading-link:hover {
 	opacity: 0.7;
 }
 
 /* Selector and controls wrapper */
-.todo-list-selector-controls {
+.list-selector-controls {
 	display: flex;
 	align-items: center;
 	gap: 12px;
@@ -60,7 +60,7 @@
 	flex-shrink: 0;
 }
 
-.todo-input-row {
+.list-input-row {
 	display: flex;
 	flex-direction: row;
 	align-items: center;
@@ -73,7 +73,7 @@
 	width: 72px;
 }
 
-.todo-input-row input[type="text"] {
+.list-input-row input[type="text"] {
 	flex: 1;
 	padding: 10px 4px;
 	border: none;
@@ -86,11 +86,11 @@
 	transition: border-color 0.2s;
 }
 
-.todo-input-row input[type="text"]:focus {
+.list-input-row input[type="text"]:focus {
 	border-bottom-color: var(--accent);
 }
 
-.todo-input-row input[type="text"]::placeholder {
+.list-input-row input[type="text"]::placeholder {
 	color: var(--text-muted);
 	opacity: 0.5;
 }
@@ -255,14 +255,14 @@
 	width: 100%;
 }
 
-.todo-list-ul {
+.list-ul {
 	list-style: none;
 	padding: 0;
 	margin: 0;
 	width: 100%;
 }
 
-.todo-item {
+.item-row {
 	display: flex;
 	align-items: center;
 	gap: 12px;
@@ -272,11 +272,11 @@
 	box-sizing: border-box;
 }
 
-.todo-item:last-child {
+.item-row:last-child {
 	border-bottom: none;
 }
 
-.todo-item:hover {
+.item-row:hover {
 	background-color: color-mix(in srgb, var(--text) 5%, transparent);
 }
 
@@ -286,23 +286,23 @@
 	flex-shrink: 0;
 }
 
-.list-item .todo-text {
+.list-item .item-text {
 	display: -webkit-box;
 	-webkit-line-clamp: 2;
 	-webkit-box-orient: vertical;
 	overflow: hidden;
 }
 
-.list-item.is-overflowing .todo-text {
+.list-item.is-overflowing .item-text {
 	cursor: pointer;
 }
 
-.todo-item.completed .todo-text {
+.item-row.completed .item-text {
 	text-decoration: line-through;
 	opacity: 0.6;
 }
 
-.todo-checkbox {
+.item-checkbox {
 	width: 20px;
 	height: 20px;
 	flex-shrink: 0;
@@ -310,7 +310,7 @@
 	accent-color: var(--accent);
 }
 
-.todo-text {
+.item-text {
 	flex: 1;
 	font-size: 15px;
 	color: var(--text);
@@ -319,7 +319,7 @@
 	word-break: break-word;
 }
 
-.todo-delete {
+.item-delete {
 	width: 32px;
 	height: 32px;
 	border: 1px solid var(--error);
@@ -335,19 +335,19 @@
 	transition: all 0.2s;
 }
 
-.todo-delete:hover {
+.item-delete:hover {
 	background: var(--error);
 	color: var(--bg);
 }
 
-.todo-reorder {
+.item-reorder {
 	display: flex;
 	gap: 4px;
 	flex-shrink: 0;
 }
 
-.todo-move-up,
-.todo-move-down {
+.item-move-up,
+.item-move-down {
 	width: 28px;
 	height: 28px;
 	border: 1px solid var(--border-color);
@@ -363,27 +363,27 @@
 	transition: all 0.2s;
 }
 
-.todo-move-up:hover:not(:disabled),
-.todo-move-down:hover:not(:disabled) {
+.item-move-up:hover:not(:disabled),
+.item-move-down:hover:not(:disabled) {
 	background: var(--bg-3);
 	color: var(--text);
 	border-color: var(--border-color);
 }
 
-.todo-move-up:disabled,
-.todo-move-down:disabled {
+.item-move-up:disabled,
+.item-move-down:disabled {
 	opacity: 0.25;
 	cursor: default;
 }
 
-.todo-empty {
+.list-empty {
 	padding: 2rem 1rem;
 	text-align: center;
 	color: var(--text-muted);
 	font-size: 15px;
 }
 
-.todo-footer {
+.list-footer {
 	display: flex;
 	flex-direction: column;
 	justify-content: center;
@@ -396,7 +396,7 @@
 }
 
 /* Footer actions container for Sort and Clear Completed buttons */
-.todo-footer-actions {
+.list-footer-actions {
 	display: flex;
 	gap: 8px;
 	align-items: center;
@@ -413,7 +413,7 @@
 	overflow: hidden;
 }
 
-.todo-footer-actions .btn {
+.list-footer-actions .btn {
 	max-width: 200px;
 }
 
@@ -421,46 +421,46 @@
    TODO LIST WIDGET (homepage paginated version)
    ============================================================================ */
 
-.todo-widget {
+.list-widget {
 	min-height: auto;
 	padding: 0;
 }
 
-.todo-widget .todo-list-selector-row {
+.list-widget .list-selector-row {
 	margin-bottom: 8px;
 }
 
-.todo-widget .todo-input-row {
+.list-widget .list-input-row {
 	margin: 6px 0 12px 0;
 	gap: 8px;
 }
 
-.todo-widget .todo-input-row input[type="text"] {
+.list-widget .list-input-row input[type="text"] {
 	padding: 8px 4px;
 	font-size: 14px;
 }
 
-.todo-widget .todo-item {
+.list-widget .item-row {
 	padding: 10px 8px;
 }
 
-.todo-widget .list-item {
+.list-widget .list-item {
 	padding: 0 8px;
 }
 
-.todo-widget .todo-empty {
+.list-widget .list-empty {
 	padding: 1.25rem 0.75rem;
 	font-size: 14px;
 }
 
-.todo-widget-slots {
+.list-widget-slots {
 	display: flex;
 	flex-direction: column;
 	overflow: hidden;
 	max-height: 384px;
 }
 
-.todo-widget-slots .todo-empty {
+.list-widget-slots .list-empty {
 	flex: 1;
 	display: flex;
 	align-items: center;
@@ -468,7 +468,7 @@
 }
 
 /* Nav button row */
-.todo-widget-nav-container {
+.list-widget-nav-container {
 	display: flex;
 	align-items: center;
 	padding: 8px 0;
@@ -477,16 +477,16 @@
 	width: 100%;
 }
 
-.todo-widget-nav-container:empty {
+.list-widget-nav-container:empty {
 	display: none;
 }
 
-.todo-widget-nav-btn {
+.list-widget-nav-btn {
 	flex: 1;
 	font-size: 13px;
 }
 
-.todo-widget-nav-btn:disabled {
+.list-widget-nav-btn:disabled {
 	opacity: 0.3;
 	cursor: default;
 }
@@ -672,11 +672,11 @@
 
 /* Responsive */
 @media (max-width: 640px) {
-	.todo-input-row {
+	.list-input-row {
 		gap: 8px;
 	}
 
-	.todo-input-row input[type="text"] {
+	.list-input-row input[type="text"] {
 		font-size: 14px;
 	}
 }

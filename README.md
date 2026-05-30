@@ -7,7 +7,24 @@ https://pockist.com
 
 ---
 
-This website is a progressive web app. This means it runs a service worker in the browser that runs the app offline and locally. All data is stored locally. When you want to shre, you can create a temporary list or note that is then transferred to the cloud. The link and data is deleted after 24 hours.
+## TODO / Reminders
+
+### Drop old IndexedDB stores (notes, lists)
+
+In a future DB version bump (v10+), drop the legacy `notes` and `lists` IndexedDB object stores after confirming the unified `items` migration has completed.
+
+The full migration chain must remain intact for users upgrading from v8 or earlier, but once `migrateToItems()` has successfully copied data into `items`, the old stores are orphaned and can be deleted inside `onupgradeneeded`.
+
+Plan:
+1. Bump `DB_VERSION` to 10
+2. In `onupgradeneeded` (oldVersion < 10):
+   - Check `localStorage.getItem('itemsMigrationComplete')`
+   - If true, `db.deleteObjectStore('notes')` and `db.deleteObjectStore('lists')`
+   - If false (e.g. v8 → v10 direct), inline-migrate data first, then delete
+3. `migrateToItems()` becomes a no-op if old stores don't exist
+
+This will also be the point to clean up the legacy `TodoDB` and `textAreaDB` migration code if desired.
+
 
 I am using golang with sqlite on the backend with html, css, and javascript on the frontend. 
 Deployed with docker on a five dollar vps.

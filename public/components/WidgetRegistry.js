@@ -10,14 +10,14 @@
 export const WIDGET_REGISTRY = [
     {
         id: 'lists',
-        tag: 'todo-list-widget',
+        tag: 'pockist-list-widget',
         name: 'Lists',
         defaultEnabled: true,
         props: {},
     },
     {
         id: 'notes',
-        tag: 'local-notes',
+        tag: 'pockist-notes',
         name: 'Notes',
         defaultEnabled: false,
         props: {},

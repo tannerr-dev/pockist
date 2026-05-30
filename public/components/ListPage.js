@@ -1,13 +1,12 @@
 import { Router } from "../services/Router.js";
-import "./TodoList.js";
+import "./List.js";
 
-export class TodoListPage extends HTMLElement {
+export class ListPage extends HTMLElement {
 	connectedCallback() {
-		const template = document.getElementById("todo-list-page");
+		const template = document.getElementById("pockist-list-page");
 		const content = template.content.cloneNode(true);
 		this.appendChild(content);
 
-		// Set up PWA navigation links
 		document.querySelectorAll("a.pwa").forEach((a) => {
 			a.addEventListener("click", (event) => {
 				event.preventDefault();
@@ -18,4 +17,4 @@ export class TodoListPage extends HTMLElement {
 	}
 }
 
-customElements.define("todo-list-page", TodoListPage);
+customElements.define("pockist-list-page", ListPage);

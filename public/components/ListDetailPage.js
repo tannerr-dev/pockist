@@ -1,22 +1,21 @@
 import { Router } from "../services/Router.js";
 import { DBManager } from "../services/DBManager.js";
-import './TodoList.js';
+import './List.js';
 import './ShareButton.js';
 
-export class TodoListDetailPage extends HTMLElement {
+export class ListDetailPage extends HTMLElement {
 	_timeoutId = null;
 	_originalName = '';
 
 	connectedCallback() {
 		this._listId = this.params?.[0] || null;
 
-		const template = document.getElementById("todo-list-detail-page");
+		const template = document.getElementById("pockist-list-detail");
 		const content = template.content.cloneNode(true);
 
-		// Set list-id before connecting so ListBase picks it up in _init
-		const todoListEl = content.querySelector('todo-list');
-		if (todoListEl && this._listId) {
-			todoListEl.setAttribute('list-id', this._listId);
+		const listEl = content.querySelector('pockist-list');
+		if (listEl && this._listId) {
+			listEl.setAttribute('list-id', this._listId);
 		}
 
 		this.appendChild(content);
@@ -31,12 +30,12 @@ export class TodoListDetailPage extends HTMLElement {
 
 		try {
 			await DBManager.init();
-			const list = await DBManager.getList(this._listId);
+			const list = await DBManager.getItem(this._listId);
 			if (!list) {
 				Router.go('/list');
 				return;
 			}
-			this._listName = list.name || 'Untitled List';
+			this._listName = list.content || 'Untitled List';
 			this._originalName = this._listName;
 
 			const heading = this.querySelector('.list-detail-heading');
@@ -56,12 +55,11 @@ export class TodoListDetailPage extends HTMLElement {
 				shareBtn.setAttribute('title', this._listName);
 			}
 		} catch (error) {
-			console.error('[TodoListDetailPage] Error loading list:', error);
+			console.error('[ListDetailPage] Error loading list:', error);
 		}
 	}
 
 	_attachHeadingListeners(heading) {
-		// Debounced save on input
 		heading.addEventListener('input', () => {
 			if (this._timeoutId) {
 				clearTimeout(this._timeoutId);
@@ -71,7 +69,6 @@ export class TodoListDetailPage extends HTMLElement {
 			}, 1000);
 		});
 
-		// Immediate save on blur, clear pending debounce
 		heading.addEventListener('blur', () => {
 			if (this._timeoutId) {
 				clearTimeout(this._timeoutId);
@@ -80,7 +77,6 @@ export class TodoListDetailPage extends HTMLElement {
 			this._saveName(heading);
 		});
 
-		// Keyboard shortcuts
 		heading.addEventListener('keydown', (e) => {
 			if (e.key === 'Enter') {
 				e.preventDefault();
@@ -107,14 +103,14 @@ export class TodoListDetailPage extends HTMLElement {
 		}
 
 		try {
-			const list = await DBManager.getList(this._listId);
+			const list = await DBManager.getItem(this._listId);
 			if (!list) return;
-			list.name = newName;
-			await DBManager.saveList(list);
+			list.content = newName;
+			await DBManager.saveItem(list);
 			this._listName = newName;
 			this._originalName = newName;
 		} catch (error) {
-			console.error('[TodoListDetailPage] Error renaming list:', error);
+			console.error('[ListDetailPage] Error renaming list:', error);
 			heading.textContent = this._escapeHtml(this._listName);
 		}
 	}
@@ -126,4 +122,4 @@ export class TodoListDetailPage extends HTMLElement {
 	}
 }
 
-customElements.define("todo-list-detail-page", TodoListDetailPage);
+customElements.define("pockist-list-detail", ListDetailPage);

@@ -54,22 +54,22 @@ export class ListItem extends HTMLElement {
 	}
 
 	connectedCallback() {
-		this.className = `todo-item list-item ${this.completed ? 'completed' : ''}`;
+		this.className = `item-row list-item ${this.completed ? 'completed' : ''}`;
 		this.innerHTML = `
-			<input type="checkbox" class="todo-checkbox" ${this.completed ? 'checked' : ''}>
-			<span class="todo-text">${this._escapeHtml(this.text || '')}</span>
-			<div class="todo-reorder">
-				<button class="btn btn-icon btn-ghost todo-move-up" aria-label="Move up">▲</button>
-				<button class="btn btn-icon btn-ghost todo-move-down" aria-label="Move down">▼</button>
+			<input type="checkbox" class="item-checkbox" ${this.completed ? 'checked' : ''}>
+			<span class="item-text">${this._escapeHtml(this.text || '')}</span>
+			<div class="item-reorder">
+				<button class="btn btn-icon btn-ghost item-move-up" aria-label="Move up">▲</button>
+				<button class="btn btn-icon btn-ghost item-move-down" aria-label="Move down">▼</button>
 			</div>
-			<button class="btn btn-icon btn-outline-danger todo-delete" aria-label="Delete todo">×</button>
+			<button class="btn btn-icon btn-outline-danger item-delete" aria-label="Delete todo">×</button>
 		`;
 
-		this._checkbox = this.querySelector('.todo-checkbox');
-		this._textEl = this.querySelector('.todo-text');
-		this._moveUpBtn = this.querySelector('.todo-move-up');
-		this._moveDownBtn = this.querySelector('.todo-move-down');
-		this._deleteBtn = this.querySelector('.todo-delete');
+		this._checkbox = this.querySelector('.item-checkbox');
+		this._textEl = this.querySelector('.item-text');
+		this._moveUpBtn = this.querySelector('.item-move-up');
+		this._moveDownBtn = this.querySelector('.item-move-down');
+		this._deleteBtn = this.querySelector('.item-delete');
 
 		this._setupEventListeners();
 		this._updateReorderButtons();
