@@ -1,8 +1,6 @@
 import { Router } from "../services/Router.js";
 import { DBManager } from "../services/DBManager.js";
 import { DialogService } from "../services/DialogService.js";
-import { ShareService } from "../services/ShareService.js";
-import { ImportExportService } from "../services/ImportExportService.js";
 import { ListItem } from "./ListItem.js";
 
 /**
@@ -543,144 +541,6 @@ export class ListBase extends HTMLElement {
 	}
 
 	// -------------------------------------------------------------------------
-	// Share
-	// -------------------------------------------------------------------------
-	async _shareList() {
-		const list = this._getCurrentList();
-		if (!list) return;
-
-		const dialog = document.createElement('dialog');
-			dialog.className = 'dialog';
-			dialog.innerHTML = `
-				<div class="dialog-content">
-					<h3>Share List</h3>
-				<p class="share-title">"${this._escapeHtml(list.name || 'Untitled List')}"</p>
-				<div class="share-options">
-					<button class="share-option-btn share-option-link" type="button">
-						<span class="share-option-icon">&#128279;</span>
-						<span class="share-option-label">Temporary Public Link</span>
-						<span class="share-option-desc">Create a shareable link that expires in 24 hours</span>
-					</button>
-					<button class="share-option-btn share-option-json" type="button">
-						<span class="share-option-icon">&#128190;</span>
-						<span class="share-option-label">Download Pockist Format</span>
-						<span class="share-option-desc">Export as JSON for backup or re-import</span>
-					</button>
-					<button class="share-option-btn share-option-md" type="button">
-						<span class="share-option-icon">&#128196;</span>
-						<span class="share-option-label">Download Markdown</span>
-						<span class="share-option-desc">Export as a Markdown checklist file</span>
-					</button>
-				</div>
-				<div class="share-actions">
-					<button class="btn btn-ghost" type="button">Cancel</button>
-				</div>
-			</div>
-		`;
-
-		document.body.appendChild(dialog);
-		dialog.showModal();
-
-		const linkBtn = dialog.querySelector('.share-option-link');
-		const jsonBtn = dialog.querySelector('.share-option-json');
-		const mdBtn = dialog.querySelector('.share-option-md');
-		const cancelBtn = dialog.querySelector('.btn.btn-ghost');
-
-		const cleanup = () => {
-			dialog.close();
-			document.body.removeChild(dialog);
-		};
-
-		linkBtn.addEventListener('click', async () => {
-			cleanup();
-			await this._createShareLink(list);
-		});
-
-		jsonBtn.addEventListener('click', async () => {
-			cleanup();
-			try {
-				await ImportExportService.exportList(list);
-			} catch (error) {
-				console.error(`[${this.constructor.name}] Export failed:`, error);
-				alert(`Failed to export list: ${error.message}`);
-			}
-		});
-
-		mdBtn.addEventListener('click', async () => {
-			cleanup();
-			try {
-				await ImportExportService.exportMarkdown(list, 'list');
-			} catch (error) {
-				console.error(`[${this.constructor.name}] Markdown export failed:`, error);
-				alert(`Failed to export markdown: ${error.message}`);
-			}
-		});
-
-		cancelBtn.addEventListener('click', cleanup);
-		dialog.addEventListener('click', (e) => {
-			if (e.target === dialog) cleanup();
-		});
-	}
-
-	async _createShareLink(list) {
-		try {
-			const shareData = { notes: [], lists: [list] };
-			const result = await ShareService.createShare('list', shareData, list.name || 'Untitled List');
-			const fullUrl = `${window.location.origin}${result.url}`;
-
-			const dialog = document.createElement('dialog');
-			dialog.className = 'dialog';
-			dialog.innerHTML = `
-				<div class="dialog-content">
-					<h3>List Shared!</h3>
-					<p class="share-title">"${this._escapeHtml(list.name || 'Untitled List')}"</p>
-					<div class="share-result-card">
-						<span class="share-option-icon">&#128279;</span>
-						<span class="share-option-label">Temporary Public Link</span>
-						<span class="share-result-url">${fullUrl}</span>
-						<span class="share-result-meta">Link expires in ${result.expiresIn}</span>
-					</div>
-					<div class="dialog-footer">
-						<button class="btn btn-ghost share-close-btn" type="button">Close</button>
-						<button class="btn btn-outline share-copy-btn" type="button">Copy Link</button>
-					</div>
-				</div>
-			`;
-
-			document.body.appendChild(dialog);
-			dialog.showModal();
-
-			const copyBtn = dialog.querySelector('.share-copy-btn');
-			const urlSpan = dialog.querySelector('.share-result-url');
-			copyBtn.addEventListener('click', () => {
-				const url = urlSpan.textContent;
-				navigator.clipboard.writeText(url).then(() => {
-					copyBtn.textContent = 'Copied!';
-					setTimeout(() => copyBtn.textContent = 'Copy Link', 2000);
-				}).catch((err) => {
-					console.error('Failed to copy:', err);
-				});
-			});
-
-			const closeBtn = dialog.querySelector('.share-close-btn');
-			closeBtn.addEventListener('click', () => {
-				dialog.close();
-				document.body.removeChild(dialog);
-			});
-
-			dialog.addEventListener('click', (e) => {
-				if (e.target === dialog) {
-					dialog.close();
-					document.body.removeChild(dialog);
-				}
-			});
-		} catch (error) {
-			console.error(`[${this.constructor.name}] Share failed:`, error);
-			alert(`Failed to share list: ${error.message}`);
-		}
-	}
-
-	// -------------------------------------------------------------------------
 	// List selector dialog
 	// -------------------------------------------------------------------------
 	_showListSelectorDialog() {
@@ -693,18 +553,15 @@ export class ListBase extends HTMLElement {
 			const isFirst = index === 0;
 			const isLast = index === sortedMetadata.length - 1;
 			const isSelected = meta.id === this._currentListId;
-			const isDefault = meta.isDefault;
 
 			return `
 				<div class="list-selector-item ${isSelected ? 'selected' : ''}" data-list-id="${meta.id}">
 					<div class="list-selector-item-info">
 						<span class="list-selector-item-name" contenteditable="false" data-list-id="${meta.id}">${this._escapeHtml(meta.name)}</span>
-						${isDefault ? '<span class="list-selector-item-badge">default</span>' : ''}
 					</div>
 					<div class="list-selector-item-actions">
 						<button class="btn btn-icon btn-ghost list-selector-move-up ${isFirst ? 'disabled' : ''}" data-list-id="${meta.id}" ${isFirst ? 'disabled' : ''} title="Move up">▲</button>
 						<button class="btn btn-icon btn-ghost list-selector-move-down ${isLast ? 'disabled' : ''}" data-list-id="${meta.id}" ${isLast ? 'disabled' : ''} title="Move down">▼</button>
-						${!isDefault ? `<button class="btn btn-icon btn-ghost list-selector-set-default" data-list-id="${meta.id}" title="Set as default">★</button>` : ''}
 						<button class="btn btn-icon btn-outline-danger list-selector-delete" data-list-id="${meta.id}" title="Delete list">×</button>
 					</div>
 				</div>
@@ -732,6 +589,7 @@ export class ListBase extends HTMLElement {
 				if (e.target.classList.contains('list-selector-item-name')) return;
 
 				const listId = item.dataset.listId;
+				await this._setDefaultList(listId);
 				this._currentListId = listId;
 				dialog.close();
 				document.body.removeChild(dialog);
@@ -800,18 +658,7 @@ export class ListBase extends HTMLElement {
 			});
 		});
 
-		dialog.querySelectorAll('.list-selector-set-default').forEach(btn => {
-			btn.addEventListener('click', async (e) => {
-				e.stopPropagation();
-				const listId = btn.dataset.listId;
-				await this._setDefaultList(listId);
-				this._currentListId = listId;
-				dialog.close();
-				document.body.removeChild(dialog);
-				await this._loadCurrentList();
-				this._render();
-			});
-		});
+
 
 		dialog.querySelectorAll('.list-selector-delete').forEach(btn => {
 			btn.addEventListener('click', async (e) => {
@@ -861,13 +708,8 @@ export class ListBase extends HTMLElement {
 
 		if (this._listActionsEl) {
 			this._listActionsEl.innerHTML = `
-				<button class="btn btn-outline share-list-btn" title="Share list">Share</button>
+				<share-button type="list" data-id="${this._escapeHtml(this._currentListId || '')}" title="${this._escapeHtml(currentMeta?.name || 'Untitled List')}"></share-button>
 			`;
-
-			const shareBtn = this._listActionsEl.querySelector('.share-list-btn');
-			if (shareBtn) {
-				shareBtn.addEventListener('click', () => this._shareList());
-			}
 		}
 
 		this._renderContent();
@@ -889,11 +731,11 @@ export class ListBase extends HTMLElement {
 
 		const hasCompleted = list?.todos.some((t) => t.completed);
 		if (this._clearCompletedBtn) {
-			this._clearCompletedBtn.disabled = !hasCompleted;
+			this._clearCompletedBtn.classList.toggle('hidden', !hasCompleted);
 		}
 
 		if (this._sortTodosBtn) {
-			this._sortTodosBtn.disabled = !(list?.todos.length > 0);
+			this._sortTodosBtn.classList.toggle('hidden', !hasCompleted);
 		}
 	}
 

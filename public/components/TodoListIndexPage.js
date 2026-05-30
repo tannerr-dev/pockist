@@ -45,13 +45,12 @@ export class TodoListIndexPage extends HTMLElement {
 			const isFirst = index === 0;
 			const isLast = index === this._lists.length - 1;
 			return `
-				<div class="list-index-card ${meta.isDefault ? 'is-default' : ''}" data-list-id="${meta.id}">
+				<div class="list-index-card" data-list-id="${meta.id}">
 					<div class="list-index-card-content">
 						<div class="list-index-card-name" data-list-id="${meta.id}">${this._escapeHtml(meta.name)}</div>
-						<div class="list-index-card-meta">${total} item${total !== 1 ? 's' : ''}${meta.isDefault ? ' &middot; default' : ''}</div>
+						<div class="list-index-card-meta">${total} item${total !== 1 ? 's' : ''}</div>
 					</div>
 					<div class="list-index-card-actions">
-						${!meta.isDefault ? `<button class="btn btn-icon btn-ghost list-index-set-default" data-list-id="${meta.id}" title="Set as default">&#9734;</button>` : ''}
 						<button class="btn btn-icon btn-ghost list-index-move-up ${isFirst ? 'disabled' : ''}" data-list-id="${meta.id}" ${isFirst ? 'disabled' : ''} title="Move up">&#9650;</button>
 						<button class="btn btn-icon btn-ghost list-index-move-down ${isLast ? 'disabled' : ''}" data-list-id="${meta.id}" ${isLast ? 'disabled' : ''} title="Move down">&#9660;</button>
 						<button class="btn btn-icon btn-outline-danger list-index-delete" data-list-id="${meta.id}" title="Delete list">&times;</button>
@@ -71,7 +70,7 @@ export class TodoListIndexPage extends HTMLElement {
 		emptyNewBtn?.addEventListener('click', () => this._createList());
 
 		// Click on card content navigates to list
-		container?.addEventListener('click', (e) => {
+		container?.addEventListener('click', async (e) => {
 			const card = e.target.closest('.list-index-card');
 			if (!card) return;
 
@@ -80,16 +79,9 @@ export class TodoListIndexPage extends HTMLElement {
 
 			const listId = card.dataset.listId;
 			if (listId) {
+				await DBManager.setDefaultList(listId);
 				Router.go(`/list/${listId}`);
 			}
-		});
-
-		// Set default
-		container?.addEventListener('click', async (e) => {
-			const btn = e.target.closest('.list-index-set-default');
-			if (!btn) return;
-			e.stopPropagation();
-			await this._setDefault(btn.dataset.listId);
 		});
 
 		// Move up
@@ -127,16 +119,6 @@ export class TodoListIndexPage extends HTMLElement {
 			this._render();
 		} catch (error) {
 			console.error('[TodoListIndexPage] Error creating list:', error);
-		}
-	}
-
-	async _setDefault(listId) {
-		try {
-			await DBManager.setDefaultList(listId);
-			this._lists = await DBManager.getListMetadata();
-			this._render();
-		} catch (error) {
-			console.error('[TodoListIndexPage] Error setting default:', error);
 		}
 	}
 

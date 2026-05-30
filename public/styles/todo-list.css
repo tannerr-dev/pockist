@@ -21,8 +21,6 @@
 	align-items: center;
 	justify-content: space-between;
 	margin-bottom: 16px;
-	padding-top: 16px;
-	border-top: 1px solid var(--border-color);
 	gap: 12px;
 	flex-wrap: wrap;
 }
@@ -37,7 +35,6 @@
 
 .todo-heading-link {
 	color: var(--text);
-	text-decoration: none;
 	cursor: pointer;
 }
 
@@ -193,16 +190,6 @@
 	outline: none;
 }
 
-.list-selector-item-badge {
-	font-size: 11px;
-	padding: 2px 6px;
-	background-color: var(--accent);
-	color: white;
-	border-radius: 4px;
-	opacity: 0.8;
-	flex-shrink: 0;
-}
-
 .list-selector-item-actions {
 	display: flex;
 	align-items: center;
@@ -238,10 +225,6 @@
 .list-selector-item-actions button:disabled {
 	opacity: 0.15;
 	cursor: default;
-}
-
-.list-selector-set-default:hover:not(:disabled) {
-	color: var(--accent);
 }
 
 .list-selector-delete:hover:not(:disabled) {
@@ -406,7 +389,7 @@
 	justify-content: center;
 	align-items: center;
 	gap: 8px;
-	padding: 12px 0;
+	padding: 8px 0;
 	font-size: 14px;
 	color: var(--text-muted);
 	text-align: center;
@@ -417,6 +400,21 @@
 	display: flex;
 	gap: 8px;
 	align-items: center;
+}
+
+.btn.hidden {
+	opacity: 0;
+	pointer-events: none;
+	max-width: 0;
+	padding-left: 0;
+	padding-right: 0;
+	border-left-width: 0;
+	border-right-width: 0;
+	overflow: hidden;
+}
+
+.todo-footer-actions .btn {
+	max-width: 200px;
 }
 
 /* ============================================================================
@@ -455,15 +453,11 @@
 	font-size: 14px;
 }
 
-.todo-widget .todo-footer {
-	padding: 8px 0;
-}
-
 .todo-widget-slots {
 	display: flex;
 	flex-direction: column;
 	overflow: hidden;
-	height: 384px;
+	max-height: 384px;
 }
 
 .todo-widget-slots .todo-empty {
@@ -546,11 +540,6 @@
 	background-color: color-mix(in srgb, var(--text) 5%, transparent);
 }
 
-.list-index-card.is-default {
-	border-left: 3px solid var(--accent);
-	padding-left: 12px;
-}
-
 .list-index-card-content {
 	flex: 1;
 	min-width: 0;
@@ -601,11 +590,6 @@
 	background: var(--bg-3);
 	color: var(--text);
 	border-color: var(--border-color);
-}
-
-.list-index-set-default:hover {
-	color: var(--accent);
-	border-color: var(--accent);
 }
 
 .list-index-delete:hover {
@@ -673,6 +657,10 @@
 	background-color: color-mix(in srgb, var(--text) 15%, transparent);
 	outline: none;
 	border-bottom-color: transparent;
+}
+
+.list-detail-share-btn {
+	margin-left: auto;
 }
 
 /* Always show card actions on touch devices */
