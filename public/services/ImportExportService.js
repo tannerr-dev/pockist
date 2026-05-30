@@ -76,7 +76,15 @@ export class ImportExportService {
         }
 
         const scope = item.type === 'note' ? 'note' : (item.type === 'list' ? 'list' : 'item');
-        const exportData = this.#createExportPayload(scope, { items: [item] });
+
+        // For lists, include all linked items so the export is self-contained
+        let items = [item];
+        if (item.type === 'list' && Array.isArray(item.links) && item.links.length > 0) {
+            const linked = await DBManager.getLinkedItems(item.id);
+            items = [item, ...linked];
+        }
+
+        const exportData = this.#createExportPayload(scope, { items });
         const name = (item.content || '').split('\n')[0].slice(0, 32).trim() || 'untitled';
         const fileName = this.#generateFileName(scope, name);
 
@@ -235,26 +243,8 @@ export class ImportExportService {
         }
 
         if (!isV2) {
-            // Legacy v1.0 import
-            const summary = this.#generateImportSummary(data);
-            const shouldImport = await DialogService.confirm(
-                `This backup contains:\n${summary}\n\nImport will merge with existing data. Conflicts will be renamed. Continue?`,
-                'Import'
-            );
-            if (!shouldImport) {
-                return { success: false, cancelled: true };
-            }
-
-            const result = await this.#performImport(data);
-            await DBManager.recordImport({
-                id: data.exportId,
-                importedAt: new Date().toISOString(),
-                fileName: sourceName,
-                scope: data.scope,
-                summary: result.summary
-            });
-
-            return { success: true, summary: result.summary, scope: data.scope };
+            // Convert legacy v1.0 to v2.0 in memory, then show merge dialog
+            data = this.#convertLegacyToItems(data);
         }
 
         // v2.0 import with merge options
@@ -413,72 +403,87 @@ export class ImportExportService {
     }
 
     /**
-     * Legacy v1.0 import handler
+     * Convert legacy v1.0 format to v2.0 unified items in memory
      * @private
      */
-    static async #performImport(data) {
+    static #convertLegacyToItems(data) {
+        const items = [];
         const notes = data.data.notes || [];
         const lists = data.data.lists || [];
-
-        let notesImported = 0;
-        let listsImported = 0;
-        let todosImported = 0;
-
-        const [existingNotes, existingLists] = await Promise.all([
-            DBManager.getAllNotes(),
-            DBManager.getLists()
-        ]);
-
-        const existingNoteIds = new Set(existingNotes.map(n => n.id));
-        const existingListIds = new Set(existingLists.map(l => l.id));
 
         for (const note of notes) {
             if (!note || !note.id) continue;
 
-            let noteToSave = { ...note };
-
-            if (existingNoteIds.has(note.id)) {
-                const newId = `${note.id}-imported-${Date.now()}`;
-                noteToSave.id = newId;
-                noteToSave.title = `${note.title || 'Note'} (Imported)`;
-                console.log(`[ImportExportService] Note ${note.id} renamed to ${newId}`);
+            let content = note.content || '';
+            if (note.title) {
+                content = note.title + '\n' + content;
             }
+            content = String(content).trim();
 
-            await DBManager.saveNote(noteToSave.id, noteToSave);
-            notesImported++;
+            items.push({
+                id: String(note.id),
+                type: 'note',
+                content,
+                links: [],
+                meta: {
+                    createdAt: note.createdAt || new Date().toISOString(),
+                    updatedAt: note.updatedAt || new Date().toISOString(),
+                    archived: false,
+                    completed: false
+                }
+            });
         }
 
-        if (lists.length > 0) {
-            let updatedLists = [...existingLists];
+        for (const list of lists) {
+            if (!list || !list.id) continue;
 
-            for (const list of lists) {
-                if (!list || !list.id) continue;
+            const links = [];
+            const linkedItems = [];
 
-                let listToSave = { ...list };
+            if (Array.isArray(list.todos)) {
+                for (let i = 0; i < list.todos.length; i++) {
+                    const todo = list.todos[i];
+                    const todoId = String(todo.id || `todo-${Date.now()}-${i}`);
 
-                if (existingListIds.has(list.id)) {
-                    listToSave.id = `${list.id}-imported-${Date.now()}`;
-                    listToSave.name = `${list.name || 'List'} (Imported)`;
-                    console.log(`[ImportExportService] List ${list.id} renamed to ${listToSave.id}`);
+                    linkedItems.push({
+                        id: todoId,
+                        type: 'item',
+                        content: String(todo.text || ''),
+                        links: [],
+                        meta: {
+                            createdAt: new Date(todo.createdAt || Date.now()).toISOString(),
+                            updatedAt: new Date().toISOString(),
+                            archived: false,
+                            completed: todo.completed || false
+                        }
+                    });
+
+                    links.push({ id: todoId, order: i });
                 }
-
-                if (listToSave.todos) {
-                    todosImported += listToSave.todos.length;
-                }
-
-                updatedLists.push(listToSave);
-                listsImported++;
             }
 
-            await DBManager.saveLists(updatedLists);
+            items.push({
+                id: String(list.id),
+                type: 'list',
+                content: String(list.name || ''),
+                links,
+                meta: {
+                    createdAt: new Date(list.createdAt || Date.now()).toISOString(),
+                    updatedAt: new Date(list.updatedAt || Date.now()).toISOString(),
+                    archived: false,
+                    completed: false,
+                    isDefault: list.isDefault || false,
+                    order: typeof list.order === 'number' ? list.order : 0
+                }
+            });
+
+            items.push(...linkedItems);
         }
 
         return {
-            summary: {
-                notes: notesImported,
-                lists: listsImported,
-                todos: todosImported
-            }
+            ...data,
+            version: '2.0',
+            data: { items }
         };
     }
 
@@ -1193,27 +1198,6 @@ export class ImportExportService {
             console.warn('[ImportExportService] Could not check for duplicate:', error);
             return null;
         }
-    }
-
-    /**
-     * Generate human-readable import summary for legacy v1.0
-     * @private
-     */
-    static #generateImportSummary(data) {
-        const parts = [];
-        const notes = data.data.notes || [];
-        const lists = data.data.lists || [];
-
-        if (notes.length > 0) {
-            parts.push(`• ${notes.length} note${notes.length === 1 ? '' : 's'}`);
-        }
-
-        if (lists.length > 0) {
-            const totalTodos = lists.reduce((sum, list) => sum + (list.todos?.length || 0), 0);
-            parts.push(`• ${lists.length} list${lists.length === 1 ? '' : 's'} (${totalTodos} todo${totalTodos === 1 ? '' : 's'})`);
-        }
-
-        return parts.join('\n') || '• No data found';
     }
 
     /**

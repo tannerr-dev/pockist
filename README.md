@@ -223,7 +223,7 @@ Uses the unified `items` schema:
 
 ### Legacy File Format v1.0
 
-Older backups used separate `notes` and `lists` arrays. These are still supported for import.
+Older backups used separate `notes` and `lists` arrays. These are automatically converted to the unified v2.0 format during import and shown the same merge dialog as v2.0 backups.
 
 ```json
 {
