@@ -39,7 +39,27 @@ window.addEventListener("DOMContentLoaded", async () => {
         console.error("[App] Error stack:", err.stack);
         // Continue anyway
     }
-    
+
+    try {
+        // console.log('[App] Step 3: Running migrateFromTodoDB (TodoDB -> lists)...');
+        const todoDBResult = await DBManager.migrateFromTodoDB();
+        // console.log('[App] migrateFromTodoDB result:', todoDBResult);
+    } catch (err) {
+        console.error("[App] migrateFromTodoDB failed:", err);
+        console.error("[App] Error stack:", err.stack);
+        // Continue anyway
+    }
+
+    try {
+        // console.log('[App] Step 4: Running migrateToItems (v8 -> v9)...');
+        const itemsResult = await DBManager.migrateToItems();
+        // console.log('[App] migrateToItems result:', itemsResult);
+    } catch (err) {
+        console.error("[App] migrateToItems failed:", err);
+        console.error("[App] Error stack:", err.stack);
+        // Continue anyway
+    }
+
     // console.log('[App] All migrations completed');
 
 

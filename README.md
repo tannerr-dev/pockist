@@ -7,7 +7,24 @@ https://pockist.com
 
 ---
 
-This website is a progressive web app. This means it runs a service worker in the browser that runs the app offline and locally. All data is stored locally. When you want to shre, you can create a temporary list or note that is then transferred to the cloud. The link and data is deleted after 24 hours.
+## TODO / Reminders
+
+### Drop old IndexedDB stores (notes, lists)
+
+In a future DB version bump (v10+), drop the legacy `notes` and `lists` IndexedDB object stores after confirming the unified `items` migration has completed.
+
+The full migration chain must remain intact for users upgrading from v8 or earlier, but once `migrateToItems()` has successfully copied data into `items`, the old stores are orphaned and can be deleted inside `onupgradeneeded`.
+
+Plan:
+1. Bump `DB_VERSION` to 10
+2. In `onupgradeneeded` (oldVersion < 10):
+   - Check `localStorage.getItem('itemsMigrationComplete')`
+   - If true, `db.deleteObjectStore('notes')` and `db.deleteObjectStore('lists')`
+   - If false (e.g. v8 → v10 direct), inline-migrate data first, then delete
+3. `migrateToItems()` becomes a no-op if old stores don't exist
+
+This will also be the point to clean up the legacy `TodoDB` and `textAreaDB` migration code if desired.
+
 
 I am using golang with sqlite on the backend with html, css, and javascript on the frontend. 
 Deployed with docker on a five dollar vps.
@@ -148,22 +165,70 @@ Pockist supports importing and exporting data for backup and migration purposes.
 
 ### Features
 
-- **Full Backup**: Export all notes and lists as a single JSON file
+- **Full Backup**: Export all items as a single JSON file
 - **Individual Export**: Export specific notes or lists
-- **Import**: Import data from JSON files (merges with existing data)
+- **Import**: Import data from JSON files with merge options
+- **Smart Merge**: Skip duplicate items when importing lists
 - **Duplicate Detection**: Tracks imported files to prevent accidental re-imports
 - **Version Tracking**: Export format versioning for future compatibility
+- **Backwards Compatible**: Can still import v1.0 backups
 
-### File Format
+### File Format v2.0 (Current)
+
+Uses the unified `items` schema:
 
 ```json
 {
-  "version": "1.0",
+  "version": "2.0",
   "type": "pockist-backup",
   "scope": "full|note|list",
   "exportId": "uuid-timestamp",
   "exportedAt": "2026-04-28T10:30:00Z",
   "appVersion": "1.0.0",
+  "data": {
+    "items": [
+      {
+        "id": "note-20260530",
+        "type": "note",
+        "content": "Note title\nNote body...",
+        "links": [],
+        "meta": {
+          "createdAt": "2026-05-30T10:00:00Z",
+          "updatedAt": "2026-05-30T10:00:00Z",
+          "archived": false,
+          "completed": false
+        }
+      },
+      {
+        "id": "list-20260530",
+        "type": "list",
+        "content": "My List",
+        "links": [
+          { "id": "item-1", "order": 0 },
+          { "id": "item-2", "order": 1 }
+        ],
+        "meta": {
+          "createdAt": "2026-05-30T10:00:00Z",
+          "updatedAt": "2026-05-30T10:00:00Z",
+          "archived": false,
+          "completed": false,
+          "isDefault": false,
+          "order": 0
+        }
+      }
+    ]
+  }
+}
+```
+
+### Legacy File Format v1.0
+
+Older backups used separate `notes` and `lists` arrays. These are automatically converted to the unified v2.0 format during import and shown the same merge dialog as v2.0 backups.
+
+```json
+{
+  "version": "1.0",
+  "type": "pockist-backup",
   "data": {
     "notes": [...],
     "lists": [...]
@@ -173,16 +238,20 @@ Pockist supports importing and exporting data for backup and migration purposes.
 
 ### Usage
 
-Access import/export via the hamburger menu ( drawer ):
+Access import/export via the hamburger menu (drawer):
 - **Export All**: Creates a timestamped backup file
-- **Import Data**: Select a JSON file to import (merges with existing data)
+- **Import Data**: Select a JSON file to import
 
-### Merge Strategy
+### Import Options
 
-When importing:
-- **Conflicts**: Items with duplicate IDs are renamed with "(Imported)" suffix
-- **No Overwrites**: Existing data is never deleted or replaced
-- **Safe Import**: All imports are non-destructive
+When importing a single note or list, you can choose:
+
+- **Create New**: Import as fresh items (renames conflicts)
+- **Smart Merge** (lists only): Skip duplicate items, add only new ones
+- **Append to Existing**: Add all items to an existing note/list
+
+When importing a full backup:
+- **Create All New**: Import everything as fresh items
 
 ---
 

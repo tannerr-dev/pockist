@@ -6,65 +6,51 @@ import { ListItem } from "./ListItem.js";
 /**
  * ListBase - Abstract base class for list components.
  *
- * Encapsulates all shared state, CRUD operations, list management,
- * sharing, and dialog logic. Subclasses provide rendering via hooks.
+ * Works directly with the unified items store (v9 schema).
+ * Lists are items with type='list', linked items are resolved via links[] array.
  */
 export class ListBase extends HTMLElement {
-	// -------------------------------------------------------------------------
 	// Shared state
-	// -------------------------------------------------------------------------
-	_listMetadata = [];
-	_currentList = null;
+	_listItems = [];
+	_currentListItem = null;
 	_currentListId = null;
+	_linkedItems = [];
 	_initialized = false;
 
-	// -------------------------------------------------------------------------
-	// DOM refs (populated from template by subclass or here)
-	// -------------------------------------------------------------------------
+	// DOM refs
 	_containerEl = null;
 	_listSelectorBtn = null;
 	_listsContainerEl = null;
 	_inputEl = null;
 	_addBtn = null;
 	_clearCompletedBtn = null;
-	_sortTodosBtn = null;
+	_sortItemsBtn = null;
 	_listActionsEl = null;
 
-	// -------------------------------------------------------------------------
 	// Abstract: template ID
-	// -------------------------------------------------------------------------
 	_getTemplateId() {
 		throw new Error("_getTemplateId() must be implemented by subclass");
 	}
 
-	// -------------------------------------------------------------------------
-	// Abstract: set up add-todo event listeners (click/keydown vs form submit)
-	// -------------------------------------------------------------------------
+	// Abstract: set up add-item event listeners
 	_setupAddListeners() {
 		throw new Error("_setupAddListeners() must be implemented by subclass");
 	}
 
-	// -------------------------------------------------------------------------
-	// Hooks: called after successful mutations so subclass can update DOM
-	// -------------------------------------------------------------------------
-	_onAfterAdd(todo, list) { /* subclass */ }
-	_onAfterToggle(todoId, newState, li) { /* subclass */ }
-	_onAfterEdit(todoId) { /* subclass */ }
-	_onAfterDelete(todoId) { /* subclass */ }
-	_onAfterMove(todoId, direction, oldIndex, newIndex) { /* subclass */ }
-	_onAfterClear(completedIds) { /* subclass */ }
-	_onAfterSort() { /* subclass */ }
+	// Hooks
+	_onAfterAdd(item, listItem) {}
+	_onAfterToggle(itemId, newState, li) {}
+	_onAfterEdit(itemId) {}
+	_onAfterDelete(itemId) {}
+	_onAfterMove(itemId, direction, oldIndex, newIndex) {}
+	_onAfterClear(completedIds) {}
+	_onAfterSort() {}
 
-	// -------------------------------------------------------------------------
-	// Abstract: render the list content area (scroll UL vs paginated slots)
-	// -------------------------------------------------------------------------
+	// Abstract: render the list content area
 	_renderContent() {
 		throw new Error("_renderContent() must be implemented by subclass");
 	}
 
-	// -------------------------------------------------------------------------
-	// Lifecycle
-	// -------------------------------------------------------------------------
 	connectedCallback() {
 		const template = document.getElementById(this._getTemplateId());
 		if (!template) {
@@ -74,16 +60,16 @@ export class ListBase extends HTMLElement {
 		const content = template.content.cloneNode(true);
 		this.appendChild(content);
 
-		this._containerEl = this.querySelector(".todo-list-container");
+		this._containerEl = this.querySelector(".list-container");
 		this._listSelectorBtn = this.querySelector("#list-selector-btn");
 		this._listsContainerEl = this.querySelector("#lists-container");
-		this._inputEl = this.querySelector("#todo-input");
+		this._inputEl = this.querySelector("#list-input");
 		this._addBtn = this.querySelector("#add-btn");
 		this._clearCompletedBtn = this.querySelector("#clear-completed");
-		this._sortTodosBtn = this.querySelector("#sort-todos");
+		this._sortItemsBtn = this.querySelector("#sort-items");
 		this._listActionsEl = this.querySelector("#list-actions");
 
-		const headingLink = this.querySelector(".todo-heading-link");
+		const headingLink = this.querySelector(".list-heading-link");
 		if (headingLink) {
 			headingLink.addEventListener("click", (e) => {
 				e.preventDefault();
@@ -91,46 +77,41 @@ export class ListBase extends HTMLElement {
 			});
 		}
 
-		// When list-id is locked (detail page), hide the selector row and heading
 		if (this.hasAttribute('list-id')) {
-			const selectorRow = this.querySelector('.todo-list-selector-row');
+			const selectorRow = this.querySelector('.list-selector-row');
 			if (selectorRow) selectorRow.style.display = 'none';
 		}
 
 		this._init();
 	}
 
-	// -------------------------------------------------------------------------
-	// Init
-	// -------------------------------------------------------------------------
 	async _init() {
 		if (this._initialized) return;
 
-		// If list-id attribute is set externally, lock to that list
 		const attrListId = this.getAttribute('list-id');
 
 		try {
 			await DBManager.init();
 			await DBManager.migrateFromTodoDB();
+			await DBManager.migrateToItems();
 
-			this._listMetadata = await DBManager.getListMetadata();
+			this._listItems = await DBManager.getItems({ type: 'list', archived: false });
 
 			if (attrListId) {
 				this._currentListId = attrListId;
-				const exists = this._listMetadata.some(m => m.id === attrListId);
-				if (!exists) {
-					this._currentListId = null;
-				}
-			} else if (this._listMetadata.length === 0) {
-				const newList = await DBManager.createList({
-					name: "My Todos",
-					isDefault: true
+				const exists = this._listItems.some(item => item.id === attrListId);
+				if (!exists) this._currentListId = null;
+			} else if (this._listItems.length === 0) {
+				const newList = await DBManager.createItem({
+					type: 'list',
+					content: 'My List',
+					meta: { isDefault: true, order: 0 }
 				});
-				this._listMetadata = await DBManager.getListMetadata();
+				this._listItems = await DBManager.getItems({ type: 'list', archived: false });
 				this._currentListId = newList.id;
 			} else if (!this._currentListId) {
-				const defaultList = this._listMetadata.find((l) => l.isDefault);
-				this._currentListId = defaultList?.id || this._listMetadata[0]?.id;
+				const defaultList = this._listItems.find(item => item.meta?.isDefault);
+				this._currentListId = defaultList?.id || this._listItems[0]?.id;
 			}
 
 			await this._loadCurrentList();
@@ -153,230 +134,217 @@ export class ListBase extends HTMLElement {
 		this._setupAddListeners();
 
 		this._clearCompletedBtn?.addEventListener("click", () => this._clearCompleted());
-		this._sortTodosBtn?.addEventListener("click", () => this._sortTodos());
+		this._sortItemsBtn?.addEventListener("click", () => this._sortItems());
 		this._listSelectorBtn?.addEventListener("click", () => this._showListSelectorDialog());
 
 		this._listsContainerEl?.addEventListener("list-toggle", (e) => {
-			this._toggleTodo(e.detail.itemId, e.detail.completed);
+			this._toggleItem(e.detail.itemId, e.detail.completed);
 		});
 		this._listsContainerEl?.addEventListener("list-edit", (e) => {
-			this._editTodo(e.detail.itemId, e.detail.text);
+			this._editItem(e.detail.itemId, e.detail.text);
 		});
 		this._listsContainerEl?.addEventListener("list-delete", (e) => {
-			this._deleteTodo(e.detail.itemId);
+			this._deleteItem(e.detail.itemId);
 		});
 		this._listsContainerEl?.addEventListener("list-move-up", (e) => {
-			this._moveTodo(e.detail.itemId, -1);
+			this._moveItem(e.detail.itemId, -1);
 		});
 		this._listsContainerEl?.addEventListener("list-move-down", (e) => {
-			this._moveTodo(e.detail.itemId, 1);
+			this._moveItem(e.detail.itemId, 1);
 		});
 	}
 
-	// -------------------------------------------------------------------------
-	// Data loading
-	// -------------------------------------------------------------------------
 	async _loadCurrentList() {
 		if (!this._currentListId) return;
 		try {
-			this._currentList = await DBManager.getList(this._currentListId);
-			if (this._currentList?.todos?.some(t => typeof t.order === 'number')) {
-				this._currentList.todos.sort((a, b) => (b.order || 0) - (a.order || 0));
-				this._currentList.todos.forEach(t => delete t.order);
-				await DBManager.saveList(this._currentList);
-			}
+			this._currentListItem = await DBManager.getItem(this._currentListId);
+			this._linkedItems = await DBManager.getLinkedItems(this._currentListId);
 			await DBManager.updateLastAccessed(this._currentListId);
-			const metaIndex = this._listMetadata.findIndex(m => m.id === this._currentListId);
-			if (metaIndex >= 0) {
-				this._listMetadata[metaIndex].lastAccessed = Date.now();
-			}
 		} catch (error) {
 			console.error(`[${this.constructor.name}] Error loading current list:`, error);
-			this._currentList = null;
+			this._currentListItem = null;
+			this._linkedItems = [];
 		}
 	}
 
 	_getCurrentListMeta() {
-		return this._listMetadata.find((m) => m.id === this._currentListId);
+		return this._listItems.find(item => item.id === this._currentListId);
 	}
 
-	_getCurrentList() {
-		return this._currentList;
+	_getCurrentListItem() {
+		return this._currentListItem;
 	}
 
-	// -------------------------------------------------------------------------
+	_getLinkedItems() {
+		return this._linkedItems || [];
+	}
+
 	// Item CRUD
-	// -------------------------------------------------------------------------
 	async _handleAdd() {
 		const text = this._inputEl?.value.trim();
 		if (!text) return;
 
-		const list = this._getCurrentList();
-		if (!list) return;
+		const listItem = this._getCurrentListItem();
+		if (!listItem) return;
 
-		const todo = {
-			id: Date.now().toString(),
-			text: text,
-			completed: false,
-			createdAt: Date.now(),
-		};
+		const newItem = await DBManager.createItem({
+			type: 'item',
+			content: text,
+			meta: { completed: false }
+		});
 
-		list.todos.unshift(todo);
+		const links = listItem.links || [];
+		links.push({ id: newItem.id, order: links.length });
+		listItem.links = links;
+
 		this._inputEl.value = "";
 
 		try {
-			await DBManager.saveList(list);
-			const metaIndex = this._listMetadata.findIndex(m => m.id === list.id);
-			if (metaIndex >= 0) {
-				this._listMetadata[metaIndex].todoCount = list.todos.length;
-			}
-			this._onAfterAdd(todo, list);
+			await DBManager.saveItem(listItem);
+			this._linkedItems = await DBManager.getLinkedItems(listItem.id);
+			this._onAfterAdd(newItem, listItem);
 		} catch (error) {
 			console.error(`[${this.constructor.name}] Error saving list:`, error);
-			list.todos.shift();
+			listItem.links.pop();
 			this._renderContent();
 		}
 	}
 
-	async _toggleTodo(todoId, newCompletedState) {
-		const list = this._getCurrentList();
-		if (!list) return;
-
-		const todo = list.todos.find((t) => t.id === todoId);
-		if (!todo) return;
+	async _toggleItem(itemId, newCompletedState) {
+		const item = this._linkedItems.find(i => i.id === itemId);
+		if (!item) return;
 
 		if (newCompletedState === undefined) {
-			newCompletedState = !todo.completed;
+			newCompletedState = !item.meta.completed;
 		}
-		todo.completed = newCompletedState;
+		item.meta = { ...item.meta, completed: newCompletedState };
 
-		const item = this._listsContainerEl.querySelector(`list-item[item-id="${todoId}"]`);
-		if (item) {
-			item.completed = newCompletedState;
+		const li = this._listsContainerEl.querySelector(`list-item[item-id="${itemId}"]`);
+		if (li) {
+			li.completed = newCompletedState;
 		}
 
 		this._updateFooter();
 
 		try {
-			await DBManager.saveList(list);
-			this._onAfterToggle(todoId, newCompletedState, item);
+			await DBManager.saveItem(item);
+			this._onAfterToggle(itemId, newCompletedState, li);
 		} catch (error) {
 			console.error(`[${this.constructor.name}] Error saving after toggle:`, error);
-			todo.completed = !newCompletedState;
-			if (item) {
-				item.completed = !newCompletedState;
-			}
+			item.meta = { ...item.meta, completed: !newCompletedState };
+			if (li) li.completed = !newCompletedState;
 			this._updateFooter();
 		}
 	}
 
-	async _editTodo(todoId, newText) {
-		const list = this._getCurrentList();
-		if (!list) return;
-
-		const todo = list.todos.find((t) => t.id === todoId);
-		if (!todo) return;
+	async _editItem(itemId, newText) {
+		const item = this._linkedItems.find(i => i.id === itemId);
+		if (!item) return;
 
 		const trimmedText = newText.trim();
-		if (!trimmedText || trimmedText === todo.text) return;
+		if (!trimmedText || trimmedText === item.content) return;
 
-		const originalText = todo.text;
-		todo.text = trimmedText;
+		const originalText = item.content;
+		item.content = trimmedText;
 
 		try {
-			await DBManager.saveList(list);
-			const item = this._listsContainerEl.querySelector(`list-item[item-id="${todoId}"]`);
-			if (item) {
-				item.text = trimmedText;
+			await DBManager.saveItem(item);
+			const li = this._listsContainerEl.querySelector(`list-item[item-id="${itemId}"]`);
+			if (li) {
+				li.text = trimmedText;
 			}
-			this._onAfterEdit(todoId);
+			this._onAfterEdit(itemId);
 		} catch (error) {
 			console.error(`[${this.constructor.name}] Error saving after edit:`, error);
-			todo.text = originalText;
-			const item = this._listsContainerEl.querySelector(`list-item[item-id="${todoId}"]`);
-			if (item) {
-				item.text = originalText;
-			}
+			item.content = originalText;
+			const li = this._listsContainerEl.querySelector(`list-item[item-id="${itemId}"]`);
+			if (li) li.text = originalText;
 		}
 	}
 
-	async _deleteTodo(todoId) {
-		const list = this._getCurrentList();
-		if (!list) return;
+	async _deleteItem(itemId) {
+		const item = this._linkedItems.find(i => i.id === itemId);
+		if (!item) return;
 
-		const todo = list.todos.find((t) => t.id === todoId);
-		if (!todo) return;
-
-		const confirmed = await DialogService.confirm(`Delete "${todo.text}"? This cannot be undone.`, "Delete");
+		const confirmed = await DialogService.confirm(`Delete "${item.content}"? This cannot be undone.`, "Delete");
 		if (!confirmed) return;
 
-		const deletedIndex = list.todos.findIndex((t) => t.id === todoId);
-		const deletedTodo = todo;
-		list.todos = list.todos.filter((t) => t.id !== todoId);
+		const listItem = this._getCurrentListItem();
+		if (!listItem) return;
+
+		const deletedIndex = this._linkedItems.findIndex(i => i.id === itemId);
+		listItem.links = (listItem.links || []).filter(l => l.id !== itemId);
+
+		listItem.links.forEach((link, idx) => {
+			link.order = idx;
+		});
 
 		try {
-			await DBManager.saveList(list);
-			const metaIndex = this._listMetadata.findIndex(m => m.id === list.id);
-			if (metaIndex >= 0) {
-				this._listMetadata[metaIndex].todoCount = list.todos.length;
-			}
-			this._onAfterDelete(todoId);
+			await DBManager.saveItem(listItem);
+			await DBManager.hardDeleteItem(itemId);
+			this._linkedItems = await DBManager.getLinkedItems(listItem.id);
+			this._onAfterDelete(itemId);
 		} catch (error) {
 			console.error(`[${this.constructor.name}] Error saving after delete:`, error);
-			list.todos.splice(deletedIndex, 0, deletedTodo);
+			await this._loadCurrentList();
 			this._renderContent();
 		}
 	}
 
-	async _moveTodo(todoId, direction) {
-		const list = this._getCurrentList();
-		if (!list) return;
+	async _moveItem(itemId, direction) {
+		const listItem = this._getCurrentListItem();
+		if (!listItem) return;
 
-		const todoIndex = list.todos.findIndex((t) => t.id === todoId);
-		if (todoIndex === -1) return;
+		const links = listItem.links || [];
+		const linkIndex = links.findIndex(l => l.id === itemId);
+		if (linkIndex === -1) return;
 
-		const newIndex = todoIndex + direction;
-		if (newIndex < 0 || newIndex >= list.todos.length) return;
+		const newIndex = linkIndex + direction;
+		if (newIndex < 0 || newIndex >= links.length) return;
 
-		const temp = list.todos[todoIndex];
-		list.todos[todoIndex] = list.todos[newIndex];
-		list.todos[newIndex] = temp;
+		const tempOrder = links[linkIndex].order;
+		links[linkIndex].order = links[newIndex].order;
+		links[newIndex].order = tempOrder;
+		links.sort((a, b) => a.order - b.order);
 
 		try {
-			await DBManager.saveList(list);
-			this._onAfterMove(todoId, direction, todoIndex, newIndex);
+			await DBManager.saveItem(listItem);
+			this._linkedItems = await DBManager.getLinkedItems(listItem.id);
+			this._onAfterMove(itemId, direction, linkIndex, newIndex);
 		} catch (error) {
 			console.error(`[${this.constructor.name}] Error saving after move:`, error);
-			const revertTemp = list.todos[todoIndex];
-			list.todos[todoIndex] = list.todos[newIndex];
-			list.todos[newIndex] = revertTemp;
+			await this._loadCurrentList();
 			this._renderContent();
 		}
 	}
 
 	async _clearCompleted() {
-		const list = this._getCurrentList();
-		if (!list) return;
+		const listItem = this._getCurrentListItem();
+		if (!listItem) return;
 
-		const completedTodos = list.todos.filter((t) => t.completed);
-		if (completedTodos.length === 0) return;
+		const completedItems = this._linkedItems.filter(i => i.meta?.completed);
+		if (completedItems.length === 0) return;
 
-		const itemText = completedTodos.length === 1 ? 'item' : 'items';
+		const itemText = completedItems.length === 1 ? 'item' : 'items';
 		const confirmed = await DialogService.confirm(
-			`Clear ${completedTodos.length} completed ${itemText}? This cannot be undone.`,
+			`Clear ${completedItems.length} completed ${itemText}? This cannot be undone.`,
 			'Clear'
 		);
 		if (!confirmed) return;
 
-		const completedIds = completedTodos.map(t => t.id);
-		list.todos = list.todos.filter((t) => !t.completed);
+		const completedIds = completedItems.map(i => i.id);
+
+		listItem.links = (listItem.links || []).filter(l => !completedIds.includes(l.id));
+		listItem.links.forEach((link, idx) => {
+			link.order = idx;
+		});
 
 		try {
-			await DBManager.saveList(list);
-			const metaIndex = this._listMetadata.findIndex(m => m.id === list.id);
-			if (metaIndex >= 0) {
-				this._listMetadata[metaIndex].todoCount = list.todos.length;
+			await DBManager.saveItem(listItem);
+			for (const id of completedIds) {
+				await DBManager.hardDeleteItem(id);
 			}
+			this._linkedItems = await DBManager.getLinkedItems(listItem.id);
 			this._onAfterClear(completedIds);
 		} catch (error) {
 			console.error(`[${this.constructor.name}] Error saving after clear:`, error);
@@ -385,19 +353,32 @@ export class ListBase extends HTMLElement {
 		}
 	}
 
-	async _sortTodos() {
-		const list = this._getCurrentList();
-		if (!list) return;
+	async _sortItems() {
+		const listItem = this._getCurrentListItem();
+		if (!listItem) return;
 
-		list.todos.sort((a, b) => {
-			if (a.completed !== b.completed) {
-				return a.completed ? 1 : -1;
+		const links = listItem.links || [];
+		const items = await DBManager.getLinkedItems(listItem.id);
+
+		links.sort((a, b) => {
+			const itemA = items.find(i => i.id === a.id);
+			const itemB = items.find(i => i.id === b.id);
+			const completedA = itemA?.meta?.completed || false;
+			const completedB = itemB?.meta?.completed || false;
+			if (completedA !== completedB) {
+				return completedA ? 1 : -1;
 			}
 			return 0;
 		});
 
+		links.forEach((link, idx) => {
+			link.order = idx;
+		});
+		listItem.links = links;
+
 		try {
-			await DBManager.saveList(list);
+			await DBManager.saveItem(listItem);
+			this._linkedItems = await DBManager.getLinkedItems(listItem.id);
 			this._onAfterSort();
 		} catch (error) {
 			console.error(`[${this.constructor.name}] Error saving after sort:`, error);
@@ -406,21 +387,20 @@ export class ListBase extends HTMLElement {
 		}
 	}
 
-	// -------------------------------------------------------------------------
 	// List management
-	// -------------------------------------------------------------------------
 	async _handleCreateList() {
 		const name = await DialogService.prompt("Enter a name for the new list:");
 		if (!name || !name.trim()) return;
 
 		try {
-			const newList = await DBManager.createList({
-				name: name.trim(),
-				isDefault: false
+			const newList = await DBManager.createItem({
+				type: 'list',
+				content: name.trim(),
+				meta: { isDefault: false, order: this._listItems.length }
 			});
-			this._listMetadata = await DBManager.getListMetadata();
+			this._listItems = await DBManager.getItems({ type: 'list', archived: false });
 			this._currentListId = newList.id;
-			this._currentList = newList;
+			await this._loadCurrentList();
 			this._render();
 		} catch (error) {
 			console.error(`[${this.constructor.name}] Error creating new list:`, error);
@@ -429,10 +409,14 @@ export class ListBase extends HTMLElement {
 
 	async _setDefaultList(listId) {
 		try {
-			await DBManager.setDefaultList(listId);
-			this._listMetadata = await DBManager.getListMetadata();
-			if (this._currentList) {
-				this._currentList.isDefault = (this._currentList.id === listId);
+			const lists = await DBManager.getItems({ type: 'list', archived: false });
+			for (const list of lists) {
+				list.meta = { ...list.meta, isDefault: list.id === listId, updatedAt: new Date().toISOString() };
+				await DBManager.saveItem(list);
+			}
+			this._listItems = await DBManager.getItems({ type: 'list', archived: false });
+			if (this._currentListItem) {
+				this._currentListItem.meta = { ...this._currentListItem.meta, isDefault: (this._currentListItem.id === listId) };
 			}
 			this._render();
 		} catch (error) {
@@ -441,21 +425,21 @@ export class ListBase extends HTMLElement {
 	}
 
 	async _deleteList(listId) {
-		if (this._listMetadata.length <= 1) {
+		if (this._listItems.length <= 1) {
 			alert("Cannot delete the last list");
 			return;
 		}
 
-		const listMeta = this._listMetadata.find((l) => l.id === listId);
-		const confirmed = await DialogService.confirm(`Delete "${listMeta?.name || 'this list'}"? This cannot be undone.`, "Delete");
+		const listMeta = this._listItems.find(item => item.id === listId);
+		const confirmed = await DialogService.confirm(`Delete "${listMeta?.content || 'this list'}"? This cannot be undone.`, "Delete");
 		if (!confirmed) return;
 
 		try {
-			await DBManager.deleteList(listId);
-			this._listMetadata = this._listMetadata.filter((l) => l.id !== listId);
+			await DBManager.deleteItem(listId);
+			this._listItems = this._listItems.filter(item => item.id !== listId);
 			if (this._currentListId === listId) {
-				const defaultList = this._listMetadata.find((l) => l.isDefault);
-				this._currentListId = defaultList?.id || this._listMetadata[0]?.id;
+				const defaultList = this._listItems.find(item => item.meta?.isDefault);
+				this._currentListId = defaultList?.id || this._listItems[0]?.id;
 				await this._loadCurrentList();
 			}
 			this._render();
@@ -465,18 +449,14 @@ export class ListBase extends HTMLElement {
 	}
 
 	async _editListName() {
-		const list = this._getCurrentList();
-		if (!list) return;
+		const listItem = this._getCurrentListItem();
+		if (!listItem) return;
 
-		const newName = await DialogService.prompt("Rename list:", list.name);
-		if (newName && newName.trim() && newName.trim() !== list.name) {
-			list.name = newName.trim();
+		const newName = await DialogService.prompt("Rename list:", listItem.content);
+		if (newName && newName.trim() && newName.trim() !== listItem.content) {
+			listItem.content = newName.trim();
 			try {
-				await DBManager.saveList(list);
-				const metaIndex = this._listMetadata.findIndex(m => m.id === list.id);
-				if (metaIndex >= 0) {
-					this._listMetadata[metaIndex].name = list.name;
-				}
+				await DBManager.saveItem(listItem);
 				this._render();
 			} catch (error) {
 				console.error(`[${this.constructor.name}] Error saving after name edit:`, error);
@@ -488,81 +468,65 @@ export class ListBase extends HTMLElement {
 		const trimmedName = newName.trim();
 		if (!trimmedName) return;
 
-		if (this._currentList && this._currentList.id === listId) {
-			if (trimmedName === this._currentList.name) return;
-			this._currentList.name = trimmedName;
-			try {
-				await DBManager.saveList(this._currentList);
-			} catch (error) {
-				console.error(`[${this.constructor.name}] Error saving after name edit:`, error);
-				return;
-			}
-		} else {
-			try {
-				const list = await DBManager.getList(listId);
-				if (!list || trimmedName === list.name) return;
-				list.name = trimmedName;
-				await DBManager.saveList(list);
-			} catch (error) {
-				console.error(`[${this.constructor.name}] Error saving after name edit:`, error);
-				return;
-			}
+		const listItem = this._listItems.find(item => item.id === listId);
+		if (!listItem || trimmedName === listItem.content) return;
+
+		listItem.content = trimmedName;
+		try {
+			await DBManager.saveItem(listItem);
+		} catch (error) {
+			console.error(`[${this.constructor.name}] Error saving after name edit:`, error);
+			return;
 		}
 
-		const metaIndex = this._listMetadata.findIndex(m => m.id === listId);
-		if (metaIndex >= 0) {
-			this._listMetadata[metaIndex].name = trimmedName;
-		}
 		this._render();
 	}
 
 	async _moveList(listId, direction) {
-		const listIndex = this._listMetadata.findIndex((l) => l.id === listId);
+		const listIndex = this._listItems.findIndex(item => item.id === listId);
 		if (listIndex === -1) return;
 
 		const newIndex = listIndex + direction;
-		if (newIndex < 0 || newIndex >= this._listMetadata.length) return;
+		if (newIndex < 0 || newIndex >= this._listItems.length) return;
 
-		const listA = this._listMetadata[listIndex];
-		const listB = this._listMetadata[newIndex];
+		const listA = this._listItems[listIndex];
+		const listB = this._listItems[newIndex];
 
-		const tempOrder = listA.order;
-		listA.order = listB.order;
-		listB.order = tempOrder;
-		this._listMetadata.sort((a, b) => a.order - b.order);
+		const tempOrder = listA.meta.order;
+		listA.meta = { ...listA.meta, order: listB.meta.order };
+		listB.meta = { ...listB.meta, order: tempOrder };
+		this._listItems.sort((a, b) => a.meta.order - b.meta.order);
 
 		try {
-			await DBManager.updateListOrder(listA.id, listA.order);
-			await DBManager.updateListOrder(listB.id, listB.order);
+			await DBManager.saveItem(listA);
+			await DBManager.saveItem(listB);
 			this._render();
 		} catch (error) {
 			console.error(`[${this.constructor.name}] Error saving after list move:`, error);
 		}
 	}
 
-	// -------------------------------------------------------------------------
 	// List selector dialog
-	// -------------------------------------------------------------------------
 	_showListSelectorDialog() {
-		const sortedMetadata = [...this._listMetadata];
+		const sortedLists = [...this._listItems].sort((a, b) => (a.meta?.order || 0) - (b.meta?.order || 0));
 
 		const dialog = document.createElement('dialog');
 		dialog.className = 'dialog';
 
-		const listItemsHtml = sortedMetadata.map((meta, index) => {
+		const listItemsHtml = sortedLists.map((item, index) => {
 			const isFirst = index === 0;
-			const isLast = index === sortedMetadata.length - 1;
-			const isSelected = meta.id === this._currentListId;
+			const isLast = index === sortedLists.length - 1;
+			const isSelected = item.id === this._currentListId;
 
 			return `
-				<div class="list-selector-item ${isSelected ? 'selected' : ''}" data-list-id="${meta.id}">
+				<div class="list-selector-item ${isSelected ? 'selected' : ''}" data-list-id="${item.id}">
 					<div class="list-selector-item-info">
-						<span class="list-selector-item-name" contenteditable="false" data-list-id="${meta.id}">${this._escapeHtml(meta.name)}</span>
+						<span class="list-selector-item-name" contenteditable="false" data-list-id="${item.id}">${this._escapeHtml(item.content || 'Unnamed List')}</span>
 					</div>
 					<div class="list-selector-item-actions">
-						<button class="btn btn-icon btn-ghost list-selector-move-up ${isFirst ? 'disabled' : ''}" data-list-id="${meta.id}" ${isFirst ? 'disabled' : ''} title="Move up">▲</button>
-						<button class="btn btn-icon btn-ghost list-selector-move-down ${isLast ? 'disabled' : ''}" data-list-id="${meta.id}" ${isLast ? 'disabled' : ''} title="Move down">▼</button>
-						<button class="btn btn-icon btn-outline-danger list-selector-delete" data-list-id="${meta.id}" title="Delete list">×</button>
+						<button class="btn btn-icon btn-ghost list-selector-move-up ${isFirst ? 'disabled' : ''}" data-list-id="${item.id}" ${isFirst ? 'disabled' : ''} title="Move up"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg></button>
+						<button class="btn btn-icon btn-ghost list-selector-move-down ${isLast ? 'disabled' : ''}" data-list-id="${item.id}" ${isLast ? 'disabled' : ''} title="Move down"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></button>
+						<button class="btn btn-icon btn-outline-danger list-selector-delete" data-list-id="${item.id}" title="Delete list">×</button>
 					</div>
 				</div>
 			`;
@@ -658,8 +622,6 @@ export class ListBase extends HTMLElement {
 			});
 		});
 
-
-
 		dialog.querySelectorAll('.list-selector-delete').forEach(btn => {
 			btn.addEventListener('click', async (e) => {
 				e.stopPropagation();
@@ -667,7 +629,7 @@ export class ListBase extends HTMLElement {
 				await this._deleteList(listId);
 				dialog.close();
 				document.body.removeChild(dialog);
-				if (this._listMetadata.length > 0) {
+				if (this._listItems.length > 0) {
 					this._showListSelectorDialog();
 				}
 			});
@@ -678,7 +640,7 @@ export class ListBase extends HTMLElement {
 			dialog.close();
 			document.body.removeChild(dialog);
 			await this._handleCreateList();
-			if (this._listMetadata.length > 0) {
+			if (this._listItems.length > 0) {
 				this._showListSelectorDialog();
 			}
 		});
@@ -691,9 +653,7 @@ export class ListBase extends HTMLElement {
 		});
 	}
 
-	// -------------------------------------------------------------------------
 	// Render helpers
-	// -------------------------------------------------------------------------
 	_render() {
 		if (!this._containerEl) return;
 
@@ -702,47 +662,45 @@ export class ListBase extends HTMLElement {
 		if (this._listSelectorBtn) {
 			const nameSpan = this._listSelectorBtn.querySelector('.list-selector-name');
 			if (nameSpan) {
-				nameSpan.textContent = currentMeta?.name || 'Select List';
+				nameSpan.textContent = currentMeta?.content || 'Select List';
 			}
 		}
 
 		if (this._listActionsEl) {
 			this._listActionsEl.innerHTML = `
-				<share-button type="list" data-id="${this._escapeHtml(this._currentListId || '')}" title="${this._escapeHtml(currentMeta?.name || 'Untitled List')}"></share-button>
+				<share-button type="list" data-id="${this._escapeHtml(this._currentListId || '')}" title="${this._escapeHtml(currentMeta?.content || 'Untitled List')}"></share-button>
 			`;
 		}
 
 		this._renderContent();
 	}
 
-	_createTodoElement(todo, index, total) {
-		const item = document.createElement('list-item');
-		item.itemId = todo.id;
-		item.text = todo.text;
-		item.completed = todo.completed;
-		item.index = index;
-		item.total = total;
-		item.style.viewTransitionName = `todo-${todo.id}`;
-		return item;
+	_createItemElement(item, index, total) {
+		const li = document.createElement('list-item');
+		li.itemId = item.id;
+		li.text = item.content || '';
+		li.completed = item.meta?.completed || false;
+		li.index = index;
+		li.total = total;
+		li.style.viewTransitionName = `item-${item.id}`;
+		return li;
 	}
 
 	_updateFooter() {
-		const list = this._getCurrentList();
+		const items = this._getLinkedItems();
 
-		const hasCompleted = list?.todos.some((t) => t.completed);
+		const hasCompleted = items.some(i => i.meta?.completed);
 		if (this._clearCompletedBtn) {
 			this._clearCompletedBtn.classList.toggle('hidden', !hasCompleted);
 		}
 
-		if (this._sortTodosBtn) {
-			this._sortTodosBtn.classList.toggle('hidden', !hasCompleted);
+		if (this._sortItemsBtn) {
+			this._sortItemsBtn.classList.toggle('hidden', !hasCompleted);
 		}
 	}
 
-	_getOrderedTodos() {
-		const list = this._getCurrentList();
-		if (!list) return [];
-		return [...list.todos];
+	_getOrderedItems() {
+		return [...this._getLinkedItems()];
 	}
 
 	_escapeHtml(text) {

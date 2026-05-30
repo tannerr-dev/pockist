@@ -1,28 +1,25 @@
 import { ListBase } from './ListBase.js';
 
 /**
- * TodoListWidget - Paginated todo list for homepage widget.
+ * ListWidget - Paginated list for homepage widget.
  *
  * Fixed-height 8-item viewport with Up / Down buttons below the list.
- * - Up on the left, Down on the right.
- * - Scrolls 2 items at a time; falls back to 1 when only 1 remains.
- * - Reordering follows the moved item across viewport boundaries.
  */
-export class TodoListWidget extends ListBase {
+export class ListWidget extends ListBase {
 	#offset = 0;
 	#navContainer = null;
 
 	_getTemplateId() {
-		return 'todo-list-widget';
+		return 'pockist-list-widget';
 	}
 
 	connectedCallback() {
 		super.connectedCallback();
-		this.#navContainer = this.querySelector('.todo-widget-nav-container');
+		this.#navContainer = this.querySelector('.list-widget-nav-container');
 	}
 
 	_setupAddListeners() {
-		const form = this.querySelector("#todo-input-form");
+		const form = this.querySelector("#list-input-form");
 		form?.addEventListener("submit", (e) => {
 			e.preventDefault();
 			this._handleAdd();
@@ -40,7 +37,7 @@ export class TodoListWidget extends ListBase {
 		this._renderSlots();
 	}
 
-	_onAfterMove(todoId, direction, oldIndex, newIndex) {
+	_onAfterMove(itemId, direction, oldIndex, newIndex) {
 		this.#offset = this.#computeOffsetForIndex(newIndex);
 		this._renderSlots();
 	}
@@ -59,11 +56,8 @@ export class TodoListWidget extends ListBase {
 		this._renderSlots();
 	}
 
-	// -------------------------------------------------------------------------
-	// Pagination helpers
-	// -------------------------------------------------------------------------
 	#clampOffset() {
-		const total = this._getCurrentList()?.todos.length || 0;
+		const total = this._getLinkedItems().length || 0;
 		if (total <= 8) {
 			this.#offset = 0;
 		} else {
@@ -73,7 +67,7 @@ export class TodoListWidget extends ListBase {
 	}
 
 	#computeOffsetForIndex(index) {
-		const total = this._getCurrentList()?.todos.length || 0;
+		const total = this._getLinkedItems().length || 0;
 		if (total <= 8) return 0;
 		return Math.max(0, Math.min(index - 3, total - 8));
 	}
@@ -81,8 +75,11 @@ export class TodoListWidget extends ListBase {
 	#createNavButton(direction) {
 		const btn = document.createElement('button');
 		btn.type = 'button';
-		btn.className = 'todo-widget-nav-btn btn btn-ghost';
-		btn.textContent = direction === -1 ? '▲ Up' : '▼ Down';
+		btn.className = 'list-widget-nav-btn btn btn-ghost';
+		const svg = direction === -1
+			? '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>'
+			: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>';
+		btn.innerHTML = svg + (direction === -1 ? ' Up' : ' Down');
 		return btn;
 	}
 
@@ -115,19 +112,19 @@ export class TodoListWidget extends ListBase {
 	}
 
 	_renderSlots() {
-		const list = this._getCurrentList();
+		const items = this._getLinkedItems();
 
 		if (!this._listsContainerEl) return;
 		this._listsContainerEl.innerHTML = '';
 
-		if (!list || list.todos.length === 0) {
-			this._listsContainerEl.innerHTML = '<div class="todo-empty">No todos yet. Add one above!</div>';
+		if (items.length === 0) {
+			this._listsContainerEl.innerHTML = '<div class="list-empty">No items yet. Add one above!</div>';
 			this.#renderNav(0, 0);
 			this._updateFooter();
 			return;
 		}
 
-		const total = list.todos.length;
+		const total = items.length;
 		const offset = this.#offset;
 
 		this.#clampOffset();
@@ -136,11 +133,11 @@ export class TodoListWidget extends ListBase {
 		const startIndex = clampedOffset;
 		const endIndex = Math.min(clampedOffset + 8, total);
 
-		const items = list.todos.slice(startIndex, endIndex);
+		const visibleItems = items.slice(startIndex, endIndex);
 
-		items.forEach((todo, idx) => {
+		visibleItems.forEach((item, idx) => {
 			const globalIndex = startIndex + idx;
-			const li = this._createTodoElement(todo, globalIndex, total);
+			const li = this._createItemElement(item, globalIndex, total);
 			this._listsContainerEl.appendChild(li);
 		});
 
@@ -149,4 +146,4 @@ export class TodoListWidget extends ListBase {
 	}
 }
 
-customElements.define("todo-list-widget", TodoListWidget);
+customElements.define("pockist-list-widget", ListWidget);

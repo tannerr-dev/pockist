@@ -125,22 +125,26 @@ export class ShareService {
      */
     static async importToLocal(shareData) {
         console.log('[ShareService] Importing shared data:', shareData.type);
-        
+
         const { ImportExportService } = await import('./ImportExportService.js');
-        
+
+        // Detect v2.0 vs v1.0 format
+        const isV2 = shareData.data && Array.isArray(shareData.data.items);
+
         // Create import payload matching our export format
         const importPayload = {
-            version: '1.0',
+            version: isV2 ? '2.0' : '1.0',
             type: 'pockist-backup',
             scope: shareData.type,
             exportId: `shared-${shareData.id}`,
             exportedAt: shareData.createdAt,
             data: shareData.data
         };
-        
-        // Use ImportExportService to perform the import
-        await ImportExportService.importFromShare(importPayload);
-        
+
+        // Use ImportExportService to perform the import (with merge dialog)
+        const result = await ImportExportService.importFromShare(importPayload);
+
         console.log('[ShareService] Import complete');
+        return result;
     }
 }

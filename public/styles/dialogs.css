@@ -191,16 +191,19 @@
 	max-width: 800px;
 	margin: 0 auto;
 	padding: 20px;
+	display: flex;
+	flex-direction: column;
+	height: calc(100vh - 64px);
 }
 
 .share-header {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
-	padding: 12px 16px;
-	background-color: var(--accent-2);
-	border-radius: 8px;
+	padding: 12px 0;
+	border-bottom: 1px solid var(--border-color);
 	margin-bottom: 20px;
+	flex-shrink: 0;
 }
 
 .share-creator-badge {
@@ -213,10 +216,12 @@
 }
 
 .share-content {
-	background-color: var(--bg-2);
-	border-radius: 8px;
-	padding: 20px;
+	padding: 20px 0 8px 0;
 	margin-bottom: 20px;
+	border-bottom: 1px solid var(--border-color);
+	flex: 1;
+	overflow-y: auto;
+	min-height: 0;
 }
 
 .share-content h1 {
@@ -240,7 +245,7 @@
 	line-height: 1.6;
 }
 
-.note-text {
+.share-note-text {
 	white-space: pre-wrap;
 	word-wrap: break-word;
 }
@@ -258,33 +263,28 @@
 	margin: 0;
 }
 
-.share-todo {
-	display: flex;
-	align-items: center;
-	gap: 12px;
-	padding: 12px;
-	border-bottom: 1px solid var(--border-color);
+.share-todos .item-row {
+	cursor: default;
 }
 
-.share-todo:last-child {
-	border-bottom: none;
+.share-todos .item-row:hover {
+	background-color: transparent;
 }
 
-.share-todo.completed {
+.share-todos .item-row.completed .item-text {
+	text-decoration: line-through;
 	opacity: 0.6;
 }
 
-.share-todo.completed .share-todo-text {
-	text-decoration: line-through;
-}
-
-.share-todo .todo-checkbox {
-	font-size: 18px;
+.share-todo-checkbox {
 	flex-shrink: 0;
+	display: flex;
+	align-items: center;
 }
 
-.share-todo-text {
-	flex: 1;
+.share-todos .item-text {
+	cursor: default;
+	outline: none;
 }
 
 .todo-count {
@@ -293,49 +293,20 @@
 	color: var(--text-muted);
 }
 
-/* Share Actions */
-.share-actions {
+/* Share View Actions */
+.share-view-actions {
 	display: flex;
 	flex-wrap: wrap;
 	gap: 12px;
+	flex-shrink: 0;
+	padding-bottom: 20px;
 }
 
-.share-actions button {
+.share-view-actions .btn {
 	flex: 1;
 	min-width: 150px;
 	padding: 14px 20px;
-	border: none;
-	border-radius: 8px;
 	font-size: 16px;
-	cursor: pointer;
-	transition: background-color 0.2s;
-}
-
-.share-delete-btn {
-	background-color: var(--error);
-	color: white;
-}
-
-.share-delete-btn:hover {
-	background-color: var(--error-hover);
-}
-
-.share-import-btn {
-	background-color: var(--success);
-	color: white;
-}
-
-.share-import-btn:hover {
-	background-color: var(--success-hover);
-}
-
-.share-download-btn {
-	background-color: var(--accent);
-	color: var(--bg);
-}
-
-.share-download-btn:hover {
-	background-color: var(--accent-hover);
 }
 
 /* Loading & Error States */
@@ -375,11 +346,11 @@
 		width: 100%;
 	}
 
-	.share-actions {
+	.share-view-actions {
 		flex-direction: column;
 	}
 
-	.share-actions button {
+	.share-view-actions .btn {
 		width: 100%;
 	}
 }

@@ -1,9 +1,9 @@
 import { ListBase } from './ListBase.js';
 import './ShareButton.js';
 
-export class TodoList extends ListBase {
+export class List extends ListBase {
 	_getTemplateId() {
-		return 'todo-list';
+		return 'pockist-list';
 	}
 
 	_setupAddListeners() {
@@ -13,34 +13,34 @@ export class TodoList extends ListBase {
 		});
 	}
 
-	_onAfterAdd(todo, list) {
-		let container = this._listsContainerEl.querySelector('.todo-list-ul');
+	_onAfterAdd(item, listItem) {
+		let container = this._listsContainerEl.querySelector('.list-ul');
 
 		if (!container) {
 			this._listsContainerEl.innerHTML = '';
 			container = document.createElement('div');
-			container.className = 'todo-list-ul';
+			container.className = 'list-ul';
 			this._listsContainerEl.appendChild(container);
 		}
 
-		const item = this._createTodoElement(todo, 0, list.todos.length);
-		item.style.opacity = '0';
-		item.style.transform = 'translateY(-10px)';
-		container.insertBefore(item, container.firstChild);
+		const li = this._createItemElement(item, 0, this._getLinkedItems().length);
+		li.style.opacity = '0';
+		li.style.transform = 'translateY(-10px)';
+		container.insertBefore(li, container.firstChild);
 
 		requestAnimationFrame(() => {
-			item.style.transition = 'opacity 0.2s, transform 0.2s';
-			item.style.opacity = '1';
-			item.style.transform = 'translateY(0)';
+			li.style.transition = 'opacity 0.2s, transform 0.2s';
+			li.style.opacity = '1';
+			li.style.transform = 'translateY(0)';
 		});
 
 		this.#updateItemIndices();
 		this._updateFooter();
 	}
 
-	_onAfterDelete(todoId) {
-		const item = this._listsContainerEl.querySelector(`list-item[item-id="${todoId}"]`);
-		const list = this._getCurrentList();
+	_onAfterDelete(itemId) {
+		const item = this._listsContainerEl.querySelector(`list-item[item-id="${itemId}"]`);
+		const items = this._getLinkedItems();
 
 		if (item) {
 			item.style.transition = 'opacity 0.2s, transform 0.2s';
@@ -49,8 +49,8 @@ export class TodoList extends ListBase {
 
 			setTimeout(() => {
 				item.remove();
-				if (list?.todos.length === 0) {
-					this._listsContainerEl.innerHTML = '<div class="todo-empty">No todos yet. Add one above!</div>';
+				if (items.length === 0) {
+					this._listsContainerEl.innerHTML = '<div class="list-empty">No items yet. Add one above!</div>';
 				}
 			}, 200);
 		}
@@ -59,15 +59,15 @@ export class TodoList extends ListBase {
 		this._updateFooter();
 	}
 
-	_onAfterMove(todoId, direction, oldIndex, newIndex) {
+	_onAfterMove(itemId, direction, oldIndex, newIndex) {
 		const items = Array.from(this._listsContainerEl.querySelectorAll('list-item'));
-		const currentItem = items.find(item => item.itemId === todoId);
+		const currentItem = items.find(item => item.itemId === itemId);
 		if (!currentItem) return;
 
 		const targetItem = direction === -1
 			? currentItem.previousElementSibling
 			: currentItem.nextElementSibling;
-		if (!targetItem || targetItem.classList.contains('todo-empty')) return;
+		if (!targetItem || targetItem.classList.contains('list-empty')) return;
 
 		currentItem.style.transition = 'transform 0.2s';
 		targetItem.style.transition = 'transform 0.2s';
@@ -82,7 +82,7 @@ export class TodoList extends ListBase {
 	}
 
 	_onAfterClear(completedIds) {
-		const list = this._getCurrentList();
+		const items = this._getLinkedItems();
 
 		completedIds.forEach((id, index) => {
 			const item = this._listsContainerEl.querySelector(`list-item[item-id="${id}"]`);
@@ -100,41 +100,41 @@ export class TodoList extends ListBase {
 		this.#updateItemIndices();
 		this._updateFooter();
 
-		if (list?.todos.length === 0) {
+		if (items.length === 0) {
 			setTimeout(() => {
-				this._listsContainerEl.innerHTML = '<div class="todo-empty">No todos yet. Add one above!</div>';
+				this._listsContainerEl.innerHTML = '<div class="list-empty">No items yet. Add one above!</div>';
 			}, 200 + (completedIds.length * 50));
 		}
 	}
 
 	_onAfterSort() {
-		const ul = this._listsContainerEl.querySelector('.todo-list-ul');
+		const ul = this._listsContainerEl.querySelector('.list-ul');
 		if (ul) {
 			ul.style.opacity = '0.5';
 			ul.style.transition = 'opacity 0.2s';
 		}
-		this._renderTodoList();
+		this._renderList();
 	}
 
 	_renderContent() {
-		this._renderTodoList();
+		this._renderList();
 	}
 
-	_renderTodoList() {
-		const list = this._getCurrentList();
+	_renderList() {
+		const items = this._getLinkedItems();
 
 		if (!this._listsContainerEl) return;
 		this._listsContainerEl.innerHTML = "";
 
-		if (!list || list.todos.length === 0) {
-			this._listsContainerEl.innerHTML = '<div class="todo-empty">No todos yet. Add one above!</div>';
+		if (items.length === 0) {
+			this._listsContainerEl.innerHTML = '<div class="list-empty">No items yet. Add one above!</div>';
 		} else {
 			const div = document.createElement('div');
-			div.className = 'todo-list-ul';
+			div.className = 'list-ul';
 
-			list.todos.forEach((todo, index) => {
-				const item = this._createTodoElement(todo, index, list.todos.length);
-				div.appendChild(item);
+			items.forEach((item, index) => {
+				const li = this._createItemElement(item, index, items.length);
+				div.appendChild(li);
 			});
 
 			this._listsContainerEl.appendChild(div);
@@ -144,9 +144,6 @@ export class TodoList extends ListBase {
 	}
 
 	#updateItemIndices() {
-		const list = this._getCurrentList();
-		if (!list || !this._listsContainerEl) return;
-
 		const items = this._listsContainerEl.querySelectorAll('list-item');
 		items.forEach((item, index) => {
 			item.index = index;
@@ -155,4 +152,4 @@ export class TodoList extends ListBase {
 	}
 }
 
-customElements.define("todo-list", TodoList);
+customElements.define("pockist-list", List);

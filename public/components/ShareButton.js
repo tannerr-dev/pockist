@@ -56,23 +56,21 @@ export class ShareButton extends HTMLElement {
             let shareData;
 
             if (this.type === 'note') {
-                const note = await DBManager.getNote(this.itemId);
-                if (!note) {
+                const item = await DBManager.getItem(this.itemId);
+                if (!item) {
                     throw new Error('Note not found');
                 }
                 shareData = {
-                    notes: [note],
-                    lists: []
+                    items: [item]
                 };
             } else if (this.type === 'list') {
-                const lists = await DBManager.getLists();
-                const list = lists.find(l => l.id === this.itemId);
-                if (!list) {
+                const item = await DBManager.getItem(this.itemId);
+                if (!item) {
                     throw new Error('List not found');
                 }
+                const linked = await DBManager.getLinkedItems(this.itemId);
                 shareData = {
-                    notes: [],
-                    lists: [list]
+                    items: [item, ...linked]
                 };
             } else {
                 throw new Error('Invalid share type');
@@ -88,7 +86,7 @@ export class ShareButton extends HTMLElement {
     }
 
     async showShareDialog(shareData) {
-        const item = this.type === 'note' ? shareData.notes[0] : shareData.lists[0];
+        const item = shareData.items[0];
         const typeLabel = this.type === 'note' ? 'Note' : 'List';
 
         // Create options dialog
@@ -100,17 +98,17 @@ export class ShareButton extends HTMLElement {
                 <p class="share-title">"${this.itemTitle}"</p>
                 <div class="share-options">
                     <button class="share-option-btn share-option-link" type="button">
-                        <span class="share-option-icon">&#128279;</span>
+                        <span class="share-option-icon"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></span>
                         <span class="share-option-label">Temporary Public Link</span>
                         <span class="share-option-desc">Create a shareable link that expires in 24 hours</span>
                     </button>
                     <button class="share-option-btn share-option-json" type="button">
-                        <span class="share-option-icon">&#128190;</span>
+                        <span class="share-option-icon"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg></span>
                         <span class="share-option-label">Download Pockist Format</span>
                         <span class="share-option-desc">Export as JSON for backup or re-import</span>
                     </button>
                     <button class="share-option-btn share-option-md" type="button">
-                        <span class="share-option-icon">&#128196;</span>
+                        <span class="share-option-icon"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg></span>
                         <span class="share-option-label">Download Markdown</span>
                         <span class="share-option-desc">Export as a Markdown file</span>
                     </button>
@@ -151,7 +149,7 @@ export class ShareButton extends HTMLElement {
                         <h3>${typeLabel} Shared!</h3>
                         <p class="share-title">"${this.itemTitle}"</p>
                         <div class="share-result-card">
-                            <span class="share-option-icon">&#128279;</span>
+                            <span class="share-option-icon"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></span>
                             <span class="share-option-label">Temporary Public Link</span>
                             <span class="share-result-url">${window.location.origin}${result.url}</span>
                             <span class="share-result-meta">Link expires in ${result.expiresIn}</span>
@@ -189,11 +187,7 @@ export class ShareButton extends HTMLElement {
         jsonBtn.addEventListener('click', async () => {
             cleanup();
             try {
-                if (this.type === 'note') {
-                    await ImportExportService.exportNote(item);
-                } else {
-                    await ImportExportService.exportList(item);
-                }
+                await ImportExportService.exportItem(item);
             } catch (error) {
                 console.error('[ShareButton] Export failed:', error);
                 alert(`Failed to export: ${error.message}`);
@@ -203,7 +197,7 @@ export class ShareButton extends HTMLElement {
         mdBtn.addEventListener('click', async () => {
             cleanup();
             try {
-                await ImportExportService.exportMarkdown(item, this.type);
+                await ImportExportService.exportMarkdown(item);
             } catch (error) {
                 console.error('[ShareButton] Markdown export failed:', error);
                 alert(`Failed to export markdown: ${error.message}`);

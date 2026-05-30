@@ -2,9 +2,9 @@ import { getDefaultLayout, getWidgetById } from "./WidgetRegistry.js";
 import { DBManager } from "../services/DBManager.js";
 import { Router } from "../services/Router.js";
 import './weather/WeatherCurrent.js';
-import './TodoList.js';
-import './TodoListWidget.js';
-import './LocalNotes.js';
+import './List.js';
+import './ListWidget.js';
+import './Notes.js';
 
 export class HomePage extends HTMLElement {
     connectedCallback() {

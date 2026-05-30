@@ -1,21 +1,29 @@
 /**
  * ImportExportService - Handles export and import of Pockist data
- * 
+ *
  * Supports:
- * - Full backup export (notes + lists)
- * - Individual note export
- * - Individual list export  
- * - Import with version checking and migration
+ * - Full backup export (all items in unified v2.0 format)
+ * - Individual item export
+ * - Import with version checking and merge options
  * - Duplicate detection via exportId tracking
- * 
- * File format:
+ * - Backwards compatible with v1.0 JSON format
+ *
+ * File format v2.0:
  * {
- *   version: "1.0",
+ *   version: "2.0",
  *   type: "pockist-backup",
  *   scope: "full|note|list",
  *   exportId: "uuid-timestamp",
  *   exportedAt: "ISO-8601",
  *   appVersion: "1.x.x",
+ *   data: { items: [...] }
+ * }
+ *
+ * Legacy format v1.0:
+ * {
+ *   version: "1.0",
+ *   type: "pockist-backup",
+ *   scope: "full|note|list",
  *   data: { notes: [...], lists: [...] }
  * }
  */
@@ -23,102 +31,91 @@
 import { DBManager } from './DBManager.js';
 import { DialogService } from './DialogService.js';
 
-const EXPORT_VERSION = '1.0';
+const EXPORT_VERSION = '2.0';
+const LEGACY_VERSION = '1.0';
 const EXPORT_TYPE = 'pockist-backup';
 const MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024; // 50MB
 
 export class ImportExportService {
-    
+
     // ============================================================================
     // EXPORT FUNCTIONS
     // ============================================================================
-    
+
     /**
-     * Export all data (notes and lists) as a full backup
+     * Export all data as a full backup
      */
     static async exportAll() {
         console.log('[ImportExportService] exportAll() starting...');
-        
+
         try {
-            const [notes, lists] = await Promise.all([
-                DBManager.getAllNotes(),
-                DBManager.getLists()
-            ]);
-            
-            const exportData = this.#createExportPayload('full', { notes, lists });
+            const items = await DBManager.getAllItems();
+
+            const exportData = this.#createExportPayload('full', { items });
             const fileName = this.#generateFileName('backup');
-            
+
             await this.#downloadJSON(exportData, fileName);
             console.log('[ImportExportService] Full backup exported successfully');
             return { success: true, fileName };
-            
+
         } catch (error) {
             console.error('[ImportExportService] Export failed:', error);
             throw error;
         }
     }
-    
+
     /**
-     * Export a specific note
-     * @param {Object} note - The note object to export
+     * Export a specific item (note or list)
+     * @param {Object} item - The unified item to export
      */
-    static async exportNote(note) {
-        console.log('[ImportExportService] exportNote() starting...');
-        
-        if (!note || !note.id) {
-            throw new Error('Invalid note provided for export');
+    static async exportItem(item) {
+        console.log('[ImportExportService] exportItem() starting...');
+
+        if (!item || !item.id) {
+            throw new Error('Invalid item provided for export');
         }
-        
-        const exportData = this.#createExportPayload('note', { notes: [note] });
-        const fileName = this.#generateFileName('note', note.title || 'untitled');
-        
+
+        const scope = item.type === 'note' ? 'note' : (item.type === 'list' ? 'list' : 'item');
+
+        // For lists, include all linked items so the export is self-contained
+        let items = [item];
+        if (item.type === 'list' && Array.isArray(item.links) && item.links.length > 0) {
+            const linked = await DBManager.getLinkedItems(item.id);
+            items = [item, ...linked];
+        }
+
+        const exportData = this.#createExportPayload(scope, { items });
+        const name = (item.content || '').split('\n')[0].slice(0, 32).trim() || 'untitled';
+        const fileName = this.#generateFileName(scope, name);
+
         await this.#downloadJSON(exportData, fileName);
-        console.log('[ImportExportService] Note exported successfully');
+        console.log('[ImportExportService] Item exported successfully');
         return { success: true, fileName };
     }
-    
+
     /**
-     * Export a specific todo list
-     * @param {Object} list - The list object to export
+     * Export a specific item as Markdown
+     * @param {Object} item - The unified item
      */
-    static async exportList(list) {
-        console.log('[ImportExportService] exportList() starting...');
-        
-        if (!list || !list.id) {
-            throw new Error('Invalid list provided for export');
-        }
-        
-        const exportData = this.#createExportPayload('list', { lists: [list] });
-        const fileName = this.#generateFileName('list', list.name || 'untitled');
-        
-        await this.#downloadJSON(exportData, fileName);
-        console.log('[ImportExportService] List exported successfully');
-        return { success: true, fileName };
-    }
-    
-    /**
-     * Export a specific item as Markdown and trigger download
-     * @param {Object} item - The note or list object
-     * @param {string} type - 'note' or 'list'
-     */
-    static async exportMarkdown(item, type) {
+    static async exportMarkdown(item) {
         console.log('[ImportExportService] exportMarkdown() starting...');
-        
+
         if (!item) {
-            throw new Error(`Invalid ${type} provided for markdown export`);
+            throw new Error('Invalid item provided for markdown export');
         }
-        
-        const markdown = type === 'note'
+
+        const markdown = item.type === 'note'
             ? this.#noteToMarkdown(item)
-            : this.#listToMarkdown(item);
-        
-        const fileName = type === 'note'
-            ? this.#generateMarkdownFileName('note', item.title)
-            : this.#generateMarkdownFileName('list', item.name);
-        
+            : await this.#listToMarkdown(item);
+
+        const name = (item.content || '').split('\n')[0].slice(0, 32).trim() || 'untitled';
+        const fileName = item.type === 'note'
+            ? `${name.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 30)}.md`
+            : `${name.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 30)}-list.md`;
+
         const blob = new Blob([markdown], { type: 'text/markdown' });
         const url = URL.createObjectURL(blob);
-        
+
         const a = document.createElement('a');
         a.href = url;
         a.download = fileName;
@@ -126,20 +123,21 @@ export class ImportExportService {
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
-        
+
         console.log('[ImportExportService] Markdown exported successfully');
         return { success: true, fileName };
     }
-    
+
     /**
-     * Convert a note to Markdown format
+     * Convert a note item to Markdown format
      * @private
      */
-    static #noteToMarkdown(note) {
-        const title = note.title || 'Untitled Note';
-        const body = note.content || note.text || '';
-        const date = note.createdAt ? new Date(note.createdAt).toLocaleString() : '';
-        
+    static #noteToMarkdown(item) {
+        const lines = (item.content || '').split('\n');
+        const title = lines[0] || 'Untitled Note';
+        const body = lines.slice(1).join('\n').trim();
+        const date = item.meta?.createdAt ? new Date(item.meta.createdAt).toLocaleString() : '';
+
         let markdown = `# ${title}\n\n`;
         if (date) {
             markdown += `*Created: ${date}*\n\n`;
@@ -147,413 +145,520 @@ export class ImportExportService {
         markdown += body;
         return markdown;
     }
-    
+
     /**
-     * Convert a todo list to Markdown format
+     * Convert a list item to Markdown format
      * @private
      */
-    static #listToMarkdown(list) {
-        const title = list.name || 'Untitled List';
-        const todos = list.todos || [];
-        const date = list.createdAt ? new Date(list.createdAt).toLocaleString() : '';
-        
+    static async #listToMarkdown(item) {
+        const linkedItems = await DBManager.getLinkedItems(item.id);
+        return this.#listToMarkdownFromData(item, linkedItems);
+    }
+
+    /**
+     * Convert a list item to Markdown format using provided linked items (no DB)
+     * @private
+     */
+    static #listToMarkdownFromData(item, linkedItems) {
+        const title = item.content || 'Untitled List';
+        const date = item.meta?.createdAt ? new Date(item.meta.createdAt).toLocaleString() : '';
+
         let markdown = `# ${title}\n\n`;
         if (date) {
             markdown += `*Created: ${date}*\n\n`;
         }
-        
-        if (todos.length === 0) {
-            markdown += '*No todos yet.*';
+
+        if (linkedItems.length === 0) {
+            markdown += '*No items yet.*';
         } else {
-            todos.forEach(todo => {
-                const checkbox = todo.completed ? '[x]' : '[ ]';
-                markdown += `- ${checkbox} ${todo.text}\n`;
+            linkedItems.forEach(todoItem => {
+                const checkbox = todoItem.meta?.completed ? '[x]' : '[ ]';
+                markdown += `- ${checkbox} ${todoItem.content || ''}\n`;
             });
         }
-        
+
         return markdown;
     }
-    
+
     /**
-     * Generate markdown filename for export
-     * @private
+     * Export markdown from share data without requiring items in local DB
+     * @param {Object} item - The unified item
+     * @param {Array} linkedItems - Optional linked items for lists
      */
-    static #generateMarkdownFileName(type, name = '') {
-        const date = new Date().toISOString().split('T')[0];
-        const safeName = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 30);
-        
-        switch (type) {
-            case 'note':
-                return `${safeName || 'untitled'}-${date}.md`;
-            case 'list':
-                return `${safeName || 'untitled'}-list-${date}.md`;
-            default:
-                return `pockist-export-${date}.md`;
+    static async exportMarkdownFromData(item, linkedItems = null) {
+        console.log('[ImportExportService] exportMarkdownFromData() starting...');
+
+        if (!item) {
+            throw new Error('Invalid item provided for markdown export');
         }
+
+        const markdown = item.type === 'note'
+            ? this.#noteToMarkdown(item)
+            : this.#listToMarkdownFromData(item, linkedItems || []);
+
+        const name = (item.content || '').split('\n')[0].slice(0, 32).trim() || 'untitled';
+        const fileName = item.type === 'note'
+            ? `${name.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 30)}.md`
+            : `${name.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 30)}-list.md`;
+
+        const blob = new Blob([markdown], { type: 'text/markdown' });
+        const url = URL.createObjectURL(blob);
+
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        console.log('[ImportExportService] Markdown exported successfully');
+        return { success: true, fileName };
     }
-    
+
     // ============================================================================
-    // IMPORT FUNCTIONS
+    // IMPORT ENTRY POINTS
     // ============================================================================
-    
+
     /**
      * Import data from a file
      * @param {File} file - The file to import
      */
     static async importFromFile(file) {
         console.log('[ImportExportService] importFromFile() starting...');
-        
-        // Validate file size
+
         if (file.size > MAX_FILE_SIZE_BYTES) {
             throw new Error(`File too large. Maximum size is ${MAX_FILE_SIZE_BYTES / 1024 / 1024}MB`);
         }
-        
+
         try {
-            // Read file content
             const content = await this.#readFile(file);
-            
+
             // Auto-detect markdown files
             if (file.name.toLowerCase().endsWith('.md')) {
                 console.log('[ImportExportService] Detected markdown file');
                 const parsed = this.#parseMarkdown(content);
                 return await this.#importMarkdown(parsed, file.name);
             }
-            
-            // JSON import flow
+
             const data = JSON.parse(content);
-            
-            // Validate structure
             this.#validateImport(data);
-            
-            // Check for duplicate import
-            const isDuplicate = await this.#checkDuplicate(data.exportId);
-            if (isDuplicate) {
-                const shouldProceed = await DialogService.confirm(
-                    `You have already imported this file on ${isDuplicate.importedAt}. Import again?`,
-                    'Import Again'
-                );
-                if (!shouldProceed) {
-                    return { success: false, cancelled: true };
-                }
-            }
-            
-            // Show confirmation dialog with summary
-            const summary = this.#generateImportSummary(data);
-            const shouldImport = await DialogService.confirm(
-                `This backup contains:\n${summary}\n\nImport will merge with existing data. Conflicts will be renamed. Continue?`,
-                'Import'
-            );
-            if (!shouldImport) {
-                return { success: false, cancelled: true };
-            }
-            
-            // Perform import
-            const result = await this.#performImport(data);
-            
-            // Record import
-            await DBManager.recordImport({
-                id: data.exportId,
-                importedAt: new Date().toISOString(),
-                fileName: file.name,
-                scope: data.scope,
-                summary: result.summary
-            });
-            
-            console.log('[ImportExportService] Import completed successfully');
-            return { 
-                success: true, 
-                summary: result.summary,
-                scope: data.scope 
-            };
-            
+
+            return await this.#importWithOptions(data, file.name);
+
         } catch (error) {
             console.error('[ImportExportService] Import failed:', error);
             throw error;
         }
     }
-    
+
     /**
      * Import data from a shared item (from ShareService)
-     * @param {Object} sharePayload - The share payload matching pockist-backup format
+     * @param {Object} sharePayload - The share payload
      */
     static async importFromShare(sharePayload) {
         console.log('[ImportExportService] importFromShare() starting...');
-        
-        try {
-            // Validate structure (similar to file import)
-            this.#validateImport(sharePayload);
-            
-            // Perform import
-            const result = await this.#performImport(sharePayload);
-            
-            // Record import (optional - could skip for shares)
-            await DBManager.recordImport({
-                id: sharePayload.exportId,
-                importedAt: new Date().toISOString(),
-                fileName: `shared-${sharePayload.exportId}`,
-                scope: sharePayload.scope,
-                summary: result.summary
-            });
-            
-            console.log('[ImportExportService] Share import completed successfully');
-            return { 
-                success: true, 
-                summary: result.summary,
-                scope: sharePayload.scope 
-            };
-            
-        } catch (error) {
-            console.error('[ImportExportService] Share import failed:', error);
-            throw error;
-        }
+
+        this.#validateImport(sharePayload);
+        return await this.#importWithOptions(sharePayload, `shared-${sharePayload.exportId}`);
     }
-    
+
     // ============================================================================
-    // PRIVATE HELPERS
+    // CORE IMPORT LOGIC
     // ============================================================================
-    
+
     /**
-     * Create the export payload structure
+     * Route import to the appropriate handler with user options
      * @private
      */
-    static #createExportPayload(scope, data) {
-        return {
-            version: EXPORT_VERSION,
-            type: EXPORT_TYPE,
-            scope: scope,
-            exportId: `${crypto.randomUUID()}-${Date.now()}`,
-            exportedAt: new Date().toISOString(),
-            appVersion: this.#getAppVersion(),
-            data: {
-                notes: data.notes || [],
-                lists: data.lists || []
-            }
-        };
-    }
-    
-    /**
-     * Generate filename for export
-     * @private
-     */
-    static #generateFileName(type, name = '') {
-        const date = new Date().toISOString().split('T')[0];
-        const safeName = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 30);
-        
-        switch (type) {
-            case 'backup':
-                return `pockist-backup-${date}.json`;
-            case 'note':
-                return `pockist-note-${safeName || 'untitled'}-${date}.json`;
-            case 'list':
-                return `pockist-list-${safeName || 'untitled'}-${date}.json`;
-            default:
-                return `pockist-export-${date}.json`;
-        }
-    }
-    
-    /**
-     * Get app version from manifest or default
-     * @private
-     */
-    static #getAppVersion() {
-        // Try to get from manifest
-        const manifestLink = document.querySelector('link[rel="manifest"]');
-        if (manifestLink) {
-            // Could fetch manifest, but for now use simple version
-            return '1.0.0';
-        }
-        return '1.0.0';
-    }
-    
-    /**
-     * Download JSON data as file
-     * @private
-     */
-    static #downloadJSON(data, fileName) {
-        return new Promise((resolve, reject) => {
-            try {
-                const json = JSON.stringify(data, null, 2);
-                const blob = new Blob([json], { type: 'application/json' });
-                const url = URL.createObjectURL(blob);
-                
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = fileName;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                
-                URL.revokeObjectURL(url);
-                resolve();
-            } catch (error) {
-                reject(error);
-            }
-        });
-    }
-    
-    /**
-     * Read file content as text
-     * @private
-     */
-    static #readFile(file) {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = (e) => resolve(e.target.result);
-            reader.onerror = (e) => reject(new Error('Failed to read file'));
-            reader.readAsText(file);
-        });
-    }
-    
-    // ============================================================================
-    // MARKDOWN IMPORT FUNCTIONS
-    // ============================================================================
-    
-    /**
-     * Parse markdown content into a structured object
-     * @private
-     */
-    static #parseMarkdown(content) {
-        const lines = content.split('\n');
-        
-        // Extract title: first non-empty line, capped at 32 chars
-        let title = 'Untitled';
-        let bodyStartIndex = 0;
-        for (let i = 0; i < lines.length; i++) {
-            const trimmed = lines[i].trim();
-            if (trimmed) {
-                title = trimmed.replace(/^#+\s*/, '').slice(0, 32).trim();
-                bodyStartIndex = i;
-                break;
+    static async #importWithOptions(data, sourceName) {
+        const isV2 = data.data && Array.isArray(data.data.items);
+
+        // Check for duplicate import
+        const isDuplicate = await this.#checkDuplicate(data.exportId);
+        if (isDuplicate) {
+            const shouldProceed = await DialogService.confirm(
+                `You have already imported this file on ${isDuplicate.importedAt}. Import again?`,
+                'Import Again'
+            );
+            if (!shouldProceed) {
+                return { success: false, cancelled: true };
             }
         }
-        
-        // Check for checkbox patterns to determine type
-        const checkboxPattern = /^-\s*\[(\s|x)\]\s*(.*)$/i;
-        const todos = [];
-        
-        for (const line of lines) {
-            const match = line.match(checkboxPattern);
-            if (match) {
-                todos.push({
-                    text: match[2].trim(),
-                    completed: match[1].toLowerCase() === 'x'
-                });
-            }
+
+        if (!isV2) {
+            // Convert legacy v1.0 to v2.0 in memory, then show merge dialog
+            data = this.#convertLegacyToItems(data);
         }
-        
-        if (todos.length > 0) {
-            return {
-                type: 'list',
-                title,
-                todos,
-                rawContent: content
-            };
-        }
-        
-        return {
-            type: 'note',
-            title,
-            content: content.trim(),
-            rawContent: content
-        };
-    }
-    
-    /**
-     * Import parsed markdown data with create/merge options
-     * @private
-     */
-    static async #importMarkdown(parsed, fileName) {
-        console.log('[ImportExportService] #importMarkdown() starting...');
-        
-        const choice = await this.#showMarkdownImportDialog(parsed);
+
+        // v2.0 import with merge options
+        const choice = await this.#showImportOptionsDialog(data);
         if (!choice) {
             return { success: false, cancelled: true };
         }
-        
-        if (choice === 'create') {
-            await this.#createFromMarkdown(parsed);
-            console.log('[ImportExportService] Markdown import: created new', parsed.type);
-            return { success: true, action: 'create', type: parsed.type };
-        }
-        
-        if (choice === 'merge') {
-            const target = await this.#showMergeSelector(parsed.type);
-            if (!target) {
-                return { success: false, cancelled: true };
-            }
-            await this.#mergeIntoItem(target, parsed);
-            console.log('[ImportExportService] Markdown import: merged into existing', parsed.type);
-            return { success: true, action: 'merge', type: parsed.type };
-        }
-        
-        return { success: false, cancelled: true };
+
+        const result = await this.#performItemsImport(data, choice);
+
+        await DBManager.recordImport({
+            id: data.exportId,
+            importedAt: new Date().toISOString(),
+            fileName: sourceName,
+            scope: data.scope,
+            summary: result.summary
+        });
+
+        console.log('[ImportExportService] Import completed successfully');
+        return { success: true, summary: result.summary, scope: data.scope };
     }
-    
+
     /**
-     * Show import options dialog for markdown (create new / merge / cancel)
+     * Perform v2.0 items import with merge options
      * @private
      */
-    static #showMarkdownImportDialog(parsed) {
+    static async #performItemsImport(data, options) {
+        const items = data.data.items || [];
+        const { action, targetId } = options;
+
+        let notesImported = 0;
+        let listsImported = 0;
+        let itemsImported = 0;
+        let itemsMerged = 0;
+        let itemsSkipped = 0;
+
+        if (action === 'create') {
+            // Rename conflicting IDs first, then save everything
+            const idMap = new Map();
+            for (const item of items) {
+                const existing = await DBManager.getItem(item.id);
+                if (existing) {
+                    idMap.set(item.id, `${item.id}-imported-${Date.now()}`);
+                }
+            }
+
+            for (const item of items) {
+                let itemToSave = { ...item };
+                if (idMap.has(item.id)) {
+                    itemToSave.id = idMap.get(item.id);
+                }
+                if (Array.isArray(itemToSave.links)) {
+                    itemToSave.links = itemToSave.links.map(link => ({
+                        ...link,
+                        id: idMap.has(link.id) ? idMap.get(link.id) : link.id
+                    }));
+                }
+                await DBManager.saveItem(itemToSave);
+
+                if (itemToSave.type === 'note') notesImported++;
+                else if (itemToSave.type === 'list') listsImported++;
+                else itemsImported++;
+            }
+        }
+
+        if (action === 'append' && targetId) {
+            const target = await DBManager.getItem(targetId);
+            if (!target) throw new Error('Target not found');
+
+            if (target.type === 'note') {
+                const importedNote = items.find(i => i.type === 'note');
+                if (importedNote) {
+                    const divider = '\n\n---\n\n';
+                    target.content = (target.content || '') + divider + (importedNote.content || '');
+                    target.meta = { ...target.meta, updatedAt: new Date().toISOString() };
+                    await DBManager.saveItem(target);
+                    notesImported++;
+                    itemsMerged++;
+                }
+            } else if (target.type === 'list') {
+                const importedLinked = items.filter(i => i.type === 'item');
+                const existingLinks = target.links || [];
+                const newLinks = [...existingLinks];
+                let maxOrder = existingLinks.length > 0
+                    ? Math.max(...existingLinks.map(l => l.order || 0))
+                    : -1;
+
+                for (const linkedItem of importedLinked) {
+                    const existing = await DBManager.getItem(linkedItem.id);
+                    let itemToSave = { ...linkedItem };
+                    if (existing) {
+                        itemToSave.id = `${linkedItem.id}-imported-${Date.now()}`;
+                    }
+                    await DBManager.saveItem(itemToSave);
+                    newLinks.push({ id: itemToSave.id, order: ++maxOrder });
+                    itemsImported++;
+                }
+
+                target.links = newLinks;
+                target.meta = { ...target.meta, updatedAt: new Date().toISOString() };
+                await DBManager.saveItem(target);
+                listsImported++;
+                itemsMerged += importedLinked.length;
+            }
+        }
+
+        if (action === 'smart-merge' && targetId) {
+            const target = await DBManager.getItem(targetId);
+            if (!target || target.type !== 'list') throw new Error('Target list not found');
+
+            const importedLinked = items.filter(i => i.type === 'item');
+            const existingLinkedItems = await DBManager.getLinkedItems(targetId);
+            const existingTexts = new Set(
+                existingLinkedItems.map(i => (i.content || '').trim().toLowerCase())
+            );
+
+            const existingLinks = target.links || [];
+            const newLinks = [...existingLinks];
+            let maxOrder = existingLinks.length > 0
+                ? Math.max(...existingLinks.map(l => l.order || 0))
+                : -1;
+
+            for (const linkedItem of importedLinked) {
+                const text = (linkedItem.content || '').trim().toLowerCase();
+                if (existingTexts.has(text)) {
+                    itemsSkipped++;
+                    continue;
+                }
+
+                const existing = await DBManager.getItem(linkedItem.id);
+                let itemToSave = { ...linkedItem };
+                if (existing) {
+                    itemToSave.id = `${linkedItem.id}-imported-${Date.now()}`;
+                }
+                await DBManager.saveItem(itemToSave);
+                newLinks.push({ id: itemToSave.id, order: ++maxOrder });
+                itemsImported++;
+            }
+
+            target.links = newLinks;
+            target.meta = { ...target.meta, updatedAt: new Date().toISOString() };
+            await DBManager.saveItem(target);
+            listsImported++;
+            itemsMerged += importedLinked.length - itemsSkipped;
+        }
+
+        return {
+            summary: {
+                notes: notesImported,
+                lists: listsImported,
+                items: itemsImported,
+                merged: itemsMerged,
+                skipped: itemsSkipped
+            }
+        };
+    }
+
+    /**
+     * Convert legacy v1.0 format to v2.0 unified items in memory
+     * @private
+     */
+    static #convertLegacyToItems(data) {
+        const items = [];
+        const notes = data.data.notes || [];
+        const lists = data.data.lists || [];
+
+        for (const note of notes) {
+            if (!note || !note.id) continue;
+
+            let content = note.content || '';
+            if (note.title) {
+                content = note.title + '\n' + content;
+            }
+            content = String(content).trim();
+
+            items.push({
+                id: String(note.id),
+                type: 'note',
+                content,
+                links: [],
+                meta: {
+                    createdAt: note.createdAt || new Date().toISOString(),
+                    updatedAt: note.updatedAt || new Date().toISOString(),
+                    archived: false,
+                    completed: false
+                }
+            });
+        }
+
+        for (const list of lists) {
+            if (!list || !list.id) continue;
+
+            const links = [];
+            const linkedItems = [];
+
+            if (Array.isArray(list.todos)) {
+                for (let i = 0; i < list.todos.length; i++) {
+                    const todo = list.todos[i];
+                    const todoId = String(todo.id || `todo-${Date.now()}-${i}`);
+
+                    linkedItems.push({
+                        id: todoId,
+                        type: 'item',
+                        content: String(todo.text || ''),
+                        links: [],
+                        meta: {
+                            createdAt: new Date(todo.createdAt || Date.now()).toISOString(),
+                            updatedAt: new Date().toISOString(),
+                            archived: false,
+                            completed: todo.completed || false
+                        }
+                    });
+
+                    links.push({ id: todoId, order: i });
+                }
+            }
+
+            items.push({
+                id: String(list.id),
+                type: 'list',
+                content: String(list.name || ''),
+                links,
+                meta: {
+                    createdAt: new Date(list.createdAt || Date.now()).toISOString(),
+                    updatedAt: new Date(list.updatedAt || Date.now()).toISOString(),
+                    archived: false,
+                    completed: false,
+                    isDefault: list.isDefault || false,
+                    order: typeof list.order === 'number' ? list.order : 0
+                }
+            });
+
+            items.push(...linkedItems);
+        }
+
+        return {
+            ...data,
+            version: '2.0',
+            data: { items }
+        };
+    }
+
+    // ============================================================================
+    // IMPORT DIALOGS
+    // ============================================================================
+
+    /**
+     * Show import options dialog for v2.0 items
+     * @private
+     */
+    static async #showImportOptionsDialog(data) {
+        const items = data.data.items || [];
+        const importedNotes = items.filter(i => i.type === 'note');
+        const importedLists = items.filter(i => i.type === 'list');
+        const importedItems = items.filter(i => i.type === 'item');
+
+        const isSingleNote = importedNotes.length === 1 && importedLists.length === 0;
+        const isSingleList = importedLists.length === 1 && importedNotes.length === 0;
+
+        let title, subtitle, optionsHtml;
+
+        if (isSingleNote) {
+            const note = importedNotes[0];
+            title = 'Import Note';
+            subtitle = `"${(note.content || '').split('\n')[0].slice(0, 40)}"`;
+            optionsHtml = `
+                <button class="share-option-btn import-action-btn" data-action="create" type="button">
+                    <span class="share-option-icon"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span>
+                    <span class="share-option-label">Create New Note</span>
+                    <span class="share-option-desc">Import as a fresh note</span>
+                </button>
+                <button class="share-option-btn import-action-btn" data-action="append" type="button">
+                    <span class="share-option-icon"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg></span>
+                    <span class="share-option-label">Append to Existing</span>
+                    <span class="share-option-desc">Add content to an existing note</span>
+                </button>
+            `;
+        } else if (isSingleList) {
+            const list = importedLists[0];
+            title = 'Import List';
+            subtitle = `"${list.content || 'Untitled'}" — ${importedItems.length} item${importedItems.length !== 1 ? 's' : ''}`;
+            optionsHtml = `
+                <button class="share-option-btn import-action-btn" data-action="create" type="button">
+                    <span class="share-option-icon"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span>
+                    <span class="share-option-label">Create New List</span>
+                    <span class="share-option-desc">Import as a fresh list</span>
+                </button>
+                <button class="share-option-btn import-action-btn" data-action="smart-merge" type="button">
+                    <span class="share-option-icon"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg></span>
+                    <span class="share-option-label">Smart Merge</span>
+                    <span class="share-option-desc">Skip duplicate items, add only new ones</span>
+                </button>
+                <button class="share-option-btn import-action-btn" data-action="append" type="button">
+                    <span class="share-option-icon"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg></span>
+                    <span class="share-option-label">Append to Existing</span>
+                    <span class="share-option-desc">Add all items to an existing list</span>
+                </button>
+            `;
+        } else {
+            const noteCount = importedNotes.length;
+            const listCount = importedLists.length;
+            const itemCount = importedItems.length;
+            title = 'Import Full Backup';
+            subtitle = `${noteCount} note${noteCount !== 1 ? 's' : ''}, ${listCount} list${listCount !== 1 ? 's' : ''}, ${itemCount} item${itemCount !== 1 ? 's' : ''}`;
+            optionsHtml = `
+                <button class="share-option-btn import-action-btn" data-action="create" type="button">
+                    <span class="share-option-icon"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span>
+                    <span class="share-option-label">Create All New</span>
+                    <span class="share-option-desc">Import everything as fresh items</span>
+                </button>
+            `;
+        }
+
+        const action = await this.#showActionDialog(title, subtitle, optionsHtml);
+        if (!action) return null;
+
+        if (action === 'append' || action === 'smart-merge') {
+            const targetType = isSingleNote ? 'note' : 'list';
+            const target = await this.#showTargetSelector(targetType);
+            if (!target) return null;
+            return { action, targetId: target.id };
+        }
+
+        return { action };
+    }
+
+    /**
+     * Generic action dialog for imports
+     * @private
+     */
+    static #showActionDialog(title, subtitle, optionsHtml) {
         return new Promise((resolve) => {
-            const typeLabel = parsed.type === 'list' ? 'List' : 'Note';
-            const detailText = parsed.type === 'list'
-                ? `${parsed.todos.length} todo${parsed.todos.length === 1 ? '' : 's'}`
-                : `${parsed.content.length} characters`;
-            
             const dialog = document.createElement('dialog');
             dialog.className = 'dialog';
             dialog.innerHTML = `
                 <div class="dialog-content">
-                    <h3>Import Markdown ${typeLabel}</h3>
-                    <p class="share-title">"${this.#escapeHtml(parsed.title)}"</p>
-                    <div class="share-info">
-                        <span class="share-expiry">${this.#escapeHtml(detailText)}</span>
-                    </div>
+                    <h3>${this.#escapeHtml(title)}</h3>
+                    <p class="share-title">${this.#escapeHtml(subtitle)}</p>
                     <div class="share-options">
-                        <button class="share-option-btn share-option-create" type="button">
-                            <span class="share-option-icon">&#10133;</span>
-                            <span class="share-option-label">Create New ${typeLabel}</span>
-                            <span class="share-option-desc">Add as a new ${parsed.type === 'list' ? 'todo list' : 'note'}</span>
-                        </button>
-                        <button class="share-option-btn share-option-merge" type="button">
-                            <span class="share-option-icon">&#128256;</span>
-                            <span class="share-option-label">Merge Into Existing</span>
-                            <span class="share-option-desc">Append to an existing ${parsed.type === 'list' ? 'list' : 'note'}</span>
-                        </button>
+                        ${optionsHtml}
                     </div>
                     <div class="share-actions">
                         <button class="btn btn-ghost" type="button">Cancel</button>
                     </div>
                 </div>
             `;
-            
+
             document.body.appendChild(dialog);
             dialog.showModal();
-            
-            const createBtn = dialog.querySelector('.share-option-create');
-            const mergeBtn = dialog.querySelector('.share-option-merge');
+
+            const actionBtns = dialog.querySelectorAll('.import-action-btn');
             const cancelBtn = dialog.querySelector('.btn.btn-ghost');
-            
+
             const cleanup = () => {
                 dialog.close();
                 document.body.removeChild(dialog);
             };
-            
-            createBtn.addEventListener('click', () => {
-                cleanup();
-                resolve('create');
+
+            actionBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    cleanup();
+                    resolve(btn.dataset.action);
+                });
             });
-            
-            mergeBtn.addEventListener('click', () => {
-                cleanup();
-                resolve('merge');
-            });
-            
+
             cancelBtn.addEventListener('click', () => {
                 cleanup();
                 resolve(null);
             });
-            
+
             dialog.addEventListener('click', (e) => {
                 if (e.target === dialog) {
                     cleanup();
@@ -562,25 +667,33 @@ export class ImportExportService {
             });
         });
     }
-    
+
     /**
-     * Show selector dialog for existing lists or notes to merge into
+     * Show selector for existing notes or lists
      * @private
      */
-    static async #showMergeSelector(type) {
+    static async #showTargetSelector(type) {
         const typeLabel = type === 'list' ? 'List' : 'Note';
-        const items = type === 'list'
-            ? await DBManager.getListMetadata()
-            : await DBManager.getAllNotes();
-        
+        let items;
+
+        if (type === 'list') {
+            items = await DBManager.getListMetadata();
+        } else {
+            const notes = await DBManager.getItems({ type: 'note', archived: false });
+            items = notes.map(n => ({
+                id: n.id,
+                name: (n.content || '').split('\n')[0].slice(0, 40) || 'Untitled'
+            }));
+        }
+
         return new Promise((resolve) => {
             const dialog = document.createElement('dialog');
             dialog.className = 'dialog';
-            
+
             if (items.length === 0) {
                 dialog.innerHTML = `
                     <div class="dialog-content">
-                        <h3>Merge Into Existing ${typeLabel}</h3>
+                        <h3>Choose ${typeLabel}</h3>
                         <p class="share-title">No existing ${typeLabel.toLowerCase()}s found.</p>
                         <div class="share-actions">
                             <button class="btn btn-ghost" type="button">Close</button>
@@ -589,7 +702,7 @@ export class ImportExportService {
                 `;
                 document.body.appendChild(dialog);
                 dialog.showModal();
-                
+
                 const closeBtn = dialog.querySelector('.btn.btn-ghost');
                 const cleanup = () => {
                     dialog.close();
@@ -602,17 +715,266 @@ export class ImportExportService {
                 });
                 return;
             }
-            
+
+            const itemListHtml = items.map(item => `
+                <button class="share-option-btn share-merge-item" type="button" data-id="${this.#escapeHtml(item.id)}">
+                    <span class="share-option-label">${this.#escapeHtml(item.name || item.title || 'Untitled')}</span>
+                </button>
+            `).join('');
+
+            dialog.innerHTML = `
+                <div class="dialog-content">
+                    <h3>Choose ${typeLabel} to Merge Into</h3>
+                    <p class="share-title">Select an existing ${typeLabel.toLowerCase()}:</p>
+                    <div class="share-options">
+                        ${itemListHtml}
+                    </div>
+                    <div class="share-actions">
+                        <button class="btn btn-ghost" type="button">Cancel</button>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(dialog);
+            dialog.showModal();
+
+            const itemBtns = dialog.querySelectorAll('.share-merge-item');
+            const cancelBtn = dialog.querySelector('.btn.btn-ghost');
+
+            const cleanup = () => {
+                dialog.close();
+                document.body.removeChild(dialog);
+            };
+
+            itemBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const itemId = btn.dataset.id;
+                    const selectedItem = items.find(i => i.id === itemId);
+                    cleanup();
+                    resolve(selectedItem || null);
+                });
+            });
+
+            cancelBtn.addEventListener('click', () => {
+                cleanup();
+                resolve(null);
+            });
+
+            dialog.addEventListener('click', (e) => {
+                if (e.target === dialog) {
+                    cleanup();
+                    resolve(null);
+                }
+            });
+        });
+    }
+
+    // ============================================================================
+    // MARKDOWN IMPORT FUNCTIONS
+    // ============================================================================
+
+    /**
+     * Parse markdown content into a structured object
+     * @private
+     */
+    static #parseMarkdown(content) {
+        const lines = content.split('\n');
+
+        let title = 'Untitled';
+        let bodyStartIndex = 0;
+        for (let i = 0; i < lines.length; i++) {
+            const trimmed = lines[i].trim();
+            if (trimmed) {
+                title = trimmed.replace(/^#+\s*/, '').slice(0, 32).trim();
+                bodyStartIndex = i;
+                break;
+            }
+        }
+
+        const checkboxPattern = /^-\s*\[(\s|x)\]\s*(.*)$/i;
+        const todos = [];
+
+        for (const line of lines) {
+            const match = line.match(checkboxPattern);
+            if (match) {
+                todos.push({
+                    text: match[2].trim(),
+                    completed: match[1].toLowerCase() === 'x'
+                });
+            }
+        }
+
+        if (todos.length > 0) {
+            return {
+                type: 'list',
+                title,
+                todos,
+                rawContent: content
+            };
+        }
+
+        return {
+            type: 'note',
+            title,
+            content: content.trim(),
+            rawContent: content
+        };
+    }
+
+    /**
+     * Import parsed markdown data with create/merge options
+     * @private
+     */
+    static async #importMarkdown(parsed, fileName) {
+        console.log('[ImportExportService] #importMarkdown() starting...');
+
+        const choice = await this.#showMarkdownImportDialog(parsed);
+        if (!choice) {
+            return { success: false, cancelled: true };
+        }
+
+        if (choice === 'create') {
+            await this.#createFromMarkdown(parsed);
+            console.log('[ImportExportService] Markdown import: created new', parsed.type);
+            return { success: true, action: 'create', type: parsed.type };
+        }
+
+        if (choice === 'merge') {
+            const target = await this.#showMergeSelector(parsed.type);
+            if (!target) {
+                return { success: false, cancelled: true };
+            }
+            await this.#mergeIntoItem(target, parsed);
+            console.log('[ImportExportService] Markdown import: merged into existing', parsed.type);
+            return { success: true, action: 'merge', type: parsed.type };
+        }
+
+        return { success: false, cancelled: true };
+    }
+
+    /**
+     * Show import options dialog for markdown
+     * @private
+     */
+    static #showMarkdownImportDialog(parsed) {
+        return new Promise((resolve) => {
+            const typeLabel = parsed.type === 'list' ? 'List' : 'Note';
+            const detailText = parsed.type === 'list'
+                ? `${parsed.todos.length} todo${parsed.todos.length === 1 ? '' : 's'}`
+                : `${parsed.content.length} characters`;
+
+            const dialog = document.createElement('dialog');
+            dialog.className = 'dialog';
+            dialog.innerHTML = `
+                <div class="dialog-content">
+                    <h3>Import Markdown ${typeLabel}</h3>
+                    <p class="share-title">"${this.#escapeHtml(parsed.title)}"</p>
+                    <div class="share-info">
+                        <span class="share-expiry">${this.#escapeHtml(detailText)}</span>
+                    </div>
+                    <div class="share-options">
+                        <button class="share-option-btn share-option-create" type="button">
+                            <span class="share-option-icon"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span>
+                            <span class="share-option-label">Create New ${typeLabel}</span>
+                            <span class="share-option-desc">Add as a new ${parsed.type === 'list' ? 'todo list' : 'note'}</span>
+                        </button>
+                        <button class="share-option-btn share-option-merge" type="button">
+                            <span class="share-option-icon"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg></span>
+                            <span class="share-option-label">Merge Into Existing</span>
+                            <span class="share-option-desc">Append to an existing ${parsed.type === 'list' ? 'list' : 'note'}</span>
+                        </button>
+                    </div>
+                    <div class="share-actions">
+                        <button class="btn btn-ghost" type="button">Cancel</button>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(dialog);
+            dialog.showModal();
+
+            const createBtn = dialog.querySelector('.share-option-create');
+            const mergeBtn = dialog.querySelector('.share-option-merge');
+            const cancelBtn = dialog.querySelector('.btn.btn-ghost');
+
+            const cleanup = () => {
+                dialog.close();
+                document.body.removeChild(dialog);
+            };
+
+            createBtn.addEventListener('click', () => {
+                cleanup();
+                resolve('create');
+            });
+
+            mergeBtn.addEventListener('click', () => {
+                cleanup();
+                resolve('merge');
+            });
+
+            cancelBtn.addEventListener('click', () => {
+                cleanup();
+                resolve(null);
+            });
+
+            dialog.addEventListener('click', (e) => {
+                if (e.target === dialog) {
+                    cleanup();
+                    resolve(null);
+                }
+            });
+        });
+    }
+
+    /**
+     * Show selector dialog for existing lists or notes to merge into
+     * @private
+     */
+    static async #showMergeSelector(type) {
+        const typeLabel = type === 'list' ? 'List' : 'Note';
+        const items = type === 'list'
+            ? await DBManager.getListMetadata()
+            : await DBManager.getAllNotes();
+
+        return new Promise((resolve) => {
+            const dialog = document.createElement('dialog');
+            dialog.className = 'dialog';
+
+            if (items.length === 0) {
+                dialog.innerHTML = `
+                    <div class="dialog-content">
+                        <h3>Merge Into Existing ${typeLabel}</h3>
+                        <p class="share-title">No existing ${typeLabel.toLowerCase()}s found.</p>
+                        <div class="share-actions">
+                            <button class="btn btn-ghost" type="button">Close</button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(dialog);
+                dialog.showModal();
+
+                const closeBtn = dialog.querySelector('.btn.btn-ghost');
+                const cleanup = () => {
+                    dialog.close();
+                    document.body.removeChild(dialog);
+                    resolve(null);
+                };
+                closeBtn.addEventListener('click', cleanup);
+                dialog.addEventListener('click', (e) => {
+                    if (e.target === dialog) cleanup();
+                });
+                return;
+            }
+
             const itemListHtml = items.map((item, index) => {
                 const name = type === 'list' ? item.name : (item.title || 'Untitled');
-                const isFirst = index === 0;
                 return `
                     <button class="share-option-btn share-merge-item" type="button" data-id="${this.#escapeHtml(item.id)}">
                         <span class="share-option-label">${this.#escapeHtml(name)}</span>
                     </button>
                 `;
             }).join('');
-            
+
             dialog.innerHTML = `
                 <div class="dialog-content">
                     <h3>Merge Into Existing ${typeLabel}</h3>
@@ -625,18 +987,18 @@ export class ImportExportService {
                     </div>
                 </div>
             `;
-            
+
             document.body.appendChild(dialog);
             dialog.showModal();
-            
+
             const itemBtns = dialog.querySelectorAll('.share-merge-item');
             const cancelBtn = dialog.querySelector('.btn.btn-ghost');
-            
+
             const cleanup = () => {
                 dialog.close();
                 document.body.removeChild(dialog);
             };
-            
+
             itemBtns.forEach(btn => {
                 btn.addEventListener('click', () => {
                     const itemId = btn.dataset.id;
@@ -645,12 +1007,12 @@ export class ImportExportService {
                     resolve(selectedItem || null);
                 });
             });
-            
+
             cancelBtn.addEventListener('click', () => {
                 cleanup();
                 resolve(null);
             });
-            
+
             dialog.addEventListener('click', (e) => {
                 if (e.target === dialog) {
                     cleanup();
@@ -659,28 +1021,27 @@ export class ImportExportService {
             });
         });
     }
-    
+
     /**
      * Create a new note or list from parsed markdown
      * @private
      */
     static async #createFromMarkdown(parsed) {
         const now = new Date().toISOString();
-        
+
         if (parsed.type === 'list') {
             const newList = await DBManager.createList({
                 name: parsed.title,
                 isDefault: false
             });
-            
-            // Add parsed todos
+
             const todos = parsed.todos.map((todo, index) => ({
                 id: `todo-${Date.now()}-${index}`,
                 text: todo.text,
                 completed: todo.completed,
                 createdAt: Date.now()
             }));
-            
+
             newList.todos = todos;
             await DBManager.saveList(newList);
         } else {
@@ -695,22 +1056,20 @@ export class ImportExportService {
             await DBManager.saveNote(noteId, note);
         }
     }
-    
+
     /**
      * Merge parsed markdown into an existing note or list
      * @private
      */
     static async #mergeIntoItem(target, parsed) {
         const now = new Date().toISOString();
-        
+
         if (parsed.type === 'list') {
-            // Load full list to get todos array
             const fullList = await DBManager.getList(target.id);
             if (!fullList) {
                 throw new Error('Target list not found');
             }
-            
-            // Append new todos at the bottom
+
             const existingCount = fullList.todos?.length || 0;
             const newTodos = parsed.todos.map((todo, index) => ({
                 id: `todo-${Date.now()}-${index}`,
@@ -718,15 +1077,14 @@ export class ImportExportService {
                 completed: todo.completed,
                 createdAt: Date.now()
             }));
-            
+
             fullList.todos = [...(fullList.todos || []), ...newTodos];
             fullList.updatedAt = Date.now();
             await DBManager.saveList(fullList);
         } else {
-            // For notes, append content with a divider
             const divider = '\n\n---\n\n';
             const newContent = (target.content || '') + divider + parsed.content;
-            
+
             const updatedNote = {
                 ...target,
                 content: newContent,
@@ -735,60 +1093,143 @@ export class ImportExportService {
             await DBManager.saveNote(target.id, updatedNote);
         }
     }
-    
+
+    // ============================================================================
+    // PRIVATE HELPERS
+    // ============================================================================
+
     /**
-     * Escape HTML for safe insertion into dialog content
+     * Create the export payload structure
      * @private
      */
-    static #escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
+    static #createExportPayload(scope, data) {
+        return {
+            version: EXPORT_VERSION,
+            type: EXPORT_TYPE,
+            scope: scope,
+            exportId: `${crypto.randomUUID()}-${Date.now()}`,
+            exportedAt: new Date().toISOString(),
+            appVersion: this.#getAppVersion(),
+            data: {
+                items: data.items || []
+            }
+        };
     }
-    
-    // ============================================================================
-    // END MARKDOWN IMPORT FUNCTIONS
-    // ============================================================================
-    
+
+    /**
+     * Generate filename for export
+     * @private
+     */
+    static #generateFileName(type, name = '') {
+        const date = new Date().toISOString().split('T')[0];
+        const safeName = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 30);
+
+        switch (type) {
+            case 'backup':
+                return `pockist-backup-${date}.json`;
+            case 'note':
+                return `pockist-note-${safeName || 'untitled'}-${date}.json`;
+            case 'list':
+                return `pockist-list-${safeName || 'untitled'}-${date}.json`;
+            default:
+                return `pockist-export-${date}.json`;
+        }
+    }
+
+    /**
+     * Get app version from manifest or default
+     * @private
+     */
+    static #getAppVersion() {
+        const manifestLink = document.querySelector('link[rel="manifest"]');
+        if (manifestLink) {
+            return '1.0.0';
+        }
+        return '1.0.0';
+    }
+
+    /**
+     * Download JSON data as file
+     * @private
+     */
+    static #downloadJSON(data, fileName) {
+        return new Promise((resolve, reject) => {
+            try {
+                const json = JSON.stringify(data, null, 2);
+                const blob = new Blob([json], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = fileName;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+
+                URL.revokeObjectURL(url);
+                resolve();
+            } catch (error) {
+                reject(error);
+            }
+        });
+    }
+
+    /**
+     * Read file content as text
+     * @private
+     */
+    static #readFile(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = (e) => resolve(e.target.result);
+            reader.onerror = () => reject(new Error('Failed to read file'));
+            reader.readAsText(file);
+        });
+    }
+
     /**
      * Validate import data structure
      * @private
      */
     static #validateImport(data) {
-        // Check required fields
         if (!data || typeof data !== 'object') {
             throw new Error('Invalid file format');
         }
-        
+
         if (data.type !== EXPORT_TYPE) {
             throw new Error(`Invalid file type. Expected "${EXPORT_TYPE}"`);
         }
-        
+
         if (!data.version) {
             throw new Error('Missing version in export file');
         }
-        
+
         if (!data.exportId) {
             throw new Error('Missing export ID in file');
         }
-        
+
         if (!data.data || typeof data.data !== 'object') {
             throw new Error('Missing data in export file');
         }
-        
-        // Version check - warn but allow older versions
-        if (data.version !== EXPORT_VERSION) {
-            console.warn(`[ImportExportService] Importing from older version: ${data.version}`);
-            // Could add migration logic here for future versions
+
+        // Accept v2.0 (items) or v1.0 (notes/lists)
+        const hasItems = Array.isArray(data.data.items);
+        const hasLegacy = Array.isArray(data.data.notes) || Array.isArray(data.data.lists);
+
+        if (!hasItems && !hasLegacy) {
+            throw new Error('No importable data found');
         }
-        
-        // Validate scope
+
+        if (data.version !== EXPORT_VERSION && data.version !== LEGACY_VERSION) {
+            console.warn(`[ImportExportService] Importing from version: ${data.version}`);
+        }
+
         const validScopes = ['full', 'note', 'list'];
         if (!validScopes.includes(data.scope)) {
             throw new Error(`Invalid scope: ${data.scope}`);
         }
     }
-    
+
     /**
      * Check if this export has been imported before
      * @private
@@ -799,104 +1240,17 @@ export class ImportExportService {
             return existing;
         } catch (error) {
             console.warn('[ImportExportService] Could not check for duplicate:', error);
-            return null; // Allow import if check fails
+            return null;
         }
     }
-    
+
     /**
-     * Generate human-readable import summary
+     * Escape HTML for safe insertion into dialog content
      * @private
      */
-    static #generateImportSummary(data) {
-        const parts = [];
-        const notes = data.data.notes || [];
-        const lists = data.data.lists || [];
-        
-        if (notes.length > 0) {
-            parts.push(`• ${notes.length} note${notes.length === 1 ? '' : 's'}`);
-        }
-        
-        if (lists.length > 0) {
-            const totalTodos = lists.reduce((sum, list) => sum + (list.todos?.length || 0), 0);
-            parts.push(`• ${lists.length} list${lists.length === 1 ? '' : 's'} (${totalTodos} todo${totalTodos === 1 ? '' : 's'})`);
-        }
-        
-        return parts.join('\n') || '• No data found';
-    }
-    
-    /**
-     * Perform the actual import
-     * @private
-     */
-    static async #performImport(data) {
-        const notes = data.data.notes || [];
-        const lists = data.data.lists || [];
-        
-        let notesImported = 0;
-        let listsImported = 0;
-        let todosImported = 0;
-        
-        // Get existing data for conflict checking
-        const [existingNotes, existingLists] = await Promise.all([
-            DBManager.getAllNotes(),
-            DBManager.getLists()
-        ]);
-        
-        const existingNoteIds = new Set(existingNotes.map(n => n.id));
-        const existingListIds = new Set(existingLists.map(l => l.id));
-        
-        // Import notes
-        for (const note of notes) {
-            if (!note || !note.id) continue;
-            
-            let noteToSave = { ...note };
-            
-            // Handle conflict: rename imported note
-            if (existingNoteIds.has(note.id)) {
-                const newId = `${note.id}-imported-${Date.now()}`;
-                noteToSave.id = newId;
-                noteToSave.title = `${note.title || 'Note'} (Imported)`;
-                console.log(`[ImportExportService] Note ${note.id} renamed to ${newId}`);
-            }
-            
-            await DBManager.saveNote(noteToSave.id, noteToSave);
-            notesImported++;
-        }
-        
-        // Import lists
-        if (lists.length > 0) {
-            let updatedLists = [...existingLists];
-            
-            for (const list of lists) {
-                if (!list || !list.id) continue;
-                
-                let listToSave = { ...list };
-                
-                // Handle conflict: rename imported list
-                if (existingListIds.has(list.id)) {
-                    listToSave.id = `${list.id}-imported-${Date.now()}`;
-                    listToSave.name = `${list.name || 'List'} (Imported)`;
-                    console.log(`[ImportExportService] List ${list.id} renamed to ${listToSave.id}`);
-                }
-                
-                // Ensure todos have proper structure
-                if (listToSave.todos) {
-                    todosImported += listToSave.todos.length;
-                }
-                
-                updatedLists.push(listToSave);
-                listsImported++;
-            }
-            
-            await DBManager.saveLists(updatedLists);
-        }
-        
-        return {
-            summary: {
-                notes: notesImported,
-                lists: listsImported,
-                todos: todosImported
-            }
-        };
+    static #escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
     }
 }
