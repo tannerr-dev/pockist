@@ -419,6 +419,21 @@
 	align-items: center;
 }
 
+.btn.hidden {
+	opacity: 0;
+	pointer-events: none;
+	max-width: 0;
+	padding-left: 0;
+	padding-right: 0;
+	border-left-width: 0;
+	border-right-width: 0;
+	overflow: hidden;
+}
+
+.todo-footer-actions .btn {
+	max-width: 200px;
+}
+
 /* ============================================================================
    TODO LIST WIDGET (homepage paginated version)
    ============================================================================ */
@@ -463,7 +478,7 @@
 	display: flex;
 	flex-direction: column;
 	overflow: hidden;
-	height: 384px;
+	max-height: 384px;
 }
 
 .todo-widget-slots .todo-empty {

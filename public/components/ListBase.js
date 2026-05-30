@@ -889,11 +889,11 @@ export class ListBase extends HTMLElement {
 
 		const hasCompleted = list?.todos.some((t) => t.completed);
 		if (this._clearCompletedBtn) {
-			this._clearCompletedBtn.disabled = !hasCompleted;
+			this._clearCompletedBtn.classList.toggle('hidden', !hasCompleted);
 		}
 
 		if (this._sortTodosBtn) {
-			this._sortTodosBtn.disabled = !(list?.todos.length > 0);
+			this._sortTodosBtn.classList.toggle('hidden', !hasCompleted);
 		}
 	}
 
