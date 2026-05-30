@@ -424,6 +424,7 @@
 .todo-widget {
 	min-height: auto;
 	padding: 0;
+    padding-top: 14px;
 }
 
 .todo-widget .todo-list-selector-row {
