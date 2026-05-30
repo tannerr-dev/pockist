@@ -115,13 +115,21 @@ export class ShareView extends HTMLElement {
     }
 
     renderNoteContent() {
-        const notes = this.shareData.data?.notes || [];
-        if (notes.length === 0) return '<p>No note content</p>';
+        const isV2 = Array.isArray(this.shareData.data?.items);
+        let note, content;
 
-        const note = notes[0];
-        const content = this.escapeHtml(note.content || '');
-        // Convert newlines to <br> for display
-        const formattedContent = content.replace(/\n/g, '<br>');
+        if (isV2) {
+            note = this.shareData.data.items.find(i => i.type === 'note');
+            content = note ? (note.content || '') : '';
+        } else {
+            const notes = this.shareData.data?.notes || [];
+            note = notes[0];
+            content = note ? (note.content || '') : '';
+        }
+
+        if (!note) return '<p>No note content</p>';
+
+        const formattedContent = this.escapeHtml(content).replace(/\n/g, '<br>');
 
         return `
             <div class="share-note-content">
@@ -131,15 +139,35 @@ export class ShareView extends HTMLElement {
     }
 
     renderListContent() {
-        const lists = this.shareData.data?.lists || [];
-        if (lists.length === 0) return '<p>No list content</p>';
+        const isV2 = Array.isArray(this.shareData.data?.items);
+        let listName, todos;
 
-        const list = lists[0];
-        const todos = list.todos || [];
+        if (isV2) {
+            const list = this.shareData.data.items.find(i => i.type === 'list');
+            listName = list ? (list.content || 'Untitled List') : 'Untitled List';
+            todos = this.shareData.data.items
+                .filter(i => i.type === 'item')
+                .sort((a, b) => {
+                    const listItem = this.shareData.data.items.find(li => li.type === 'list');
+                    const links = listItem?.links || [];
+                    const orderA = links.find(l => l.id === a.id)?.order || 0;
+                    const orderB = links.find(l => l.id === b.id)?.order || 0;
+                    return orderA - orderB;
+                })
+                .map(item => ({
+                    text: item.content || '',
+                    completed: item.meta?.completed || false
+                }));
+        } else {
+            const lists = this.shareData.data?.lists || [];
+            const list = lists[0];
+            listName = list ? (list.name || 'Untitled List') : 'Untitled List';
+            todos = list ? (list.todos || []) : [];
+        }
 
         return `
             <div class="share-list-content">
-                <h3>${this.escapeHtml(list.name || 'Untitled List')}</h3>
+                <h3>${this.escapeHtml(listName)}</h3>
                 <ul class="share-todos">
                     ${todos.map(todo => `
                         <li class="share-todo ${todo.completed ? 'completed' : ''}">
@@ -155,6 +183,9 @@ export class ShareView extends HTMLElement {
 
     getItemCount() {
         if (!this.shareData.data) return 0;
+        if (Array.isArray(this.shareData.data.items)) {
+            return this.shareData.data.items.length;
+        }
         const notes = this.shareData.data.notes?.length || 0;
         const lists = this.shareData.data.lists?.length || 0;
         return notes + lists;
@@ -200,22 +231,16 @@ export class ShareView extends HTMLElement {
 
     async handleImport() {
         try {
-            const summary = this.getImportSummary();
-            const confirmed = await DialogService.confirm(
-                `This will import:\n${summary}\n\nContinue?`,
-                'Import'
-            );
+            const result = await ShareService.importToLocal(this.shareData);
 
-            if (!confirmed) return;
+            if (result.cancelled) return;
 
-            await ShareService.importToLocal(this.shareData);
-            
             const success = await DialogService.confirm(
                 'Import successful! Would you like to go to your notes/lists?',
                 'Go to My Data',
                 'Stay Here'
             );
-            
+
             if (success) {
                 if (this.shareData.type === 'note') {
                     Router.go('/note');
@@ -234,10 +259,12 @@ export class ShareView extends HTMLElement {
     async handleDownload() {
         try {
             const { ImportExportService } = await import('../services/ImportExportService.js');
-            
+
+            const isV2 = Array.isArray(this.shareData.data?.items);
+
             // Create export payload from share data
             const exportPayload = {
-                version: '1.0',
+                version: isV2 ? '2.0' : '1.0',
                 type: 'pockist-backup',
                 scope: this.shareData.type,
                 exportId: `shared-${this.shareId}`,
@@ -250,7 +277,7 @@ export class ShareView extends HTMLElement {
             const json = JSON.stringify(exportPayload, null, 2);
             const blob = new Blob([json], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
-            
+
             const a = document.createElement('a');
             a.href = url;
             a.download = `pockist-shared-${this.shareData.title.slice(0, 30).replace(/[^a-z0-9]/gi, '-')}.json`;
@@ -267,16 +294,30 @@ export class ShareView extends HTMLElement {
 
     getImportSummary() {
         const parts = [];
-        const notes = this.shareData.data?.notes || [];
-        const lists = this.shareData.data?.lists || [];
 
-        if (notes.length > 0) {
-            parts.push(`• ${notes.length} note${notes.length === 1 ? '' : 's'}`);
-        }
+        if (Array.isArray(this.shareData.data?.items)) {
+            const items = this.shareData.data.items;
+            const notes = items.filter(i => i.type === 'note');
+            const lists = items.filter(i => i.type === 'list');
+            const linked = items.filter(i => i.type === 'item');
 
-        if (lists.length > 0) {
-            const todoCount = lists.reduce((sum, list) => sum + (list.todos?.length || 0), 0);
-            parts.push(`• ${lists.length} list${lists.length === 1 ? '' : 's'} (${todoCount} todo${todoCount === 1 ? '' : 's'})`);
+            if (notes.length > 0) {
+                parts.push(`• ${notes.length} note${notes.length === 1 ? '' : 's'}`);
+            }
+            if (lists.length > 0) {
+                parts.push(`• ${lists.length} list${lists.length === 1 ? '' : 's'} (${linked.length} item${linked.length !== 1 ? 's' : ''})`);
+            }
+        } else {
+            const notes = this.shareData.data?.notes || [];
+            const lists = this.shareData.data?.lists || [];
+
+            if (notes.length > 0) {
+                parts.push(`• ${notes.length} note${notes.length === 1 ? '' : 's'}`);
+            }
+            if (lists.length > 0) {
+                const todoCount = lists.reduce((sum, list) => sum + (list.todos?.length || 0), 0);
+                parts.push(`• ${lists.length} list${lists.length === 1 ? '' : 's'} (${todoCount} todo${todoCount === 1 ? '' : 's'})`);
+            }
         }
 
         return parts.join('\n') || '• No data';

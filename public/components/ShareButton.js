@@ -56,23 +56,21 @@ export class ShareButton extends HTMLElement {
             let shareData;
 
             if (this.type === 'note') {
-                const note = await DBManager.getNote(this.itemId);
-                if (!note) {
+                const item = await DBManager.getItem(this.itemId);
+                if (!item) {
                     throw new Error('Note not found');
                 }
                 shareData = {
-                    notes: [note],
-                    lists: []
+                    items: [item]
                 };
             } else if (this.type === 'list') {
-                const lists = await DBManager.getLists();
-                const list = lists.find(l => l.id === this.itemId);
-                if (!list) {
+                const item = await DBManager.getItem(this.itemId);
+                if (!item) {
                     throw new Error('List not found');
                 }
+                const linked = await DBManager.getLinkedItems(this.itemId);
                 shareData = {
-                    notes: [],
-                    lists: [list]
+                    items: [item, ...linked]
                 };
             } else {
                 throw new Error('Invalid share type');
@@ -88,7 +86,7 @@ export class ShareButton extends HTMLElement {
     }
 
     async showShareDialog(shareData) {
-        const item = this.type === 'note' ? shareData.notes[0] : shareData.lists[0];
+        const item = shareData.items[0];
         const typeLabel = this.type === 'note' ? 'Note' : 'List';
 
         // Create options dialog
@@ -189,11 +187,7 @@ export class ShareButton extends HTMLElement {
         jsonBtn.addEventListener('click', async () => {
             cleanup();
             try {
-                if (this.type === 'note') {
-                    await ImportExportService.exportNote(item);
-                } else {
-                    await ImportExportService.exportList(item);
-                }
+                await ImportExportService.exportItem(item);
             } catch (error) {
                 console.error('[ShareButton] Export failed:', error);
                 alert(`Failed to export: ${error.message}`);
@@ -203,7 +197,7 @@ export class ShareButton extends HTMLElement {
         mdBtn.addEventListener('click', async () => {
             cleanup();
             try {
-                await ImportExportService.exportMarkdown(item, this.type);
+                await ImportExportService.exportMarkdown(item);
             } catch (error) {
                 console.error('[ShareButton] Markdown export failed:', error);
                 alert(`Failed to export markdown: ${error.message}`);
