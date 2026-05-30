@@ -9,13 +9,6 @@
 
 export const WIDGET_REGISTRY = [
     {
-        id: 'weather',
-        tag: 'weather-current',
-        name: 'Weather',
-        defaultEnabled: true,
-        props: { clickable: true, 'show-city': true },
-    },
-    {
         id: 'lists',
         tag: 'todo-list-widget',
         name: 'Lists',
@@ -26,8 +19,15 @@ export const WIDGET_REGISTRY = [
         id: 'notes',
         tag: 'local-notes',
         name: 'Notes',
-        defaultEnabled: true,
+        defaultEnabled: false,
         props: {},
+    },
+    {
+        id: 'weather',
+        tag: 'weather-current',
+        name: 'Weather',
+        defaultEnabled: false,
+        props: { clickable: true, 'show-city': true },
     },
 ];
 
