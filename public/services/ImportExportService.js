@@ -151,9 +151,17 @@ export class ImportExportService {
      * @private
      */
     static async #listToMarkdown(item) {
+        const linkedItems = await DBManager.getLinkedItems(item.id);
+        return this.#listToMarkdownFromData(item, linkedItems);
+    }
+
+    /**
+     * Convert a list item to Markdown format using provided linked items (no DB)
+     * @private
+     */
+    static #listToMarkdownFromData(item, linkedItems) {
         const title = item.content || 'Untitled List';
         const date = item.meta?.createdAt ? new Date(item.meta.createdAt).toLocaleString() : '';
-        const linkedItems = await DBManager.getLinkedItems(item.id);
 
         let markdown = `# ${title}\n\n`;
         if (date) {
@@ -170,6 +178,42 @@ export class ImportExportService {
         }
 
         return markdown;
+    }
+
+    /**
+     * Export markdown from share data without requiring items in local DB
+     * @param {Object} item - The unified item
+     * @param {Array} linkedItems - Optional linked items for lists
+     */
+    static async exportMarkdownFromData(item, linkedItems = null) {
+        console.log('[ImportExportService] exportMarkdownFromData() starting...');
+
+        if (!item) {
+            throw new Error('Invalid item provided for markdown export');
+        }
+
+        const markdown = item.type === 'note'
+            ? this.#noteToMarkdown(item)
+            : this.#listToMarkdownFromData(item, linkedItems || []);
+
+        const name = (item.content || '').split('\n')[0].slice(0, 32).trim() || 'untitled';
+        const fileName = item.type === 'note'
+            ? `${name.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 30)}.md`
+            : `${name.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 30)}-list.md`;
+
+        const blob = new Blob([markdown], { type: 'text/markdown' });
+        const url = URL.createObjectURL(blob);
+
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        console.log('[ImportExportService] Markdown exported successfully');
+        return { success: true, fileName };
     }
 
     // ============================================================================
@@ -512,12 +556,12 @@ export class ImportExportService {
             subtitle = `"${(note.content || '').split('\n')[0].slice(0, 40)}"`;
             optionsHtml = `
                 <button class="share-option-btn import-action-btn" data-action="create" type="button">
-                    <span class="share-option-icon">&#10133;</span>
+                    <span class="share-option-icon"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span>
                     <span class="share-option-label">Create New Note</span>
                     <span class="share-option-desc">Import as a fresh note</span>
                 </button>
                 <button class="share-option-btn import-action-btn" data-action="append" type="button">
-                    <span class="share-option-icon">&#128220;</span>
+                    <span class="share-option-icon"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg></span>
                     <span class="share-option-label">Append to Existing</span>
                     <span class="share-option-desc">Add content to an existing note</span>
                 </button>
@@ -528,17 +572,17 @@ export class ImportExportService {
             subtitle = `"${list.content || 'Untitled'}" — ${importedItems.length} item${importedItems.length !== 1 ? 's' : ''}`;
             optionsHtml = `
                 <button class="share-option-btn import-action-btn" data-action="create" type="button">
-                    <span class="share-option-icon">&#10133;</span>
+                    <span class="share-option-icon"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span>
                     <span class="share-option-label">Create New List</span>
                     <span class="share-option-desc">Import as a fresh list</span>
                 </button>
                 <button class="share-option-btn import-action-btn" data-action="smart-merge" type="button">
-                    <span class="share-option-icon">&#128260;</span>
+                    <span class="share-option-icon"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg></span>
                     <span class="share-option-label">Smart Merge</span>
                     <span class="share-option-desc">Skip duplicate items, add only new ones</span>
                 </button>
                 <button class="share-option-btn import-action-btn" data-action="append" type="button">
-                    <span class="share-option-icon">&#128220;</span>
+                    <span class="share-option-icon"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg></span>
                     <span class="share-option-label">Append to Existing</span>
                     <span class="share-option-desc">Add all items to an existing list</span>
                 </button>
@@ -551,7 +595,7 @@ export class ImportExportService {
             subtitle = `${noteCount} note${noteCount !== 1 ? 's' : ''}, ${listCount} list${listCount !== 1 ? 's' : ''}, ${itemCount} item${itemCount !== 1 ? 's' : ''}`;
             optionsHtml = `
                 <button class="share-option-btn import-action-btn" data-action="create" type="button">
-                    <span class="share-option-icon">&#10133;</span>
+                    <span class="share-option-icon"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span>
                     <span class="share-option-label">Create All New</span>
                     <span class="share-option-desc">Import everything as fresh items</span>
                 </button>
@@ -830,12 +874,12 @@ export class ImportExportService {
                     </div>
                     <div class="share-options">
                         <button class="share-option-btn share-option-create" type="button">
-                            <span class="share-option-icon">&#10133;</span>
+                            <span class="share-option-icon"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span>
                             <span class="share-option-label">Create New ${typeLabel}</span>
                             <span class="share-option-desc">Add as a new ${parsed.type === 'list' ? 'todo list' : 'note'}</span>
                         </button>
                         <button class="share-option-btn share-option-merge" type="button">
-                            <span class="share-option-icon">&#128256;</span>
+                            <span class="share-option-icon"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg></span>
                             <span class="share-option-label">Merge Into Existing</span>
                             <span class="share-option-desc">Append to an existing ${parsed.type === 'list' ? 'list' : 'note'}</span>
                         </button>
