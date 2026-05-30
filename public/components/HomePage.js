@@ -54,7 +54,7 @@ export class HomePage extends HTMLElement {
                 const wrapper = document.createElement('section');
                 wrapper.className = 'notes-widget-section';
                 wrapper.innerHTML = `
-                    <a href="/note" class="notes-header-link pwa">
+                    <a href="/note" class="notes-header-link pwa fancy-link">
                         <h2>Notes</h2>
                     </a>
                 `;
