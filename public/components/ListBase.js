@@ -448,7 +448,6 @@ export class ListBase extends HTMLElement {
 		this._linkedItems = await DBManager.getLinkedItems(this._currentListId);
 		this._renderContent();
 		this._updateFooter();
-		Router.go(`/list/${target.id}`);
 	}
 
 	async _doConvertItemToNote(itemId) {
