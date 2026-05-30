@@ -3,17 +3,22 @@ import { ListBase } from './ListBase.js';
 /**
  * TodoListWidget - Paginated todo list for homepage widget.
  *
- * Same features as TodoList but with 8-slot pagination instead of scrolling:
- * - First page: up to 7 todos + down bar
- * - Middle pages: up bar + 6 todos + down bar
- * - Last page: up bar + remaining todos (container shrinks)
- * - Reordering follows the moved item across page boundaries.
+ * Fixed-height 8-item viewport with Up / Down buttons below the list.
+ * - Up on the left, Down on the right.
+ * - Scrolls 2 items at a time; falls back to 1 when only 1 remains.
+ * - Reordering follows the moved item across viewport boundaries.
  */
 export class TodoListWidget extends ListBase {
 	#offset = 0;
+	#navContainer = null;
 
 	_getTemplateId() {
 		return 'todo-list-widget';
+	}
+
+	connectedCallback() {
+		super.connectedCallback();
+		this.#navContainer = this.querySelector('.todo-widget-nav-container');
 	}
 
 	_setupAddListeners() {
@@ -59,42 +64,54 @@ export class TodoListWidget extends ListBase {
 	// -------------------------------------------------------------------------
 	#clampOffset() {
 		const total = this._getCurrentList()?.todos.length || 0;
-		if (total <= 7) {
+		if (total <= 8) {
 			this.#offset = 0;
 		} else {
-			this.#offset = Math.min(this.#offset, total - 7);
+			const maxOffset = total - 8;
+			this.#offset = Math.max(0, Math.min(this.#offset, maxOffset));
 		}
 	}
 
 	#computeOffsetForIndex(index) {
 		const total = this._getCurrentList()?.todos.length || 0;
-		if (total <= 7) return 0;
-		if (index <= 6) return 0;
-		return Math.min(index - 5, total - 7);
+		if (total <= 8) return 0;
+		return Math.max(0, Math.min(index - 3, total - 8));
 	}
 
-	#createNavElement(direction) {
-		const div = document.createElement('div');
-		div.className = 'todo-widget-nav';
-		div.innerHTML = direction === -1
-			? '<span>▲</span><span>Scroll up</span>'
-			: '<span>▼</span><span>Scroll down</span>';
+	#createNavButton(direction) {
+		const btn = document.createElement('button');
+		btn.type = 'button';
+		btn.className = 'todo-widget-nav-btn btn btn-ghost';
+		btn.textContent = direction === -1 ? '▲ Up' : '▼ Down';
+		return btn;
+	}
 
-		div.addEventListener('click', () => {
-			if (direction === -1) {
-				this.#offset = Math.max(0, this.#offset - 1);
-			} else {
-				if (this.#offset === 0) {
-					this.#offset = 2;
-				} else {
-					this.#offset += 1;
-				}
-				this.#clampOffset();
-			}
+	#renderNav(total, offset) {
+		if (!this.#navContainer) return;
+		this.#navContainer.innerHTML = '';
+
+		if (total <= 8) return;
+
+		const maxOffset = total - 8;
+
+		const upBtn = this.#createNavButton(-1);
+		upBtn.disabled = offset === 0;
+		upBtn.addEventListener('click', () => {
+			this.#offset = Math.max(0, this.#offset - 2);
 			this._renderSlots();
 		});
 
-		return div;
+		const downBtn = this.#createNavButton(1);
+		downBtn.disabled = offset >= maxOffset;
+		downBtn.addEventListener('click', () => {
+			const remaining = maxOffset - this.#offset;
+			const step = remaining >= 2 ? 2 : remaining;
+			this.#offset += step;
+			this._renderSlots();
+		});
+
+		this.#navContainer.appendChild(upBtn);
+		this.#navContainer.appendChild(downBtn);
 	}
 
 	_renderSlots() {
@@ -105,6 +122,7 @@ export class TodoListWidget extends ListBase {
 
 		if (!list || list.todos.length === 0) {
 			this._listsContainerEl.innerHTML = '<div class="todo-empty">No todos yet. Add one above!</div>';
+			this.#renderNav(0, 0);
 			this._updateFooter();
 			return;
 		}
@@ -112,38 +130,13 @@ export class TodoListWidget extends ListBase {
 		const total = list.todos.length;
 		const offset = this.#offset;
 
-		let startIndex, endIndex, showUp, showDown;
+		this.#clampOffset();
+		const clampedOffset = this.#offset;
 
-		if (total <= 7) {
-			startIndex = 0;
-			endIndex = total;
-			showUp = false;
-			showDown = false;
-		} else if (offset === 0) {
-			startIndex = 0;
-			endIndex = 7;
-			showUp = false;
-			showDown = true;
-		} else {
-			const remaining = total - offset;
-			if (remaining <= 7) {
-				startIndex = offset;
-				endIndex = total;
-				showUp = true;
-				showDown = false;
-			} else {
-				startIndex = offset;
-				endIndex = offset + 6;
-				showUp = true;
-				showDown = true;
-			}
-		}
+		const startIndex = clampedOffset;
+		const endIndex = Math.min(clampedOffset + 8, total);
 
 		const items = list.todos.slice(startIndex, endIndex);
-
-		if (showUp) {
-			this._listsContainerEl.appendChild(this.#createNavElement(-1));
-		}
 
 		items.forEach((todo, idx) => {
 			const globalIndex = startIndex + idx;
@@ -151,10 +144,7 @@ export class TodoListWidget extends ListBase {
 			this._listsContainerEl.appendChild(li);
 		});
 
-		if (showDown) {
-			this._listsContainerEl.appendChild(this.#createNavElement(1));
-		}
-
+		this.#renderNav(total, clampedOffset);
 		this._updateFooter();
 	}
 }
