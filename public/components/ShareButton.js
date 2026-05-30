@@ -148,15 +148,12 @@ export class ShareButton extends HTMLElement {
                     <div class="dialog-content">
                         <h3>${typeLabel} Shared!</h3>
                         <p class="share-title">"${this.itemTitle}"</p>
-                        <div class="share-result-card">
-                            <span class="share-option-icon"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></span>
-                            <span class="share-option-label">Temporary Public Link</span>
-                            <span class="share-result-url">${window.location.origin}${result.url}</span>
-                            <span class="share-result-meta">Link expires in ${result.expiresIn}</span>
-                        </div>
-                        <div class="dialog-footer">
+                        <div class="share-result-url">${window.location.origin}${result.url}</div>
+                        <div class="share-result-meta">Link expires in ${result.expiresIn}</div>
+                        <div class="dialog-footer dialog-footer--vertical">
+                            <button class="btn btn-outline-secondary share-copy-btn" type="button">Copy Link</button>
+                            <button class="btn btn-outline-danger share-delete-btn" type="button"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg> Delete</button>
                             <button class="btn btn-ghost share-close-btn" type="button">Close</button>
-                            <button class="btn btn-outline share-copy-btn" type="button">Copy Link</button>
                         </div>
                     </div>
                 `;
@@ -171,6 +168,23 @@ export class ShareButton extends HTMLElement {
                     }).catch((err) => {
                         console.error('Failed to copy:', err);
                     });
+                });
+
+                const deleteBtn = dialog.querySelector('.share-delete-btn');
+                deleteBtn.addEventListener('click', async () => {
+                    const confirmed = await DialogService.confirm(
+                        'Are you sure you want to delete this share? This cannot be undone.',
+                        'Delete Share'
+                    );
+                    if (!confirmed) return;
+
+                    try {
+                        await ShareService.deleteShare(result.shareId);
+                        cleanup();
+                    } catch (error) {
+                        console.error('[ShareButton] Delete share failed:', error);
+                        alert(`Failed to delete share: ${error.message}`);
+                    }
                 });
 
                 const closeBtn = dialog.querySelector('.share-close-btn');

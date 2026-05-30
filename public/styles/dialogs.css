@@ -32,6 +32,17 @@
 	padding: 16px 20px;
 }
 
+.dialog-footer--vertical {
+	flex-direction: column;
+	padding-top: 16px;
+	border-top: 1px solid var(--border-color);
+	margin-top: 16px;
+}
+
+.dialog-footer--vertical .btn {
+	width: 100%;
+}
+
 /* Dialog inner content helpers (used by DialogService) */
 .app-dialog-message {
 	margin: 0 0 1rem 0;
