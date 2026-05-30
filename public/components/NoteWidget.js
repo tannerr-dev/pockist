@@ -1,16 +1,19 @@
 /**
  * NoteWidget - Paginated note widget for the homepage.
  *
- * Fixed-height 8-item viewport with Up / Down navigation buttons.
+ * Fixed-height 5-item viewport with Up / Down navigation buttons.
  * Extends NoteBase for shared loading, sorting, and action logic.
  */
 import { NoteBase } from './NoteBase.js';
+import { DialogService } from '../services/DialogService.js';
 import { Router } from '../services/Router.js';
 
 export class NoteWidget extends NoteBase {
 	#offset = 0;
 	#navContainer = null;
 	#itemsContainer = null;
+	#upBtn = null;
+	#downBtn = null;
 
 	_getTemplateId() {
 		return 'pockist-note-widget';
@@ -23,11 +26,15 @@ export class NoteWidget extends NoteBase {
 	}
 
 	_setupEventListeners() {
-		// New note button
 		const newNoteBtn = this.querySelector('.note-widget-new-btn');
-		newNoteBtn?.addEventListener('click', () => this._createNewNote());
+		newNoteBtn?.addEventListener('click', async () => {
+			const content = await DialogService.prompt('Start your new note:');
+			if (!content || !content.trim()) return;
+			await this._createNoteWithContent(content.trim());
+			this.#offset = 0;
+			this._renderContent();
+		});
 
-		// Note open / more-actions delegation
 		this.#itemsContainer?.addEventListener('note-open', (e) => {
 			Router.go(`/note/${e.detail.noteId}`);
 		});
@@ -50,12 +57,16 @@ export class NoteWidget extends NoteBase {
 		this.#clampOffset();
 		const clampedOffset = this.#offset;
 		const startIndex = clampedOffset;
-		const endIndex = Math.min(clampedOffset + 8, total);
+		const endIndex = Math.min(clampedOffset + 5, total);
 		const visibleNotes = this._notes.slice(startIndex, endIndex);
 
 		visibleNotes.forEach(note => {
 			const el = this._createNoteItem(note);
+			el.classList.add('note-item--enter');
 			this.#itemsContainer.appendChild(el);
+			requestAnimationFrame(() => {
+				el.classList.remove('note-item--enter');
+			});
 		});
 
 		this.#renderNav(total, clampedOffset);
@@ -72,18 +83,12 @@ export class NoteWidget extends NoteBase {
 
 	#clampOffset() {
 		const total = this._notes.length || 0;
-		if (total <= 8) {
+		if (total <= 5) {
 			this.#offset = 0;
 		} else {
-			const maxOffset = total - 8;
+			const maxOffset = total - 5;
 			this.#offset = Math.max(0, Math.min(this.#offset, maxOffset));
 		}
-	}
-
-	#computeOffsetForIndex(index) {
-		const total = this._notes.length || 0;
-		if (total <= 8) return 0;
-		return Math.max(0, Math.min(index - 3, total - 8));
 	}
 
 	#createNavButton(direction) {
@@ -99,32 +104,37 @@ export class NoteWidget extends NoteBase {
 
 	#renderNav(total, offset) {
 		if (!this.#navContainer) return;
-		this.#navContainer.innerHTML = '';
 
-		if (total <= 8) return;
+		if (total <= 5) {
+			this.#navContainer.innerHTML = '';
+			this.#upBtn = null;
+			this.#downBtn = null;
+			return;
+		}
 
-		const maxOffset = total - 8;
+		const maxOffset = total - 5;
 
-		const upBtn = this.#createNavButton(-1);
-		upBtn.disabled = offset === 0;
-		upBtn.addEventListener('click', () => {
-			this.#offset = Math.max(0, this.#offset - 2);
-			this._renderContent();
-		});
+		// Create once, update disabled state on subsequent renders
+		if (!this.#upBtn) {
+			this.#upBtn = this.#createNavButton(-1);
+			this.#upBtn.addEventListener('click', () => {
+				this.#offset = Math.max(0, this.#offset - 1);
+				this._renderContent();
+			});
+			this.#navContainer.appendChild(this.#upBtn);
+		}
+		if (!this.#downBtn) {
+			this.#downBtn = this.#createNavButton(1);
+			this.#downBtn.addEventListener('click', () => {
+				this.#offset = Math.min(maxOffset, this.#offset + 1);
+				this._renderContent();
+			});
+			this.#navContainer.appendChild(this.#downBtn);
+		}
 
-		const downBtn = this.#createNavButton(1);
-		downBtn.disabled = offset >= maxOffset;
-		downBtn.addEventListener('click', () => {
-			const remaining = maxOffset - this.#offset;
-			const step = remaining >= 2 ? 2 : remaining;
-			this.#offset += step;
-			this._renderContent();
-		});
-
-		this.#navContainer.appendChild(upBtn);
-		this.#navContainer.appendChild(downBtn);
+		this.#upBtn.disabled = offset === 0;
+		this.#downBtn.disabled = offset >= maxOffset;
 	}
-
 }
 
 customElements.define('pockist-note-widget', NoteWidget);

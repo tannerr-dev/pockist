@@ -148,6 +148,29 @@ export class NoteBase extends HTMLElement {
 		Router.go(`/note/${newNote.id}`);
 	}
 
+	async _createNoteWithContent(content) {
+		const now = new Date().toISOString();
+		const newNote = {
+			id: this._generateNoteId(content),
+			type: 'note',
+			content: content,
+			links: [],
+			meta: {
+				createdAt: now,
+				updatedAt: now,
+				archived: false,
+				completed: false
+			}
+		};
+		this._notes.unshift(newNote);
+		try {
+			await DBManager.saveItem(newNote);
+		} catch (error) {
+			console.error('Error creating note:', error);
+		}
+		return newNote;
+	}
+
 	async _reloadNotes() {
 		this._notes = await DBManager.getItems({ type: 'note', archived: false });
 		this._sortNotes();

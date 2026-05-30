@@ -43,8 +43,12 @@
     border-bottom: 1px solid var(--border-color);
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
+    align-items: center;
     gap: 12px;
+    transition: opacity 120ms ease-out, transform 120ms ease-out;
+    height: 86px;
+    box-sizing: border-box;
+    overflow: hidden;
 }
 
 .note-item:last-child {
@@ -92,6 +96,11 @@
 .note-more-btn {
     width: 32px;
     height: 32px;
+}
+
+.note-item--enter {
+    opacity: 0;
+    transform: translateY(4px);
 }
 
 /** Editor View */
@@ -245,7 +254,7 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    max-height: 384px;
+    max-height: 430px;
 }
 
 .note-widget-empty {
@@ -365,7 +374,6 @@
     width: 100%;
     max-width: 600px;
     margin: 0 auto;
-    border-top: 1px solid var(--border-color);
 }
 
 .note-detail-container .share-btn {
