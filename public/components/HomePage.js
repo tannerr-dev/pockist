@@ -50,6 +50,12 @@ export class HomePage extends HTMLElement {
             const widget = getWidgetById(widgetId);
             if (!widget) continue;
 
+            if (zoneEl.lastElementChild) {
+                const hr = document.createElement('hr');
+                hr.className = 'widget-separator';
+                zoneEl.appendChild(hr);
+            }
+
             if (widgetId === 'notes') {
                 const wrapper = document.createElement('section');
                 wrapper.className = 'notes-widget-section';
@@ -64,11 +70,6 @@ export class HomePage extends HTMLElement {
             } else if (widgetId === 'lists') {
                 const wrapper = document.createElement('section');
                 wrapper.className = 'lists-widget-section';
-                // wrapper.innerHTML = `
-                //     <a href="/list" class="lists-header-link pwa">
-                //         <h2>Lists</h2>
-                //     </a>
-                // `;
                 const el = document.createElement(widget.tag);
                 wrapper.appendChild(el);
                 zoneEl.appendChild(wrapper);

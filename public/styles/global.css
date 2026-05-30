@@ -185,9 +185,13 @@ home-page{
     color: var(--text);
     display: block;
     margin-bottom: 0.5rem;
-    padding-top: 16px;
-    border-top: 1px solid var(--border-color);
     font-size: 17px;
+}
+
+.widget-separator {
+    border: none;
+    border-top: 1px solid var(--secondary);
+    margin: 0;
 }
 
 /* Lists widget section on home page */
