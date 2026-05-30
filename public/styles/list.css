@@ -227,8 +227,10 @@
 	cursor: default;
 }
 
-.list-selector-delete:hover:not(:disabled) {
-	color: var(--error);
+.list-selector-more {
+	width: 32px;
+	height: 32px;
+	font-size: 14px;
 }
 
 .list-selector-create-btn {
@@ -319,25 +321,10 @@
 	word-break: break-word;
 }
 
-.item-delete {
-	width: 32px;
-	height: 32px;
-	border: 1px solid var(--error);
-	background: transparent;
-	color: var(--error);
-	font-size: 18px;
-	cursor: pointer;
-	border-radius: 8px;
-	display: flex;
-	align-items: center;
-	justify-content: center;
+.item-more {
+	width: 28px;
+	height: 28px;
 	flex-shrink: 0;
-	transition: all 0.2s;
-}
-
-.item-delete:hover {
-	background: var(--error);
-	color: var(--bg);
 }
 
 .item-reorder {
@@ -596,6 +583,12 @@
 .list-index-delete:hover {
 	color: var(--error);
 	border-color: var(--error);
+}
+
+.list-index-more {
+	width: 32px;
+	height: 32px;
+	font-size: 14px;
 }
 
 /* Disabled move buttons */

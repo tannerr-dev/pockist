@@ -54,7 +54,11 @@ export class ListIndexPage extends HTMLElement {
 					<div class="list-index-card-actions">
 						<button class="btn btn-icon btn-ghost list-index-move-up ${isFirst ? 'disabled' : ''}" data-list-id="${item.id}" ${isFirst ? 'disabled' : ''} title="Move up"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg></button>
 						<button class="btn btn-icon btn-ghost list-index-move-down ${isLast ? 'disabled' : ''}" data-list-id="${item.id}" ${isLast ? 'disabled' : ''} title="Move down"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></button>
-						<button class="btn btn-icon btn-outline-danger list-index-delete" data-list-id="${item.id}" title="Delete list">&times;</button>
+						<button class="btn-icon-more list-index-more" data-list-id="${item.id}" title="More actions" type="button">
+							<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+								<circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/>
+							</svg>
+						</button>
 					</div>
 				</div>
 			`;
@@ -96,10 +100,10 @@ export class ListIndexPage extends HTMLElement {
 		});
 
 		container?.addEventListener('click', async (e) => {
-			const btn = e.target.closest('.list-index-delete');
+			const btn = e.target.closest('.list-index-more');
 			if (!btn) return;
 			e.stopPropagation();
-			await this._deleteList(btn.dataset.listId);
+			await this._showListActions(btn.dataset.listId);
 		});
 	}
 
@@ -142,6 +146,62 @@ export class ListIndexPage extends HTMLElement {
 		} catch (error) {
 			console.error('[ListIndexPage] Error moving list:', error);
 		}
+	}
+
+	async _showListActions(listId) {
+		const listIndex = this._lists.findIndex(l => l.id === listId);
+		const isFirst = listIndex === 0;
+		const isLast = listIndex === this._lists.length - 1;
+
+		const action = await DialogService.showActions([
+			{ label: 'Move Up', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>', action: 'move-up' },
+			{ label: 'Move Down', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>', action: 'move-down' },
+			{ label: 'Merge into Another List', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>', action: 'merge' },
+			{ label: 'Delete', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>', action: 'delete', danger: true }
+		]);
+
+		if (!action) return;
+
+		try {
+			if (action === 'move-up' && !isFirst) {
+				await this._moveList(listId, -1);
+			} else if (action === 'move-down' && !isLast) {
+				await this._moveList(listId, 1);
+			} else if (action === 'merge') {
+				await this._doMergeList(listId);
+			} else if (action === 'delete') {
+				await this._deleteList(listId);
+			}
+		} catch (error) {
+			console.error('List action error:', error);
+			alert(error.message || 'Action failed');
+		}
+	}
+
+	async _doMergeList(sourceId) {
+		const otherLists = this._lists.filter(l => l.id !== sourceId);
+		if (otherLists.length === 0) {
+			alert('No other lists to merge into.');
+			return;
+		}
+
+		const source = this._lists.find(l => l.id === sourceId);
+		const target = await DialogService.pickItem(
+			otherLists.map(l => ({ id: l.id, title: l.content || 'Unnamed List', subtitle: `${l.links?.length || 0} items` })),
+			{ title: 'Merge into which list?' }
+		);
+		if (!target) return;
+
+		const mode = await DialogService.showActions([
+			{ label: 'Smart Merge', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>', action: 'smart' },
+			{ label: 'Append All', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>', action: 'append' }
+		]);
+		if (!mode) return;
+
+		await DBManager.mergeLists(target.id, sourceId, mode);
+		this._lists = await DBManager.getItems({ type: 'list', archived: false });
+		this._render();
+		Router.go(`/list/${target.id}`);
 	}
 
 	async _deleteList(listId) {

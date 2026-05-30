@@ -8,6 +8,7 @@
 
 import { DBManager } from '../services/DBManager.js';
 import { DialogService } from '../services/DialogService.js';
+import { Router } from '../services/Router.js';
 import './ShareButton.js';
 
 export class Notes extends HTMLElement {
@@ -40,6 +41,7 @@ export class Notes extends HTMLElement {
 		this.emptyState = this.querySelector("#empty-state");
 		this.contentTextarea = this.querySelector("#note-content");
 		this.editorShareBtn = this.querySelector("#editor-share-btn");
+		this.editorMoreBtn = this.querySelector("#editor-more-btn");
 
 		if (!this.listContainer || !this.editorContainer) {
 			console.error("Notes: Required containers not found in template");
@@ -82,9 +84,8 @@ export class Notes extends HTMLElement {
 			backBtn.addEventListener("click", () => this.#showListView());
 		}
 
-		const deleteBtn = this.querySelector("#delete-btn");
-		if (deleteBtn) {
-			deleteBtn.addEventListener("click", () => this.#deleteCurrentNote());
+		if (this.editorMoreBtn) {
+			this.editorMoreBtn.addEventListener("click", () => this.#showNoteActions(this.currentNoteId));
 		}
 
 		if (this.contentTextarea) {
@@ -238,19 +239,24 @@ export class Notes extends HTMLElement {
 				<div class="note-item-date">${date}</div>
 			`;
 
-			const shareBtn = document.createElement('share-button');
-			shareBtn.setAttribute('type', 'note');
-			shareBtn.setAttribute('data-id', note.id);
-			shareBtn.setAttribute('title', title);
-
-			shareBtn.addEventListener('click', (e) => {
+			const moreBtn = document.createElement('button');
+			moreBtn.className = 'btn-icon-more note-more-btn';
+			moreBtn.type = 'button';
+			moreBtn.title = 'More actions';
+			moreBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>`;
+			moreBtn.addEventListener('click', (e) => {
 				e.stopPropagation();
+				this.#showNoteActions(note.id);
 			});
+
+			const actionsDiv = document.createElement('div');
+			actionsDiv.className = 'note-item-actions';
+			actionsDiv.appendChild(moreBtn);
 
 			contentWrapper.addEventListener('click', () => this.#openNote(note.id));
 
 			noteEl.appendChild(contentWrapper);
-			noteEl.appendChild(shareBtn);
+			noteEl.appendChild(actionsDiv);
 			notesListEl.appendChild(noteEl);
 		});
 	}
@@ -334,6 +340,173 @@ export class Notes extends HTMLElement {
 		} catch (error) {
 			console.error("Error deleting note:", error);
 			alert('Failed to delete note');
+		}
+	}
+
+	async #showNoteActions(noteId) {
+		const note = this.notes.find(n => n.id === noteId);
+		if (!note) return;
+
+		const action = await DialogService.showActions([
+			{ label: 'Share', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>', action: 'share' },
+			{ label: 'Convert to List', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>', action: 'convert' },
+			{ label: 'Move to List', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>', action: 'move-to-list' },
+			{ label: 'Merge with Note', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>', action: 'merge' },
+			{ label: 'Delete', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>', action: 'delete', danger: true }
+		]);
+
+		if (!action) return;
+
+		try {
+			switch (action) {
+				case 'share':
+					await this.#doShareNote(noteId);
+					break;
+				case 'convert':
+					await this.#doConvertToList(noteId);
+					break;
+				case 'move-to-list':
+					await this.#doMoveToList(noteId);
+					break;
+				case 'merge':
+					await this.#doMergeWithNote(noteId);
+					break;
+				case 'delete':
+					await this.#doDeleteNote(noteId);
+					break;
+			}
+		} catch (error) {
+			console.error('Note action error:', error);
+			alert(error.message || 'Action failed');
+		}
+	}
+
+	async #doShareNote(noteId) {
+		const note = this.notes.find(n => n.id === noteId);
+		if (!note) return;
+		const title = this.#extractTitle(note.content);
+
+		// Create a temporary share-button element to reuse its dialog logic
+		const shareBtn = document.createElement('share-button');
+		shareBtn.setAttribute('type', 'note');
+		shareBtn.setAttribute('data-id', noteId);
+		shareBtn.setAttribute('title', title);
+
+		// The share-button component needs to be in the DOM for connectedCallback to run
+		shareBtn.style.position = 'fixed';
+		shareBtn.style.top = '-9999px';
+		shareBtn.style.left = '-9999px';
+		document.body.appendChild(shareBtn);
+
+		// Give the component a tick to connect, then trigger its click
+		requestAnimationFrame(() => {
+			const btn = shareBtn.querySelector('button, .share-trigger-btn, [type="button"]');
+			if (btn) {
+				btn.click();
+			} else {
+				// Fallback: dispatch a click on the element itself
+				shareBtn.click();
+			}
+			// Remove the temporary element after the dialog is spawned
+			setTimeout(() => {
+				if (shareBtn.parentNode) shareBtn.parentNode.removeChild(shareBtn);
+			}, 100);
+		});
+	}
+
+	async #doConvertToList(noteId) {
+		const note = this.notes.find(n => n.id === noteId);
+		const title = this.#extractTitle(note.content);
+		const confirmed = await DialogService.confirm(`Convert "${title}" to a list? Each line will become an item.`, 'Convert');
+		if (!confirmed) return;
+
+		const newListId = await DBManager.convertNoteToList(noteId);
+		this.notes = this.notes.filter(n => n.id !== noteId);
+		this.#showListView();
+		Router.go(`/list/${newListId}`);
+	}
+
+	async #doMoveToList(noteId) {
+		const lists = await DBManager.getItems({ type: 'list', archived: false });
+		if (lists.length === 0) {
+			alert('No lists available. Create a list first.');
+			return;
+		}
+
+		const note = this.notes.find(n => n.id === noteId);
+		const title = this.#extractTitle(note.content);
+
+		const target = await DialogService.pickItem(
+			lists.map(l => ({ id: l.id, title: this.#extractTitle(l.content), subtitle: `${l.links?.length || 0} items` })),
+			{ title: 'Move to which list?' }
+		);
+		if (!target) return;
+
+		const confirmed = await DialogService.confirm(`Add "${title}" to "${this.#extractTitle(target.content)}"?`, 'Move');
+		if (!confirmed) return;
+
+		await DBManager.moveNoteToList(noteId, target.id);
+		this.notes = this.notes.filter(n => n.id !== noteId);
+		this.#showListView();
+		Router.go(`/list/${target.id}`);
+	}
+
+	async #doMergeWithNote(sourceId) {
+		const otherNotes = this.notes.filter(n => n.id !== sourceId);
+		if (otherNotes.length === 0) {
+			alert('No other notes to merge with.');
+			return;
+		}
+
+		const source = this.notes.find(n => n.id === sourceId);
+		const sourceTitle = this.#extractTitle(source.content);
+
+		const target = await DialogService.pickItem(
+			otherNotes.map(n => ({ id: n.id, title: this.#extractTitle(n.content), subtitle: this.#formatDate(n.meta?.updatedAt || n.meta?.createdAt) })),
+			{ title: 'Merge into which note?' }
+		);
+		if (!target) return;
+
+		const targetTitle = this.#extractTitle(target.content);
+		const confirmed = await DialogService.confirm(`Merge "${sourceTitle}" into "${targetTitle}"?`, 'Merge');
+		if (!confirmed) return;
+
+		await DBManager.mergeNotes(target.id, sourceId);
+		this.notes = this.notes.filter(n => n.id !== sourceId);
+
+		if (this.currentNoteId === sourceId) {
+			this.currentNoteId = target.id;
+			const targetNote = this.notes.find(n => n.id === target.id);
+			if (targetNote) {
+				this.contentTextarea.value = targetNote.content || '';
+				this.#updateSaveIndicator('Merged');
+			} else {
+				// Reload notes and open target
+				this.notes = await DBManager.getItems({ type: 'note', archived: false });
+				this.#sortNotes();
+				this.currentNoteId = target.id;
+				this.#loadCurrentNoteIntoEditor();
+			}
+		} else {
+			this.notes = await DBManager.getItems({ type: 'note', archived: false });
+			this.#sortNotes();
+			this.#renderNoteList();
+		}
+	}
+
+	async #doDeleteNote(noteId) {
+		const note = this.notes.find(n => n.id === noteId);
+		const title = note ? this.#extractTitle(note.content) : 'this note';
+		const confirmed = await DialogService.confirm(`Delete "${title}"?`, 'Delete');
+		if (!confirmed) return;
+
+		await DBManager.deleteItem(noteId);
+		this.notes = this.notes.filter(n => n.id !== noteId);
+
+		if (this.currentNoteId === noteId) {
+			this.#showListView();
+		} else {
+			this.#renderNoteList();
 		}
 	}
 

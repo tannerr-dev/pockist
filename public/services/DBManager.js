@@ -989,6 +989,173 @@ export class DBManager {
         });
     }
 
+    // -------------------------------------------------------------------------
+    // MERGE / MOVE / CONVERT HELPERS
+    // -------------------------------------------------------------------------
+
+    static async archiveItem(id) {
+        const item = await this.getItem(id);
+        if (!item) throw new Error('Item not found');
+        item.meta = { ...item.meta, archived: true, updatedAt: new Date().toISOString() };
+        await this.saveItem(item);
+    }
+
+    static async convertNoteToList(noteId) {
+        const note = await this.getItem(noteId);
+        if (!note || note.type !== 'note') throw new Error('Note not found');
+
+        const title = this.#extractTitle(note.content);
+        const lines = (note.content || '').split('\n').map(l => l.trim()).filter(l => l);
+
+        const newList = await this.createItem({
+            type: 'list',
+            content: title,
+            meta: { isDefault: false }
+        });
+
+        const links = [];
+        for (let i = 0; i < lines.length; i++) {
+            const item = await this.createItem({
+                type: 'item',
+                content: lines[i],
+                meta: { completed: false }
+            });
+            links.push({ id: item.id, order: i });
+        }
+        newList.links = links;
+        await this.saveItem(newList);
+
+        note.meta = { ...note.meta, archived: true, updatedAt: new Date().toISOString() };
+        await this.saveItem(note);
+
+        return newList.id;
+    }
+
+    static async moveNoteToList(noteId, listId) {
+        const note = await this.getItem(noteId);
+        const list = await this.getItem(listId);
+        if (!note || note.type !== 'note') throw new Error('Note not found');
+        if (!list || list.type !== 'list') throw new Error('List not found');
+
+        const lines = (note.content || '').split('\n').map(l => l.trim()).filter(l => l);
+        const links = list.links ? [...list.links] : [];
+        let maxOrder = links.length > 0 ? Math.max(...links.map(l => l.order || 0)) : -1;
+
+        for (const line of lines) {
+            const item = await this.createItem({
+                type: 'item',
+                content: line,
+                meta: { completed: false }
+            });
+            links.push({ id: item.id, order: ++maxOrder });
+        }
+
+        list.links = links;
+        list.meta = { ...list.meta, updatedAt: new Date().toISOString() };
+        await this.saveItem(list);
+
+        note.meta = { ...note.meta, archived: true, updatedAt: new Date().toISOString() };
+        await this.saveItem(note);
+    }
+
+    static async mergeLists(targetId, sourceId, mode = 'smart') {
+        const target = await this.getItem(targetId);
+        const source = await this.getItem(sourceId);
+        if (!target || target.type !== 'list') throw new Error('Target list not found');
+        if (!source || source.type !== 'list') throw new Error('Source list not found');
+
+        const sourceLinked = await this.getLinkedItems(sourceId);
+        const targetLinked = await this.getLinkedItems(targetId);
+
+        const existingTexts = new Set(
+            targetLinked.map(i => (i.content || '').trim().toLowerCase())
+        );
+
+        const links = target.links ? [...target.links] : [];
+        let maxOrder = links.length > 0 ? Math.max(...links.map(l => l.order || 0)) : -1;
+        let added = 0;
+        let skipped = 0;
+
+        for (const item of sourceLinked) {
+            const text = (item.content || '').trim().toLowerCase();
+            if (mode === 'smart' && existingTexts.has(text)) {
+                skipped++;
+                continue;
+            }
+            links.push({ id: item.id, order: ++maxOrder });
+            existingTexts.add(text);
+            added++;
+        }
+
+        target.links = links;
+        target.meta = { ...target.meta, updatedAt: new Date().toISOString() };
+        await this.saveItem(target);
+
+        // Archive the source list after merge
+        source.meta = { ...source.meta, archived: true, updatedAt: new Date().toISOString() };
+        await this.saveItem(source);
+
+        return { added, skipped };
+    }
+
+    static async mergeNotes(targetId, sourceId) {
+        const target = await this.getItem(targetId);
+        const source = await this.getItem(sourceId);
+        if (!target || target.type !== 'note') throw new Error('Target note not found');
+        if (!source || source.type !== 'note') throw new Error('Source note not found');
+
+        const divider = '\n\n---\n\n';
+        target.content = (target.content || '') + divider + (source.content || '');
+        target.meta = { ...target.meta, updatedAt: new Date().toISOString() };
+        await this.saveItem(target);
+
+        source.meta = { ...source.meta, archived: true, updatedAt: new Date().toISOString() };
+        await this.saveItem(source);
+    }
+
+    static async moveItemToList(itemId, fromListId, toListId) {
+        const fromList = await this.getItem(fromListId);
+        const toList = await this.getItem(toListId);
+        if (!fromList || fromList.type !== 'list') throw new Error('Source list not found');
+        if (!toList || toList.type !== 'list') throw new Error('Target list not found');
+
+        // Remove from source
+        fromList.links = (fromList.links || []).filter(l => l.id !== itemId);
+        fromList.links.forEach((l, i) => { l.order = i; });
+        fromList.meta = { ...fromList.meta, updatedAt: new Date().toISOString() };
+        await this.saveItem(fromList);
+
+        // Add to target
+        const toLinks = toList.links ? [...toList.links] : [];
+        const maxOrder = toLinks.length > 0 ? Math.max(...toLinks.map(l => l.order || 0)) : -1;
+        toLinks.push({ id: itemId, order: maxOrder + 1 });
+        toList.links = toLinks;
+        toList.meta = { ...toList.meta, updatedAt: new Date().toISOString() };
+        await this.saveItem(toList);
+    }
+
+    static async convertItemToNote(itemId, fromListId) {
+        const item = await this.getItem(itemId);
+        const fromList = await this.getItem(fromListId);
+        if (!item) throw new Error('Item not found');
+        if (!fromList || fromList.type !== 'list') throw new Error('List not found');
+
+        const note = await this.createItem({
+            type: 'note',
+            content: item.content || '',
+            meta: { completed: false }
+        });
+
+        // Remove from source list and delete the item itself
+        fromList.links = (fromList.links || []).filter(l => l.id !== itemId);
+        fromList.links.forEach((l, i) => { l.order = i; });
+        fromList.meta = { ...fromList.meta, updatedAt: new Date().toISOString() };
+        await this.saveItem(fromList);
+        await this.hardDeleteItem(itemId);
+
+        return note.id;
+    }
+
     static #generateItemId(content, timestamp) {
         const date = timestamp ? new Date(timestamp) : new Date();
         const dateStr = date.getFullYear().toString() +

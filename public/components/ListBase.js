@@ -152,6 +152,9 @@ export class ListBase extends HTMLElement {
 		this._listsContainerEl?.addEventListener("list-move-down", (e) => {
 			this._moveItem(e.detail.itemId, 1);
 		});
+		this._listsContainerEl?.addEventListener("list-more-actions", (e) => {
+			this._showItemActions(e.detail.itemId);
+		});
 	}
 
 	async _loadCurrentList() {
@@ -387,6 +390,83 @@ export class ListBase extends HTMLElement {
 		}
 	}
 
+	async _showItemActions(itemId) {
+		const action = await DialogService.showActions([
+			{ label: 'Move to List', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>', action: 'move-to-list' },
+			{ label: 'Convert to Note', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>', action: 'convert-to-note' },
+			{ label: 'Edit', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>', action: 'edit' },
+			{ label: 'Delete', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>', action: 'delete', danger: true }
+		]);
+
+		if (!action) return;
+
+		try {
+			switch (action) {
+				case 'move-to-list':
+					await this._doMoveItemToList(itemId);
+					break;
+				case 'convert-to-note':
+					await this._doConvertItemToNote(itemId);
+					break;
+				case 'edit': {
+					const item = this._linkedItems.find(i => i.id === itemId);
+					if (item) {
+						await DialogService.promptTextarea('Edit item', item.content || '', (value) => {
+							if (value && value.trim() && value.trim() !== item.content) {
+								this._editItem(itemId, value.trim());
+							}
+						});
+					}
+					break;
+				}
+				case 'delete':
+					await this._deleteItem(itemId);
+					break;
+			}
+		} catch (error) {
+			console.error('Item action error:', error);
+			alert(error.message || 'Action failed');
+		}
+	}
+
+	async _doMoveItemToList(itemId) {
+		const lists = await DBManager.getItems({ type: 'list', archived: false });
+		const otherLists = lists.filter(l => l.id !== this._currentListId);
+		if (otherLists.length === 0) {
+			alert('No other lists available.');
+			return;
+		}
+
+		const item = this._linkedItems.find(i => i.id === itemId);
+		const target = await DialogService.pickItem(
+			otherLists.map(l => ({ id: l.id, title: l.content || 'Unnamed List', subtitle: `${l.links?.length || 0} items` })),
+			{ title: 'Move to which list?' }
+		);
+		if (!target) return;
+
+		await DBManager.moveItemToList(itemId, this._currentListId, target.id);
+		this._linkedItems = await DBManager.getLinkedItems(this._currentListId);
+		this._renderContent();
+		this._updateFooter();
+		Router.go(`/list/${target.id}`);
+	}
+
+	async _doConvertItemToNote(itemId) {
+		const item = this._linkedItems.find(i => i.id === itemId);
+		if (!item) return;
+		const confirmed = await DialogService.confirm(`Create a note from "${item.content}"? The item will be removed from this list.`, 'Convert');
+		if (!confirmed) return;
+
+		const noteId = await DBManager.convertItemToNote(itemId, this._currentListId);
+		this._linkedItems = await DBManager.getLinkedItems(this._currentListId);
+		this._renderContent();
+		this._updateFooter();
+		Router.go('/note');
+		// After navigation, the notes component will load. We could try to open the note,
+		// but Router.go('/note') just shows the notes list. A future enhancement could
+		// support opening a specific note on navigation.
+	}
+
 	// List management
 	async _handleCreateList() {
 		const name = await DialogService.prompt("Enter a name for the new list:");
@@ -464,6 +544,37 @@ export class ListBase extends HTMLElement {
 		}
 	}
 
+	async _doMergeListIntoAnother(sourceId) {
+		const otherLists = this._listItems.filter(l => l.id !== sourceId);
+		if (otherLists.length === 0) {
+			alert('No other lists to merge into.');
+			return;
+		}
+
+		const source = this._listItems.find(l => l.id === sourceId);
+		const target = await DialogService.pickItem(
+			otherLists.map(l => ({ id: l.id, title: l.content || 'Unnamed List', subtitle: `${l.links?.length || 0} items` })),
+			{ title: 'Merge into which list?' }
+		);
+		if (!target) return;
+
+		const mode = await DialogService.showActions([
+			{ label: 'Smart Merge', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>', action: 'smart' },
+			{ label: 'Append All', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>', action: 'append' }
+		]);
+		if (!mode) return;
+
+		await DBManager.mergeLists(target.id, sourceId, mode);
+		this._listItems = await DBManager.getItems({ type: 'list', archived: false });
+
+		if (this._currentListId === sourceId) {
+			this._currentListId = target.id;
+			await this._loadCurrentList();
+		}
+		this._render();
+		Router.go(`/list/${target.id}`);
+	}
+
 	async _editListNameById(listId, newName) {
 		const trimmedName = newName.trim();
 		if (!trimmedName) return;
@@ -524,9 +635,11 @@ export class ListBase extends HTMLElement {
 						<span class="list-selector-item-name" contenteditable="false" data-list-id="${item.id}">${this._escapeHtml(item.content || 'Unnamed List')}</span>
 					</div>
 					<div class="list-selector-item-actions">
-						<button class="btn btn-icon btn-ghost list-selector-move-up ${isFirst ? 'disabled' : ''}" data-list-id="${item.id}" ${isFirst ? 'disabled' : ''} title="Move up"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg></button>
-						<button class="btn btn-icon btn-ghost list-selector-move-down ${isLast ? 'disabled' : ''}" data-list-id="${item.id}" ${isLast ? 'disabled' : ''} title="Move down"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></button>
-						<button class="btn btn-icon btn-outline-danger list-selector-delete" data-list-id="${item.id}" title="Delete list">×</button>
+						<button class="btn-icon-more list-selector-more" data-list-id="${item.id}" title="More actions" type="button">
+							<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+								<circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/>
+							</svg>
+						</button>
 					</div>
 				</div>
 			`;
@@ -600,33 +713,50 @@ export class ListBase extends HTMLElement {
 			});
 		});
 
-		dialog.querySelectorAll('.list-selector-move-up:not(.disabled)').forEach(btn => {
+		dialog.querySelectorAll('.list-selector-more').forEach(btn => {
 			btn.addEventListener('click', async (e) => {
 				e.stopPropagation();
 				const listId = btn.dataset.listId;
-				await this._moveList(listId, -1);
-				dialog.close();
-				document.body.removeChild(dialog);
-				this._showListSelectorDialog();
-			});
-		});
+				const listItem = this._listItems.find(l => l.id === listId);
+				const listIndex = this._listItems.findIndex(l => l.id === listId);
+				const isFirst = listIndex === 0;
+				const isLast = listIndex === this._listItems.length - 1;
 
-		dialog.querySelectorAll('.list-selector-move-down:not(.disabled)').forEach(btn => {
-			btn.addEventListener('click', async (e) => {
-				e.stopPropagation();
-				const listId = btn.dataset.listId;
-				await this._moveList(listId, 1);
-				dialog.close();
-				document.body.removeChild(dialog);
-				this._showListSelectorDialog();
-			});
-		});
+				const action = await DialogService.showActions([
+					{ label: 'Move Up', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>', action: 'move-up', danger: false },
+					{ label: 'Move Down', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>', action: 'move-down', danger: false },
+					{ label: 'Rename', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>', action: 'rename', danger: false },
+					{ label: 'Merge into Another List', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>', action: 'merge', danger: false },
+					{ label: 'Delete', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>', action: 'delete', danger: true }
+				]);
 
-		dialog.querySelectorAll('.list-selector-delete').forEach(btn => {
-			btn.addEventListener('click', async (e) => {
-				e.stopPropagation();
-				const listId = btn.dataset.listId;
-				await this._deleteList(listId);
+				if (!action) return;
+
+				if (action === 'move-up' && !isFirst) {
+					await this._moveList(listId, -1);
+				} else if (action === 'move-down' && !isLast) {
+					await this._moveList(listId, 1);
+				} else if (action === 'rename') {
+					const nameEl = dialog.querySelector(`.list-selector-item-name[data-list-id="${listId}"]`);
+					if (nameEl) {
+						nameEl.contentEditable = 'true';
+						nameEl.focus();
+						const range = document.createRange();
+						range.selectNodeContents(nameEl);
+						const selection = window.getSelection();
+						selection.removeAllRanges();
+						selection.addRange(range);
+					}
+					return; // Keep dialog open for rename
+				} else if (action === 'merge') {
+					dialog.close();
+					document.body.removeChild(dialog);
+					await this._doMergeListIntoAnother(listId);
+					return;
+				} else if (action === 'delete') {
+					await this._deleteList(listId);
+				}
+
 				dialog.close();
 				document.body.removeChild(dialog);
 				if (this._listItems.length > 0) {

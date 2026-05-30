@@ -62,14 +62,18 @@ export class ListItem extends HTMLElement {
 				<button class="btn btn-icon btn-ghost item-move-up" aria-label="Move up"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg></button>
 				<button class="btn btn-icon btn-ghost item-move-down" aria-label="Move down"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></button>
 			</div>
-			<button class="btn btn-icon btn-outline-danger item-delete" aria-label="Delete todo">×</button>
+			<button class="btn-icon-more item-more" aria-label="More actions" type="button">
+				<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+					<circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/>
+				</svg>
+			</button>
 		`;
 
 		this._checkbox = this.querySelector('.item-checkbox');
 		this._textEl = this.querySelector('.item-text');
 		this._moveUpBtn = this.querySelector('.item-move-up');
 		this._moveDownBtn = this.querySelector('.item-move-down');
-		this._deleteBtn = this.querySelector('.item-delete');
+		this._moreBtn = this.querySelector('.item-more');
 
 		this._setupEventListeners();
 		this._updateReorderButtons();
@@ -94,13 +98,6 @@ export class ListItem extends HTMLElement {
 			}));
 		});
 
-		this._deleteBtn.addEventListener('click', () => {
-			this.dispatchEvent(new CustomEvent('list-delete', {
-				bubbles: true,
-				detail: { itemId: this.itemId }
-			}));
-		});
-
 		this._moveUpBtn.addEventListener('click', () => {
 			this.dispatchEvent(new CustomEvent('list-move-up', {
 				bubbles: true,
@@ -110,6 +107,13 @@ export class ListItem extends HTMLElement {
 
 		this._moveDownBtn.addEventListener('click', () => {
 			this.dispatchEvent(new CustomEvent('list-move-down', {
+				bubbles: true,
+				detail: { itemId: this.itemId }
+			}));
+		});
+
+		this._moreBtn.addEventListener('click', () => {
+			this.dispatchEvent(new CustomEvent('list-more-actions', {
 				bubbles: true,
 				detail: { itemId: this.itemId }
 			}));

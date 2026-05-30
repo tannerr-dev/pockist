@@ -82,6 +82,18 @@
     font-size: 13px;
 }
 
+.note-item-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+.note-more-btn {
+    width: 32px;
+    height: 32px;
+}
+
 /** Editor View */
 #note-editor {
     width: 100%;
@@ -196,8 +208,7 @@
 @media (prefers-reduced-motion: reduce) {
     .note-item,
     #new-note-btn,
-    #back-btn,
-    #delete-btn {
+    #back-btn {
         transition: none;
     }
 }
