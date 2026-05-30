@@ -197,7 +197,8 @@ export class ListBase extends HTMLElement {
 		});
 
 		const links = listItem.links || [];
-		links.push({ id: newItem.id, order: links.length });
+		links.unshift({ id: newItem.id, order: 0 });
+		links.forEach((link, i) => { link.order = i; });
 		listItem.links = links;
 
 		this._inputEl.value = "";

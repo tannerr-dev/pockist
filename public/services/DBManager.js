@@ -1038,8 +1038,8 @@ export class DBManager {
         if (!list || list.type !== 'list') throw new Error('List not found');
 
         const lines = (note.content || '').split('\n').map(l => l.trim()).filter(l => l);
-        const links = list.links ? [...list.links] : [];
-        let maxOrder = links.length > 0 ? Math.max(...links.map(l => l.order || 0)) : -1;
+        const existingLinks = list.links ? [...list.links] : [];
+        const newLinks = [];
 
         for (const line of lines) {
             const item = await this.createItem({
@@ -1047,8 +1047,11 @@ export class DBManager {
                 content: line,
                 meta: { completed: false }
             });
-            links.push({ id: item.id, order: ++maxOrder });
+            newLinks.push({ id: item.id, order: 0 });
         }
+
+        const links = [...newLinks, ...existingLinks];
+        links.forEach((link, i) => { link.order = i; });
 
         list.links = links;
         list.meta = { ...list.meta, updatedAt: new Date().toISOString() };
@@ -1071,8 +1074,8 @@ export class DBManager {
             targetLinked.map(i => (i.content || '').trim().toLowerCase())
         );
 
-        const links = target.links ? [...target.links] : [];
-        let maxOrder = links.length > 0 ? Math.max(...links.map(l => l.order || 0)) : -1;
+        const existingLinks = target.links ? [...target.links] : [];
+        const newLinks = [];
         let added = 0;
         let skipped = 0;
 
@@ -1082,11 +1085,13 @@ export class DBManager {
                 skipped++;
                 continue;
             }
-            links.push({ id: item.id, order: ++maxOrder });
+            newLinks.push({ id: item.id, order: 0 });
             existingTexts.add(text);
             added++;
         }
 
+        const links = [...newLinks, ...existingLinks];
+        links.forEach((link, i) => { link.order = i; });
         target.links = links;
         target.meta = { ...target.meta, updatedAt: new Date().toISOString() };
         await this.saveItem(target);
@@ -1125,10 +1130,10 @@ export class DBManager {
         fromList.meta = { ...fromList.meta, updatedAt: new Date().toISOString() };
         await this.saveItem(fromList);
 
-        // Add to target
+        // Add to target (prepend)
         const toLinks = toList.links ? [...toList.links] : [];
-        const maxOrder = toLinks.length > 0 ? Math.max(...toLinks.map(l => l.order || 0)) : -1;
-        toLinks.push({ id: itemId, order: maxOrder + 1 });
+        toLinks.unshift({ id: itemId, order: 0 });
+        toLinks.forEach((link, i) => { link.order = i; });
         toList.links = toLinks;
         toList.meta = { ...toList.meta, updatedAt: new Date().toISOString() };
         await this.saveItem(toList);
