@@ -193,16 +193,6 @@
 	outline: none;
 }
 
-.list-selector-item-badge {
-	font-size: 11px;
-	padding: 2px 6px;
-	background-color: var(--accent);
-	color: white;
-	border-radius: 4px;
-	opacity: 0.8;
-	flex-shrink: 0;
-}
-
 .list-selector-item-actions {
 	display: flex;
 	align-items: center;
@@ -238,10 +228,6 @@
 .list-selector-item-actions button:disabled {
 	opacity: 0.15;
 	cursor: default;
-}
-
-.list-selector-set-default:hover:not(:disabled) {
-	color: var(--accent);
 }
 
 .list-selector-delete:hover:not(:disabled) {
@@ -561,11 +547,6 @@
 	background-color: color-mix(in srgb, var(--text) 5%, transparent);
 }
 
-.list-index-card.is-default {
-	border-left: 3px solid var(--accent);
-	padding-left: 12px;
-}
-
 .list-index-card-content {
 	flex: 1;
 	min-width: 0;
@@ -616,11 +597,6 @@
 	background: var(--bg-3);
 	color: var(--text);
 	border-color: var(--border-color);
-}
-
-.list-index-set-default:hover {
-	color: var(--accent);
-	border-color: var(--accent);
 }
 
 .list-index-delete:hover {

@@ -693,18 +693,15 @@ export class ListBase extends HTMLElement {
 			const isFirst = index === 0;
 			const isLast = index === sortedMetadata.length - 1;
 			const isSelected = meta.id === this._currentListId;
-			const isDefault = meta.isDefault;
 
 			return `
 				<div class="list-selector-item ${isSelected ? 'selected' : ''}" data-list-id="${meta.id}">
 					<div class="list-selector-item-info">
 						<span class="list-selector-item-name" contenteditable="false" data-list-id="${meta.id}">${this._escapeHtml(meta.name)}</span>
-						${isDefault ? '<span class="list-selector-item-badge">default</span>' : ''}
 					</div>
 					<div class="list-selector-item-actions">
 						<button class="btn btn-icon btn-ghost list-selector-move-up ${isFirst ? 'disabled' : ''}" data-list-id="${meta.id}" ${isFirst ? 'disabled' : ''} title="Move up">▲</button>
 						<button class="btn btn-icon btn-ghost list-selector-move-down ${isLast ? 'disabled' : ''}" data-list-id="${meta.id}" ${isLast ? 'disabled' : ''} title="Move down">▼</button>
-						${!isDefault ? `<button class="btn btn-icon btn-ghost list-selector-set-default" data-list-id="${meta.id}" title="Set as default">★</button>` : ''}
 						<button class="btn btn-icon btn-outline-danger list-selector-delete" data-list-id="${meta.id}" title="Delete list">×</button>
 					</div>
 				</div>
@@ -732,6 +729,7 @@ export class ListBase extends HTMLElement {
 				if (e.target.classList.contains('list-selector-item-name')) return;
 
 				const listId = item.dataset.listId;
+				await this._setDefaultList(listId);
 				this._currentListId = listId;
 				dialog.close();
 				document.body.removeChild(dialog);
@@ -800,18 +798,7 @@ export class ListBase extends HTMLElement {
 			});
 		});
 
-		dialog.querySelectorAll('.list-selector-set-default').forEach(btn => {
-			btn.addEventListener('click', async (e) => {
-				e.stopPropagation();
-				const listId = btn.dataset.listId;
-				await this._setDefaultList(listId);
-				this._currentListId = listId;
-				dialog.close();
-				document.body.removeChild(dialog);
-				await this._loadCurrentList();
-				this._render();
-			});
-		});
+
 
 		dialog.querySelectorAll('.list-selector-delete').forEach(btn => {
 			btn.addEventListener('click', async (e) => {
