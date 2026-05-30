@@ -59,8 +59,8 @@ export class ListItem extends HTMLElement {
 			<input type="checkbox" class="item-checkbox" ${this.completed ? 'checked' : ''}>
 			<span class="item-text">${this._escapeHtml(this.text || '')}</span>
 			<div class="item-reorder">
-				<button class="btn btn-icon btn-ghost item-move-up" aria-label="Move up">▲</button>
-				<button class="btn btn-icon btn-ghost item-move-down" aria-label="Move down">▼</button>
+				<button class="btn btn-icon btn-ghost item-move-up" aria-label="Move up"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg></button>
+				<button class="btn btn-icon btn-ghost item-move-down" aria-label="Move down"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></button>
 			</div>
 			<button class="btn btn-icon btn-outline-danger item-delete" aria-label="Delete todo">×</button>
 		`;

@@ -52,8 +52,8 @@ export class ListIndexPage extends HTMLElement {
 						<div class="list-index-card-meta">${total} item${total !== 1 ? 's' : ''}</div>
 					</div>
 					<div class="list-index-card-actions">
-						<button class="btn btn-icon btn-ghost list-index-move-up ${isFirst ? 'disabled' : ''}" data-list-id="${item.id}" ${isFirst ? 'disabled' : ''} title="Move up">&#9650;</button>
-						<button class="btn btn-icon btn-ghost list-index-move-down ${isLast ? 'disabled' : ''}" data-list-id="${item.id}" ${isLast ? 'disabled' : ''} title="Move down">&#9660;</button>
+						<button class="btn btn-icon btn-ghost list-index-move-up ${isFirst ? 'disabled' : ''}" data-list-id="${item.id}" ${isFirst ? 'disabled' : ''} title="Move up"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg></button>
+						<button class="btn btn-icon btn-ghost list-index-move-down ${isLast ? 'disabled' : ''}" data-list-id="${item.id}" ${isLast ? 'disabled' : ''} title="Move down"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></button>
 						<button class="btn btn-icon btn-outline-danger list-index-delete" data-list-id="${item.id}" title="Delete list">&times;</button>
 					</div>
 				</div>

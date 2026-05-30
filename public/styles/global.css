@@ -24,6 +24,9 @@
 	--secondary: hsl(var(--secondary-hue), calc(50% * var(--secondary-mod)), 50%);
 	--secondary-muted: hsl(var(--secondary-hue), calc(40% * var(--secondary-mod)), 60%);
 	--secondary-accent: hsl(var(--secondary-hue), calc(32% * var(--secondary-mod)), 46%);
+
+	--success: hsl(var(--secondary-hue), calc(50% * var(--mod)), 45%);
+	--success-hover: hsl(var(--secondary-hue), calc(50% * var(--mod)), 55%);
 }
 [data-theme="light"] {
 	--bg: hsl(var(--hue), calc(20% * var(--mod)), 88%);
@@ -314,16 +317,27 @@ home-page{
     color: var(--bg);
 }
 
+.btn-outline-secondary {
+	color: var(--secondary);
+	border: 1px solid var(--secondary);
+	background: transparent;
+}
+
+.btn-outline-secondary:hover {
+	background: var(--secondary);
+	color: var(--bg);
+}
+
 .btn-ghost {
-    color: var(--text-muted);
-    border: 1px solid var(--border-color);
-    background: transparent;
+	color: var(--text-muted);
+	border: 1px solid var(--border-color);
+	background: transparent;
 }
 
 .btn-ghost:hover {
-    background: var(--bg-3);
-    color: var(--text);
-    border-color: var(--border-color);
+	background: var(--bg-3);
+	color: var(--text);
+	border-color: var(--border-color);
 }
 
 .btn:disabled {
