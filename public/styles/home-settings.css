@@ -9,7 +9,7 @@ home-settings-drawer {
 	position-anchor: --menu-btn;
 	position-area: bottom span-right;
     margin:0;
-	margin-block-start: 9px;
+	margin-block-start: 10px;
     /* right: -200px; */
     width: 200px;
     background-color: var(--bg);
