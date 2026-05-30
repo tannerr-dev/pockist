@@ -1,6 +1,6 @@
 console.log("Service Worker loaded.");
 
-const CACHE_NAME = "pockist-v16";
+const CACHE_NAME = "pockist-v17";
 
 self.addEventListener("install", function (event) {
 	event.waitUntil(
@@ -115,5 +115,15 @@ self.addEventListener("fetch", (event) => {
 	}
 
 	// Static assets: cache-first, stale-while-revalidate
-	event.respondWith(handleStaticAsset(event.request));
+	event.respondWith(
+		handleStaticAsset(event.request).catch(() => {
+			// Offline fallback for navigation requests: serve the SPA shell
+			if (event.request.mode === 'navigate') {
+				return caches.match('/').then((response) => {
+					return response || caches.match('/index.html');
+				});
+			}
+			throw new Error("Failed to fetch:", event.request.url);
+		})
+	);
 });
