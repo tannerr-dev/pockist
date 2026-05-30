@@ -17,7 +17,7 @@ export const WIDGET_REGISTRY = [
     },
     {
         id: 'notes',
-        tag: 'pockist-notes',
+        tag: 'pockist-note-widget',
         name: 'Notes',
         defaultEnabled: false,
         props: {},

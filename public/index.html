@@ -173,27 +173,48 @@
         </section>
     </template>
 
-    <template id="pockist-notes">
-      <!-- List View -->
-      <div id="notes-list">
-        <h1>My Notes</h1>
-        <div class="notes-header">
-          <span class="notes-count"></span>
-          <button id="new-note-btn" class="btn btn-outline-secondary" type="button">+ New Note</button>
+    <!-- Note Widget (homepage) -->
+    <template id="pockist-note-widget">
+      <div class="note-widget-container">
+        <div class="note-widget-header">
+          <h2><a href="/note" class="note-heading-link fancy-link">Notes</a></h2>
+          <button class="note-widget-new-btn btn btn-outline-secondary" type="button">+ New Note</button>
         </div>
-
-        <div id="empty-state" style="display: none;">
-          <p>No notes yet.</p>
-        </div>
-
-        <div id="notes-items"></div>
+        <div class="note-widget-items"></div>
+        <div class="note-widget-nav-container"></div>
       </div>
+    </template>
 
-      <!-- Editor View -->
-      <div id="note-editor" style="display: none;">
+    <!-- Note Index Page (/note) -->
+    <template id="pockist-note-index">
+      <div class="note-index-container">
+        <div class="note-index-header">
+          <h1>Notes</h1>
+          <div class="note-index-controls">
+            <select class="note-index-sort">
+              <option value="updated-desc">Newest updated</option>
+              <option value="created-desc">Newest created</option>
+              <option value="created-asc">Oldest first</option>
+              <option value="title-asc">Title A–Z</option>
+            </select>
+            <button class="note-index-new-btn btn btn-outline-secondary" type="button">+ New Note</button>
+          </div>
+        </div>
+        <div class="note-index-count"></div>
+        <div class="note-index-items"></div>
+        <div class="note-index-empty" style="display: none;">
+          <p>No notes yet.</p>
+          <button class="note-index-empty-new-btn btn btn-outline-secondary" type="button">Create your first note</button>
+        </div>
+      </div>
+    </template>
+
+    <!-- Note Detail Page (/note/:noteId) -->
+    <template id="pockist-note-detail">
+      <div class="note-detail-container">
         <div class="editor-header">
           <div class="editor-actions">
-            <button id="back-btn" class="btn btn-outline btn-icon" type="button" title="Back to list">
+            <button id="back-btn" class="btn btn-outline btn-icon" type="button" title="Back to notes">
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M19 12H5"/>
                 <path d="M12 19l-7-7 7-7"/>
@@ -211,11 +232,7 @@
             </div>
           </div>
         </div>
-
-        <textarea
-          id="note-content"
-          placeholder="Start typing your note..."
-        ></textarea>
+        <textarea id="note-content" placeholder="Start typing your note..."></textarea>
         <span id="save-indicator"></span>
       </div>
     </template>

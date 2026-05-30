@@ -1,5 +1,6 @@
 import { HomePage } from "../components/HomePage.js";
-import { Notes } from "../components/Notes.js";
+import { NoteIndexPage } from "../components/NoteIndexPage.js";
+import { NoteDetailPage } from "../components/NoteDetailPage.js";
 import { WeatherPage } from "../components/WeatherPage.js";
 import { ListIndexPage } from "../components/ListIndexPage.js";
 import { ListDetailPage } from "../components/ListDetailPage.js";
@@ -13,7 +14,11 @@ export const routes = [
   },
   {
     path: "/note",
-    component: Notes,
+    component: NoteIndexPage,
+  },
+  {
+    path: /^\/note\/(.+)$/,  // Matches /note/:noteId
+    component: NoteDetailPage,
   },
   {
     path: "/weather",

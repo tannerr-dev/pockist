@@ -4,7 +4,7 @@ import { Router } from "../services/Router.js";
 import './weather/WeatherCurrent.js';
 import './List.js';
 import './ListWidget.js';
-import './Notes.js';
+import './NoteWidget.js';
 
 export class HomePage extends HTMLElement {
     connectedCallback() {

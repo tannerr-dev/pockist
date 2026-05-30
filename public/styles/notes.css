@@ -204,11 +204,199 @@
     }
 }
 
+/* ============================================================================
+   NOTE WIDGET (homepage paginated version)
+   ============================================================================ */
+
+.note-widget-container {
+    padding: 0;
+    padding-top: 14px;
+}
+
+.note-widget-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    padding: 0 0 8px 0;
+    border-bottom: 1px solid var(--border-color);
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.note-widget-header h2 {
+    font-size: 17px;
+    color: var(--text);
+    margin: 0;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.note-heading-link {
+    color: var(--text);
+    cursor: pointer;
+}
+
+.note-heading-link:hover {
+    opacity: 0.7;
+}
+
+.note-widget-items {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    max-height: 384px;
+}
+
+.note-widget-empty {
+    padding: 1.25rem 0.75rem;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 14px;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Nav button row */
+.note-widget-nav-container {
+    display: flex;
+    align-items: center;
+    padding: 8px 0;
+    border-top: 1px solid var(--border-color);
+    gap: 12px;
+    width: 100%;
+}
+
+.note-widget-nav-container:empty {
+    display: none;
+}
+
+.note-widget-nav-btn {
+    flex: 1;
+    font-size: 13px;
+}
+
+.note-widget-nav-btn:disabled {
+    opacity: 0.3;
+    cursor: default;
+}
+
+/* ============================================================================
+   NOTE INDEX PAGE
+   ============================================================================ */
+
+.note-index-container {
+    width: 100%;
+}
+
+.note-index-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--border-color);
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.note-index-header h1 {
+    position: static;
+    display: block;
+    margin: 0;
+    font-size: 20px;
+}
+
+.note-index-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.note-index-sort {
+    padding: 6px 8px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+    outline: none;
+    cursor: pointer;
+}
+
+.note-index-sort:focus {
+    border-color: var(--accent);
+}
+
+.note-index-count {
+    color: var(--text-muted);
+    font-size: 14px;
+    padding: 8px 0 0 0;
+}
+
+.note-index-items {
+    display: flex;
+    flex-direction: column;
+}
+
+.note-index-empty {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 1rem;
+    gap: 1rem;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 15px;
+}
+
+.note-index-empty p {
+    margin: 0;
+}
+
+/* ============================================================================
+   NOTE DETAIL PAGE
+   ============================================================================ */
+
+.note-detail-container {
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto;
+    border-top: 1px solid var(--border-color);
+}
+
+.note-detail-container .share-btn {
+    border: 1px solid var(--secondary);
+    color: var(--secondary);
+}
+
+.note-detail-container .share-btn:hover {
+    background: var(--secondary);
+    color: var(--bg);
+    border-color: var(--secondary);
+}
+
 /* Reduced motion support */
 @media (prefers-reduced-motion: reduce) {
     .note-item,
-    #new-note-btn,
+    .note-widget-new-btn,
+    .note-index-new-btn,
     #back-btn {
         transition: none;
+    }
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+    .note-index-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .note-index-controls {
+        justify-content: space-between;
     }
 }
