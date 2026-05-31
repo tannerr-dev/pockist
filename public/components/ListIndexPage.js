@@ -1,15 +1,25 @@
 import { Router } from "../services/Router.js";
 import { DBManager } from "../services/DBManager.js";
 import { DialogService } from "../services/DialogService.js";
+import { DraggableList } from "../services/DraggableList.js";
 
 export class ListIndexPage extends HTMLElement {
+	_lists = [];
+	#draggableList = null;
+
 	connectedCallback() {
 		const template = document.getElementById("pockist-list-index");
 		const content = template.content.cloneNode(true);
 		this.appendChild(content);
 
-		this._lists = [];
 		this._init();
+	}
+
+	disconnectedCallback() {
+		if (this.#draggableList) {
+			this.#draggableList.destroy();
+			this.#draggableList = null;
+		}
 	}
 
 	async _init() {
@@ -18,6 +28,7 @@ export class ListIndexPage extends HTMLElement {
 			await DBManager.migrateFromTodoDB();
 			await DBManager.migrateToItems();
 			this._lists = await DBManager.getItems({ type: 'list', archived: false });
+			this._lists.sort((a, b) => (a.meta?.order || 0) - (b.meta?.order || 0));
 			this._render();
 			this._attachListeners();
 		} catch (error) {
@@ -41,10 +52,9 @@ export class ListIndexPage extends HTMLElement {
 		}
 
 		emptyState.style.display = 'none';
-		container.innerHTML = this._lists.map((item, index) => {
+
+		container.innerHTML = this._lists.map((item) => {
 			const total = item.links ? item.links.length : 0;
-			const isFirst = index === 0;
-			const isLast = index === this._lists.length - 1;
 			return `
 				<div class="list-index-card" data-list-id="${item.id}">
 					<div class="list-index-card-content">
@@ -52,8 +62,6 @@ export class ListIndexPage extends HTMLElement {
 						<div class="list-index-card-meta">${total} item${total !== 1 ? 's' : ''}</div>
 					</div>
 					<div class="list-index-card-actions">
-						<button class="btn btn-icon btn-ghost list-index-move-up ${isFirst ? 'disabled' : ''}" data-list-id="${item.id}" ${isFirst ? 'disabled' : ''} title="Move up"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg></button>
-						<button class="btn btn-icon btn-ghost list-index-move-down ${isLast ? 'disabled' : ''}" data-list-id="${item.id}" ${isLast ? 'disabled' : ''} title="Move down"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></button>
 						<button class="btn-icon-more list-index-more" data-list-id="${item.id}" title="More actions" type="button">
 							<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
 								<circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/>
@@ -86,25 +94,23 @@ export class ListIndexPage extends HTMLElement {
 		});
 
 		container?.addEventListener('click', async (e) => {
-			const btn = e.target.closest('.list-index-move-up:not(.disabled)');
-			if (!btn) return;
-			e.stopPropagation();
-			await this._moveList(btn.dataset.listId, -1);
-		});
-
-		container?.addEventListener('click', async (e) => {
-			const btn = e.target.closest('.list-index-move-down:not(.disabled)');
-			if (!btn) return;
-			e.stopPropagation();
-			await this._moveList(btn.dataset.listId, 1);
-		});
-
-		container?.addEventListener('click', async (e) => {
 			const btn = e.target.closest('.list-index-more');
 			if (!btn) return;
 			e.stopPropagation();
 			await this._showListActions(btn.dataset.listId);
 		});
+
+		// Initialize drag-and-drop
+		const grid = this.querySelector('.lists-index-grid');
+		if (grid && this._lists.length > 1) {
+			this.#draggableList = new DraggableList(grid, {
+				itemSelector: '.list-index-card',
+				scrollContainer: this.querySelector('.lists-index-container') || grid,
+				onReorder: async (oldIndex, newIndex) => {
+					await this._reorderList(oldIndex, newIndex);
+				}
+			});
+		}
 	}
 
 	async _createList() {
@@ -118,33 +124,85 @@ export class ListIndexPage extends HTMLElement {
 				meta: { isDefault: false, order: this._lists.length }
 			});
 			this._lists = await DBManager.getItems({ type: 'list', archived: false });
+			this._lists.sort((a, b) => (a.meta?.order || 0) - (b.meta?.order || 0));
 			this._render();
+			this.#reinitDraggableList();
 		} catch (error) {
 			console.error('[ListIndexPage] Error creating list:', error);
 		}
 	}
 
-	async _moveList(listId, direction) {
-		const listIndex = this._lists.findIndex((l) => l.id === listId);
-		if (listIndex === -1) return;
+	async _reorderList(oldIndex, newIndex) {
+		if (oldIndex === newIndex || oldIndex < 0 || oldIndex >= this._lists.length || newIndex < 0 || newIndex >= this._lists.length) return;
 
-		const newIndex = listIndex + direction;
-		if (newIndex < 0 || newIndex >= this._lists.length) return;
-
-		const listA = this._lists[listIndex];
-		const listB = this._lists[newIndex];
-
-		const tempOrder = listA.meta.order;
-		listA.meta = { ...listA.meta, order: listB.meta.order };
-		listB.meta = { ...listB.meta, order: tempOrder };
-		this._lists.sort((a, b) => a.meta.order - b.meta.order);
+		const [moved] = this._lists.splice(oldIndex, 1);
+		this._lists.splice(newIndex, 0, moved);
+		this._lists.forEach((list, idx) => {
+			list.meta = { ...list.meta, order: idx, updatedAt: new Date().toISOString() };
+		});
 
 		try {
-			await DBManager.saveItem(listA);
-			await DBManager.saveItem(listB);
+			for (const list of this._lists) {
+				await DBManager.saveItem(list);
+			}
 			this._render();
+			this.#reinitDraggableList();
 		} catch (error) {
-			console.error('[ListIndexPage] Error moving list:', error);
+			console.error('[ListIndexPage] Error reordering lists:', error);
+			this._lists = await DBManager.getItems({ type: 'list', archived: false });
+			this._lists.sort((a, b) => (a.meta?.order || 0) - (b.meta?.order || 0));
+			this._render();
+			this.#reinitDraggableList();
+		}
+	}
+
+	async _moveListToTop(listId) {
+		const index = this._lists.findIndex((l) => l.id === listId);
+		if (index <= 0) return;
+
+		const [moved] = this._lists.splice(index, 1);
+		this._lists.unshift(moved);
+		this._lists.forEach((list, idx) => {
+			list.meta = { ...list.meta, order: idx, updatedAt: new Date().toISOString() };
+		});
+
+		try {
+			for (const list of this._lists) {
+				await DBManager.saveItem(list);
+			}
+			this._render();
+			this.#reinitDraggableList();
+		} catch (error) {
+			console.error('[ListIndexPage] Error moving list to top:', error);
+			this._lists = await DBManager.getItems({ type: 'list', archived: false });
+			this._lists.sort((a, b) => (a.meta?.order || 0) - (b.meta?.order || 0));
+			this._render();
+			this.#reinitDraggableList();
+		}
+	}
+
+	async _moveListToBottom(listId) {
+		const index = this._lists.findIndex((l) => l.id === listId);
+		if (index === -1 || index === this._lists.length - 1) return;
+
+		const [moved] = this._lists.splice(index, 1);
+		this._lists.push(moved);
+		this._lists.forEach((list, idx) => {
+			list.meta = { ...list.meta, order: idx, updatedAt: new Date().toISOString() };
+		});
+
+		try {
+			for (const list of this._lists) {
+				await DBManager.saveItem(list);
+			}
+			this._render();
+			this.#reinitDraggableList();
+		} catch (error) {
+			console.error('[ListIndexPage] Error moving list to bottom:', error);
+			this._lists = await DBManager.getItems({ type: 'list', archived: false });
+			this._lists.sort((a, b) => (a.meta?.order || 0) - (b.meta?.order || 0));
+			this._render();
+			this.#reinitDraggableList();
 		}
 	}
 
@@ -154,8 +212,8 @@ export class ListIndexPage extends HTMLElement {
 		const isLast = listIndex === this._lists.length - 1;
 
 		const action = await DialogService.showActions([
-			{ label: 'Move Up', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>', action: 'move-up' },
-			{ label: 'Move Down', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>', action: 'move-down' },
+			{ label: 'Move to Top', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="4" x2="20" y2="4"/><polyline points="18 10 12 4 6 10"/></svg>', action: 'move-top' },
+			{ label: 'Move to Bottom', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="20" x2="20" y2="20"/><polyline points="6 14 12 20 18 14"/></svg>', action: 'move-bottom' },
 			{ label: 'Merge into Another List', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>', action: 'merge' },
 			{ label: 'Archive', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>', action: 'archive', danger: true }
 		]);
@@ -163,10 +221,10 @@ export class ListIndexPage extends HTMLElement {
 		if (!action) return;
 
 		try {
-			if (action === 'move-up' && !isFirst) {
-				await this._moveList(listId, -1);
-			} else if (action === 'move-down' && !isLast) {
-				await this._moveList(listId, 1);
+			if (action === 'move-top' && !isFirst) {
+				await this._moveListToTop(listId);
+			} else if (action === 'move-bottom' && !isLast) {
+				await this._moveListToBottom(listId);
 			} else if (action === 'merge') {
 				await this._doMergeList(listId);
 			} else if (action === 'archive') {
@@ -200,7 +258,9 @@ export class ListIndexPage extends HTMLElement {
 
 		await DBManager.mergeLists(target.id, sourceId, mode);
 		this._lists = await DBManager.getItems({ type: 'list', archived: false });
+		this._lists.sort((a, b) => (a.meta?.order || 0) - (b.meta?.order || 0));
 		this._render();
+		this.#reinitDraggableList();
 		Router.go(`/list/${target.id}`);
 	}
 
@@ -216,8 +276,26 @@ export class ListIndexPage extends HTMLElement {
 			await DBManager.archiveItem(listId);
 			this._lists = this._lists.filter(l => l.id !== listId);
 			this._render();
+			this.#reinitDraggableList();
 		} catch (error) {
 			console.error('[ListIndexPage] Error archiving list:', error);
+		}
+	}
+
+	#reinitDraggableList() {
+		if (this.#draggableList) {
+			this.#draggableList.destroy();
+			this.#draggableList = null;
+		}
+		const grid = this.querySelector('.lists-index-grid');
+		if (grid && this._lists.length > 1) {
+			this.#draggableList = new DraggableList(grid, {
+				itemSelector: '.list-index-card',
+				scrollContainer: this.querySelector('.lists-index-container') || grid,
+				onReorder: async (oldIndex, newIndex) => {
+					await this._reorderList(oldIndex, newIndex);
+				}
+			});
 		}
 	}
 

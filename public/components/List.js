@@ -1,7 +1,10 @@
 import { ListBase } from './ListBase.js';
+import { DraggableList } from '../services/DraggableList.js';
 import './ShareButton.js';
 
 export class List extends ListBase {
+	_draggableList = null;
+
 	_getTemplateId() {
 		return 'pockist-list';
 	}
@@ -11,6 +14,17 @@ export class List extends ListBase {
 		this._inputEl?.addEventListener("keydown", (e) => {
 			if (e.key === "Enter") this._handleAdd();
 		});
+	}
+
+	connectedCallback() {
+		super.connectedCallback();
+	}
+
+	disconnectedCallback() {
+		if (this._draggableList) {
+			this._draggableList.destroy();
+			this._draggableList = null;
+		}
 	}
 
 	_onAfterAdd(item, listItem) {
@@ -36,6 +50,7 @@ export class List extends ListBase {
 
 		this.#updateItemIndices();
 		this._updateFooter();
+		this._initDraggableList();
 	}
 
 	_onAfterDelete(itemId) {
@@ -52,6 +67,7 @@ export class List extends ListBase {
 				if (items.length === 0) {
 					this._listsContainerEl.innerHTML = '<div class="list-empty">No items yet. Add one above!</div>';
 				}
+				this._initDraggableList();
 			}, 200);
 		}
 
@@ -64,18 +80,19 @@ export class List extends ListBase {
 		const currentItem = items.find(item => item.itemId === itemId);
 		if (!currentItem) return;
 
-		const targetItem = direction === -1
-			? currentItem.previousElementSibling
-			: currentItem.nextElementSibling;
-		if (!targetItem || targetItem.classList.contains('list-empty')) return;
+		const targetItem = items[newIndex];
+		if (!targetItem || targetItem === currentItem) return;
 
-		currentItem.style.transition = 'transform 0.2s';
-		targetItem.style.transition = 'transform 0.2s';
+		const container = currentItem.parentNode;
 
-		if (direction === -1) {
-			currentItem.parentNode.insertBefore(currentItem, targetItem);
+		if (newIndex > oldIndex) {
+			if (targetItem.nextElementSibling) {
+				container.insertBefore(currentItem, targetItem.nextElementSibling);
+			} else {
+				container.appendChild(currentItem);
+			}
 		} else {
-			currentItem.parentNode.insertBefore(targetItem, currentItem);
+			container.insertBefore(currentItem, targetItem);
 		}
 
 		this.#updateItemIndices();
@@ -103,6 +120,11 @@ export class List extends ListBase {
 		if (items.length === 0) {
 			setTimeout(() => {
 				this._listsContainerEl.innerHTML = '<div class="list-empty">No items yet. Add one above!</div>';
+				this._initDraggableList();
+			}, 200 + (completedIds.length * 50));
+		} else {
+			setTimeout(() => {
+				this._initDraggableList();
 			}, 200 + (completedIds.length * 50));
 		}
 	}
@@ -141,6 +163,25 @@ export class List extends ListBase {
 		}
 
 		this._updateFooter();
+		this._initDraggableList();
+	}
+
+	_initDraggableList() {
+		if (this._draggableList) {
+			this._draggableList.destroy();
+			this._draggableList = null;
+		}
+
+		const ul = this._listsContainerEl.querySelector('.list-ul');
+		if (!ul) return;
+
+		this._draggableList = new DraggableList(ul, {
+			itemSelector: 'list-item',
+			scrollContainer: this.querySelector('.list-scroll-container'),
+			onReorder: (oldIndex, newIndex) => {
+				this._reorderItem(oldIndex, newIndex);
+			}
+		});
 	}
 
 	#updateItemIndices() {

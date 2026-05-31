@@ -1,4 +1,5 @@
 import { ListBase } from './ListBase.js';
+import { DraggableList } from '../services/DraggableList.js';
 
 /**
  * ListWidget - Paginated list for homepage widget.
@@ -8,6 +9,7 @@ import { ListBase } from './ListBase.js';
 export class ListWidget extends ListBase {
 	#offset = 0;
 	#navContainer = null;
+	#draggableList = null;
 
 	_getTemplateId() {
 		return 'pockist-list-widget';
@@ -16,6 +18,13 @@ export class ListWidget extends ListBase {
 	connectedCallback() {
 		super.connectedCallback();
 		this.#navContainer = this.querySelector('.list-widget-nav-container');
+	}
+
+	disconnectedCallback() {
+		if (this.#draggableList) {
+			this.#draggableList.destroy();
+			this.#draggableList = null;
+		}
 	}
 
 	_setupAddListeners() {
@@ -121,6 +130,7 @@ export class ListWidget extends ListBase {
 			this._listsContainerEl.innerHTML = '<div class="list-empty">No items yet. Add one above!</div>';
 			this.#renderNav(0, 0);
 			this._updateFooter();
+			this.#initDraggableList();
 			return;
 		}
 
@@ -143,6 +153,27 @@ export class ListWidget extends ListBase {
 
 		this.#renderNav(total, clampedOffset);
 		this._updateFooter();
+		this.#initDraggableList();
+	}
+
+	#initDraggableList() {
+		if (this.#draggableList) {
+			this.#draggableList.destroy();
+			this.#draggableList = null;
+		}
+
+		const items = this._getLinkedItems();
+		if (items.length <= 1) return;
+
+		this.#draggableList = new DraggableList(this._listsContainerEl, {
+			itemSelector: 'list-item',
+			scrollContainer: this._listsContainerEl,
+			onReorder: (oldIndex, newIndex) => {
+				const globalOldIndex = this.#offset + oldIndex;
+				const globalNewIndex = this.#offset + newIndex;
+				this._reorderItem(globalOldIndex, globalNewIndex);
+			}
+		});
 	}
 }
 

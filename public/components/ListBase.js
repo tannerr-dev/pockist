@@ -1,6 +1,7 @@
 import { Router } from "../services/Router.js";
 import { DBManager } from "../services/DBManager.js";
 import { DialogService } from "../services/DialogService.js";
+import { DraggableList } from "../services/DraggableList.js";
 import { ListItem } from "./ListItem.js";
 
 /**
@@ -96,6 +97,7 @@ export class ListBase extends HTMLElement {
 			await DBManager.migrateToItems();
 
 			this._listItems = await DBManager.getItems({ type: 'list', archived: false });
+			this._listItems.sort((a, b) => (a.meta?.order || 0) - (b.meta?.order || 0));
 
 			if (attrListId) {
 				this._currentListId = attrListId;
@@ -145,12 +147,6 @@ export class ListBase extends HTMLElement {
 		});
 		this._listsContainerEl?.addEventListener("list-delete", (e) => {
 			this._archiveItem(e.detail.itemId);
-		});
-		this._listsContainerEl?.addEventListener("list-move-up", (e) => {
-			this._moveItem(e.detail.itemId, -1);
-		});
-		this._listsContainerEl?.addEventListener("list-move-down", (e) => {
-			this._moveItem(e.detail.itemId, 1);
 		});
 		this._listsContainerEl?.addEventListener("list-more-actions", (e) => {
 			this._showItemActions(e.detail.itemId);
@@ -384,17 +380,31 @@ export class ListBase extends HTMLElement {
 	}
 
 	async _showItemActions(itemId) {
+		const listItem = this._getCurrentListItem();
+		const links = listItem ? [...(listItem.links || [])].sort((a, b) => (a.order || 0) - (b.order || 0)) : [];
+		const linkIndex = links.findIndex(l => l.id === itemId);
+		const isFirst = linkIndex === 0;
+		const isLast = linkIndex === links.length - 1;
+
 		const action = await DialogService.showActions([
+			{ label: 'Move to Top', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="4" x2="20" y2="4"/><polyline points="18 10 12 4 6 10"/></svg>', action: 'move-top' },
+			{ label: 'Move to Bottom', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="20" x2="20" y2="20"/><polyline points="6 14 12 20 18 14"/></svg>', action: 'move-bottom' },
 			{ label: 'Move to List', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>', action: 'move-to-list' },
 			{ label: 'Convert to Note', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>', action: 'convert-to-note' },
 			{ label: 'Edit', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>', action: 'edit' },
-					{ label: 'Archive', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>', action: 'archive', danger: true }
+			{ label: 'Archive', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>', action: 'archive', danger: true }
 		]);
 
 		if (!action) return;
 
 		try {
 			switch (action) {
+				case 'move-top':
+					if (!isFirst) await this._moveItemToTop(itemId);
+					break;
+				case 'move-bottom':
+					if (!isLast) await this._moveItemToBottom(itemId);
+					break;
 				case 'move-to-list':
 					await this._doMoveItemToList(itemId);
 					break;
@@ -604,16 +614,153 @@ export class ListBase extends HTMLElement {
 		}
 	}
 
+	async _reorderItem(oldIndex, newIndex) {
+		const listItem = this._getCurrentListItem();
+		if (!listItem) return;
+
+		const links = listItem.links || [];
+		if (oldIndex === newIndex || oldIndex < 0 || oldIndex >= links.length || newIndex < 0 || newIndex >= links.length) return;
+
+		const [moved] = links.splice(oldIndex, 1);
+		links.splice(newIndex, 0, moved);
+		links.forEach((link, idx) => { link.order = idx; });
+		listItem.links = links;
+
+		try {
+			await DBManager.saveItem(listItem);
+			this._linkedItems = await DBManager.getLinkedItems(listItem.id);
+			this._onAfterMove(moved.id, newIndex > oldIndex ? 1 : -1, oldIndex, newIndex);
+		} catch (error) {
+			console.error(`[${this.constructor.name}] Error saving after item reorder:`, error);
+			await this._loadCurrentList();
+			this._renderContent();
+		}
+	}
+
+	async _moveItemToTop(itemId) {
+		const listItem = this._getCurrentListItem();
+		if (!listItem) return;
+
+		const links = listItem.links || [];
+		const linkIndex = links.findIndex(l => l.id === itemId);
+		if (linkIndex <= 0) return;
+
+		const [moved] = links.splice(linkIndex, 1);
+		links.unshift(moved);
+		links.forEach((link, idx) => { link.order = idx; });
+		listItem.links = links;
+
+		try {
+			await DBManager.saveItem(listItem);
+			this._linkedItems = await DBManager.getLinkedItems(listItem.id);
+			this._onAfterMove(itemId, -1, linkIndex, 0);
+		} catch (error) {
+			console.error(`[${this.constructor.name}] Error saving after move to top:`, error);
+			await this._loadCurrentList();
+			this._renderContent();
+		}
+	}
+
+	async _moveItemToBottom(itemId) {
+		const listItem = this._getCurrentListItem();
+		if (!listItem) return;
+
+		const links = listItem.links || [];
+		const linkIndex = links.findIndex(l => l.id === itemId);
+		if (linkIndex === -1 || linkIndex === links.length - 1) return;
+
+		const [moved] = links.splice(linkIndex, 1);
+		links.push(moved);
+		links.forEach((link, idx) => { link.order = idx; });
+		listItem.links = links;
+
+		try {
+			await DBManager.saveItem(listItem);
+			this._linkedItems = await DBManager.getLinkedItems(listItem.id);
+			this._onAfterMove(itemId, 1, linkIndex, links.length - 1);
+		} catch (error) {
+			console.error(`[${this.constructor.name}] Error saving after move to bottom:`, error);
+			await this._loadCurrentList();
+			this._renderContent();
+		}
+	}
+
+	async _reorderList(oldIndex, newIndex) {
+		if (oldIndex === newIndex || oldIndex < 0 || oldIndex >= this._listItems.length || newIndex < 0 || newIndex >= this._listItems.length) return;
+
+		const [moved] = this._listItems.splice(oldIndex, 1);
+		this._listItems.splice(newIndex, 0, moved);
+		this._listItems.forEach((list, idx) => {
+			list.meta = { ...list.meta, order: idx, updatedAt: new Date().toISOString() };
+		});
+
+		try {
+			for (const list of this._listItems) {
+				await DBManager.saveItem(list);
+			}
+			this._render();
+		} catch (error) {
+			console.error(`[${this.constructor.name}] Error saving after list reorder:`, error);
+			this._listItems = await DBManager.getItems({ type: 'list', archived: false });
+			this._listItems.sort((a, b) => (a.meta?.order || 0) - (b.meta?.order || 0));
+			this._render();
+		}
+	}
+
+	async _moveListToTop(listId) {
+		const index = this._listItems.findIndex(item => item.id === listId);
+		if (index <= 0) return;
+
+		const [moved] = this._listItems.splice(index, 1);
+		this._listItems.unshift(moved);
+		this._listItems.forEach((list, idx) => {
+			list.meta = { ...list.meta, order: idx, updatedAt: new Date().toISOString() };
+		});
+
+		try {
+			for (const list of this._listItems) {
+				await DBManager.saveItem(list);
+			}
+			this._render();
+		} catch (error) {
+			console.error(`[${this.constructor.name}] Error saving after move list to top:`, error);
+			this._listItems = await DBManager.getItems({ type: 'list', archived: false });
+			this._listItems.sort((a, b) => (a.meta?.order || 0) - (b.meta?.order || 0));
+			this._render();
+		}
+	}
+
+	async _moveListToBottom(listId) {
+		const index = this._listItems.findIndex(item => item.id === listId);
+		if (index === -1 || index === this._listItems.length - 1) return;
+
+		const [moved] = this._listItems.splice(index, 1);
+		this._listItems.push(moved);
+		this._listItems.forEach((list, idx) => {
+			list.meta = { ...list.meta, order: idx, updatedAt: new Date().toISOString() };
+		});
+
+		try {
+			for (const list of this._listItems) {
+				await DBManager.saveItem(list);
+			}
+			this._render();
+		} catch (error) {
+			console.error(`[${this.constructor.name}] Error saving after move list to bottom:`, error);
+			this._listItems = await DBManager.getItems({ type: 'list', archived: false });
+			this._listItems.sort((a, b) => (a.meta?.order || 0) - (b.meta?.order || 0));
+			this._render();
+		}
+	}
+
 	// List selector dialog
 	_showListSelectorDialog() {
-		const sortedLists = [...this._listItems].sort((a, b) => (a.meta?.order || 0) - (b.meta?.order || 0));
+		const lists = this._listItems;
 
 		const dialog = document.createElement('dialog');
 		dialog.className = 'dialog';
 
-		const listItemsHtml = sortedLists.map((item, index) => {
-			const isFirst = index === 0;
-			const isLast = index === sortedLists.length - 1;
+		const listItemsHtml = lists.map((item) => {
 			const isSelected = item.id === this._currentListId;
 
 			return `
@@ -647,6 +794,25 @@ export class ListBase extends HTMLElement {
 		document.body.appendChild(dialog);
 		dialog.showModal();
 
+		// Drag-and-drop for lists inside the dialog
+		const listContainer = dialog.querySelector('.list-selector-list');
+		let dl = null;
+		if (listContainer && lists.length > 1) {
+			dl = new DraggableList(listContainer, {
+				itemSelector: '.list-selector-item',
+				scrollContainer: listContainer,
+				onReorder: async (oldIndex, newIndex) => {
+					await this._reorderList(oldIndex, newIndex);
+					if (dl) dl.destroy();
+					dialog.close();
+					document.body.removeChild(dialog);
+					if (this._listItems.length > 0) {
+						this._showListSelectorDialog();
+					}
+				}
+			});
+		}
+
 		dialog.querySelectorAll('.list-selector-item').forEach(item => {
 			item.addEventListener('click', async (e) => {
 				if (e.target.closest('.list-selector-item-actions')) return;
@@ -657,6 +823,7 @@ export class ListBase extends HTMLElement {
 				this._currentListId = listId;
 				dialog.close();
 				document.body.removeChild(dialog);
+				if (dl) dl.destroy();
 				await this._loadCurrentList();
 				this._render();
 			});
@@ -710,19 +877,19 @@ export class ListBase extends HTMLElement {
 				const isLast = listIndex === this._listItems.length - 1;
 
 				const action = await DialogService.showActions([
-					{ label: 'Move Up', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>', action: 'move-up', danger: false },
-					{ label: 'Move Down', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>', action: 'move-down', danger: false },
+					{ label: 'Move to Top', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="4" x2="20" y2="4"/><polyline points="18 10 12 4 6 10"/></svg>', action: 'move-top', danger: false },
+					{ label: 'Move to Bottom', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="20" x2="20" y2="20"/><polyline points="6 14 12 20 18 14"/></svg>', action: 'move-bottom', danger: false },
 					{ label: 'Rename', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>', action: 'rename', danger: false },
 					{ label: 'Merge into Another List', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>', action: 'merge', danger: false },
-			{ label: 'Archive', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>', action: 'archive', danger: true }
+				{ label: 'Archive', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>', action: 'archive', danger: true }
 				]);
 
 				if (!action) return;
 
-				if (action === 'move-up' && !isFirst) {
-					await this._moveList(listId, -1);
-				} else if (action === 'move-down' && !isLast) {
-					await this._moveList(listId, 1);
+				if (action === 'move-top' && !isFirst) {
+					await this._moveListToTop(listId);
+				} else if (action === 'move-bottom' && !isLast) {
+					await this._moveListToBottom(listId);
 				} else if (action === 'rename') {
 					const nameEl = dialog.querySelector(`.list-selector-item-name[data-list-id="${listId}"]`);
 					if (nameEl) {
@@ -738,6 +905,7 @@ export class ListBase extends HTMLElement {
 				} else if (action === 'merge') {
 					dialog.close();
 					document.body.removeChild(dialog);
+					if (dl) dl.destroy();
 					await this._doMergeListIntoAnother(listId);
 					return;
 				} else if (action === 'archive') {
@@ -746,6 +914,7 @@ export class ListBase extends HTMLElement {
 
 				dialog.close();
 				document.body.removeChild(dialog);
+				if (dl) dl.destroy();
 				if (this._listItems.length > 0) {
 					this._showListSelectorDialog();
 				}
@@ -756,6 +925,7 @@ export class ListBase extends HTMLElement {
 		createBtn.addEventListener('click', async () => {
 			dialog.close();
 			document.body.removeChild(dialog);
+			if (dl) dl.destroy();
 			await this._handleCreateList();
 			if (this._listItems.length > 0) {
 				this._showListSelectorDialog();
@@ -765,8 +935,14 @@ export class ListBase extends HTMLElement {
 		dialog.addEventListener('click', (e) => {
 			if (e.target === dialog) {
 				dialog.close();
+				if (dl) dl.destroy();
 				document.body.removeChild(dialog);
 			}
+		});
+
+		dialog.addEventListener('close', () => {
+			if (dl) dl.destroy();
+			if (dialog.parentNode) document.body.removeChild(dialog);
 		});
 	}
 
