@@ -760,6 +760,8 @@ export class ListBase extends HTMLElement {
 		const dialog = document.createElement('dialog');
 		dialog.className = 'dialog';
 
+		const dragHandleSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="18" x2="16" y2="18"/></svg>`;
+
 		const listItemsHtml = lists.map((item) => {
 			const isSelected = item.id === this._currentListId;
 
@@ -768,6 +770,7 @@ export class ListBase extends HTMLElement {
 					<div class="list-selector-item-info">
 						<span class="list-selector-item-name" contenteditable="false" data-list-id="${item.id}">${this._escapeHtml(item.content || 'Unnamed List')}</span>
 					</div>
+					<span class="drag-hint list-selector-drag-hint" aria-hidden="true">${dragHandleSvg}</span>
 					<div class="list-selector-item-actions">
 						<button class="btn-icon-more list-selector-more" data-list-id="${item.id}" title="More actions" type="button">
 							<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -800,6 +803,7 @@ export class ListBase extends HTMLElement {
 		if (listContainer && lists.length > 1) {
 			dl = new DraggableList(listContainer, {
 				itemSelector: '.list-selector-item',
+				handleSelector: '.drag-hint',
 				scrollContainer: listContainer,
 				onReorder: async (oldIndex, newIndex) => {
 					await this._reorderList(oldIndex, newIndex);

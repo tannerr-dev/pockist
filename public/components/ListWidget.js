@@ -167,6 +167,7 @@ export class ListWidget extends ListBase {
 
 		this.#draggableList = new DraggableList(this._listsContainerEl, {
 			itemSelector: 'list-item',
+			handleSelector: '.drag-hint',
 			scrollContainer: this._listsContainerEl,
 			onReorder: (oldIndex, newIndex) => {
 				const globalOldIndex = this.#offset + oldIndex;

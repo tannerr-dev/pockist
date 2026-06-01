@@ -177,6 +177,7 @@ export class List extends ListBase {
 
 		this._draggableList = new DraggableList(ul, {
 			itemSelector: 'list-item',
+			handleSelector: '.drag-hint',
 			scrollContainer: this.querySelector('.list-scroll-container'),
 			onReorder: (oldIndex, newIndex) => {
 				this._reorderItem(oldIndex, newIndex);

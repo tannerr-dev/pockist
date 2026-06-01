@@ -53,6 +53,8 @@ export class ListIndexPage extends HTMLElement {
 
 		emptyState.style.display = 'none';
 
+		const dragHandleSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="18" x2="16" y2="18"/></svg>`;
+
 		container.innerHTML = this._lists.map((item) => {
 			const total = item.links ? item.links.length : 0;
 			return `
@@ -61,6 +63,7 @@ export class ListIndexPage extends HTMLElement {
 						<div class="list-index-card-name" data-list-id="${item.id}">${this._escapeHtml(item.content || 'Unnamed List')}</div>
 						<div class="list-index-card-meta">${total} item${total !== 1 ? 's' : ''}</div>
 					</div>
+					<span class="drag-hint list-index-drag-hint" aria-hidden="true">${dragHandleSvg}</span>
 					<div class="list-index-card-actions">
 						<button class="btn-icon-more list-index-more" data-list-id="${item.id}" title="More actions" type="button">
 							<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -105,6 +108,7 @@ export class ListIndexPage extends HTMLElement {
 		if (grid && this._lists.length > 1) {
 			this.#draggableList = new DraggableList(grid, {
 				itemSelector: '.list-index-card',
+				handleSelector: '.drag-hint',
 				scrollContainer: this.querySelector('.lists-index-container') || grid,
 				onReorder: async (oldIndex, newIndex) => {
 					await this._reorderList(oldIndex, newIndex);
@@ -291,6 +295,7 @@ export class ListIndexPage extends HTMLElement {
 		if (grid && this._lists.length > 1) {
 			this.#draggableList = new DraggableList(grid, {
 				itemSelector: '.list-index-card',
+				handleSelector: '.drag-hint',
 				scrollContainer: this.querySelector('.lists-index-container') || grid,
 				onReorder: async (oldIndex, newIndex) => {
 					await this._reorderList(oldIndex, newIndex);

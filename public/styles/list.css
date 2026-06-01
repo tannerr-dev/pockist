@@ -359,6 +359,38 @@
 	opacity: 1;
 }
 
+/* Visual-only drag hint (non-interactive) */
+.drag-hint {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+	color: var(--text);
+	opacity: 0.3;
+	user-select: none;
+	-webkit-user-select: none;
+	cursor: grab;
+}
+
+.drag-hint:active {
+	cursor: grabbing;
+}
+
+.item-drag-hint {
+	width: 20px;
+	height: 20px;
+}
+
+.list-index-drag-hint {
+	width: 24px;
+	height: 24px;
+}
+
+.list-selector-drag-hint {
+	width: 20px;
+	height: 20px;
+}
+
 /* Dragging state */
 .dragging {
 	position: relative;

@@ -21,6 +21,7 @@ export class DraggableList {
 	constructor(container, options = {}) {
 		this.container = container;
 		this.itemSelector = options.itemSelector || ':scope > *';
+		this.handleSelector = options.handleSelector || null;
 		this.onReorder = options.onReorder || (() => {});
 		this.scrollContainer = options.scrollContainer || container;
 		this.longPressDelay = options.longPressDelay || 350;
@@ -56,6 +57,14 @@ export class DraggableList {
 		const item = e.target.closest(this.itemSelector);
 		if (!item || !this.container.contains(item)) return;
 		if (this._isInteractive(e.target)) return;
+
+		const isHandle = this.handleSelector && e.target.closest(this.handleSelector);
+
+		if (isHandle) {
+			// Immediate drag via handle — no long-press timer
+			this._beginDrag(e, item);
+			return;
+		}
 
 		const clientX = e.touches ? e.touches[0].clientX : e.clientX;
 		const clientY = e.touches ? e.touches[0].clientY : e.clientY;
@@ -272,12 +281,10 @@ export class DraggableList {
 		window.removeEventListener('touchcancel', this._boundOnDragEnd);
 		window.removeEventListener('mouseup', this._boundOnDragEnd);
 
+		this._suppressClick = true;
 		if (newIndex !== oldIndex) {
-			this._suppressClick = true;
 			if (navigator.vibrate) navigator.vibrate(15);
 			this.onReorder(oldIndex, newIndex);
-		} else {
-			this._suppressClick = false;
 		}
 
 		this._dragState = null;
