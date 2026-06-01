@@ -106,6 +106,7 @@ export class DraggableList {
 			item,
 			isTouch: true,
 			startY: this._pendingDrag ? this._pendingDrag.startY : 0,
+			startScrollTop: this.scrollContainer.scrollTop,
 			startIndex: this._getItemIndex(item),
 			currentY: this._pendingDrag ? this._pendingDrag.startY : 0
 		};
@@ -152,7 +153,8 @@ export class DraggableList {
 		const touch = e.touches[0];
 		this._dragState.currentY = touch.clientY;
 
-		const deltaY = touch.clientY - this._dragState.startY;
+		const scrollDelta = this.scrollContainer.scrollTop - this._dragState.startScrollTop;
+		const deltaY = (touch.clientY - this._dragState.startY) + scrollDelta;
 		this._dragState.item.style.transform = `translateY(${deltaY}px)`;
 
 		const insertBeforeIndex = this._computeInsertBeforeIndex(touch.clientY);
@@ -183,6 +185,7 @@ export class DraggableList {
 			item,
 			isTouch: false,
 			startY: e.clientY,
+			startScrollTop: this.scrollContainer.scrollTop,
 			startIndex: this._getItemIndex(item),
 			currentY: e.clientY
 		};
@@ -226,7 +229,8 @@ export class DraggableList {
 
 		this._dragState.currentY = e.clientY;
 
-		const deltaY = e.clientY - this._dragState.startY;
+		const scrollDelta = this.scrollContainer.scrollTop - this._dragState.startScrollTop;
+		const deltaY = (e.clientY - this._dragState.startY) + scrollDelta;
 		this._dragState.item.style.transform = `translateY(${deltaY}px)`;
 
 		const insertBeforeIndex = this._computeInsertBeforeIndex(e.clientY);
@@ -309,19 +313,28 @@ export class DraggableList {
 		const clientY = this._dragState.currentY;
 		const container = this.scrollContainer;
 		const rect = container.getBoundingClientRect();
-		const scrollSpeed = 12;
-		const edgeThreshold = 70;
+		const scrollSpeed = 6;
+		const edgeThreshold = 40;
+
+		// Calculate scroll bounds
+		const maxScroll = container.scrollHeight - container.clientHeight;
+		const canScrollUp = container.scrollTop > 0;
+		const canScrollDown = container.scrollTop < maxScroll;
 
 		let scrolled = false;
-		if (clientY < rect.top + edgeThreshold) {
-			container.scrollTop -= scrollSpeed;
+		if (clientY < rect.top + edgeThreshold && canScrollUp) {
+			container.scrollTop = Math.max(0, container.scrollTop - scrollSpeed);
 			scrolled = true;
-		} else if (clientY > rect.bottom - edgeThreshold) {
-			container.scrollTop += scrollSpeed;
+		} else if (clientY > rect.bottom - edgeThreshold && canScrollDown) {
+			container.scrollTop = Math.min(maxScroll, container.scrollTop + scrollSpeed);
 			scrolled = true;
 		}
 
+		// Recompute transform immediately after scroll so item stays pinned to finger
 		if (scrolled && this._dragState) {
+			const scrollDelta = container.scrollTop - this._dragState.startScrollTop;
+			const deltaY = (this._dragState.currentY - this._dragState.startY) + scrollDelta;
+			this._dragState.item.style.transform = `translateY(${deltaY}px)`;
 			this._scrollRAF = requestAnimationFrame(() => this._autoScroll());
 		} else {
 			this._scrollRAF = null;

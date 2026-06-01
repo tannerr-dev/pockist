@@ -369,6 +369,7 @@
 	user-select: none;
 	-webkit-user-select: none;
 	cursor: grab;
+	touch-action: none;
 }
 
 .drag-hint:active {
