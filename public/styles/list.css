@@ -632,7 +632,7 @@
 
 .list-index-card-actions button:hover {
 	opacity: 1;
-	background: var(--bg-3);
+	background: var(--bg-2);
 	color: var(--text);
 	border-color: var(--border-color);
 }

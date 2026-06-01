@@ -265,7 +265,7 @@ weather-controls #unitBtn {
 }
 
 weather-controls #unitBtn:hover {
-    background: var(--bg-3);
+    background: var(--bg-2);
     color: var(--text);
     border-color: var(--border-color);
 }

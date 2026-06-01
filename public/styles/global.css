@@ -6,7 +6,6 @@
 	--color: hsl(var(--hue), calc(50% * var(--mod)), 50%);
 	--bg: hsl(var(--hue), calc(20% * var(--mod)), 8%);
 	--bg-2: hsl(var(--hue), calc(22% * var(--mod)), 18%);
-	--bg-3: hsl(var(--hue), calc(42% * var(--mod)), 28%);
 	--bg-dark: hsl(var(--hue), calc(8% * var(--mod)), 6%);
 	--bg-light: hsl(var(--hue), calc(22% * var(--mod)), 12%);
 
@@ -115,7 +114,7 @@ button, a {
 	font-weight: bold;
 }
 .button:hover {
-	background-color: var(--bg-3);
+	background-color: var(--bg-2);
 	color: var(--text);
 }
 .form {
@@ -304,8 +303,8 @@ home-page{
 }
 
 .btn-outline:hover {
-    background: var(--accent);
-    color: var(--bg);
+    background: var(--bg-2);
+    color: var(--text-muted);
 }
 
 .btn-outline-danger {
@@ -344,7 +343,7 @@ home-page{
 }
 
 .btn-icon-more:hover {
-	background: var(--bg-3);
+	background: var(--bg-2);
 	color: var(--text);
 	border-color: var(--border-color);
 }
@@ -356,7 +355,7 @@ home-page{
 }
 
 .btn-ghost:hover {
-	background: var(--bg-3);
+	background: var(--bg-2);
 	color: var(--text);
 	border-color: var(--border-color);
 }
