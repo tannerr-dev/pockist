@@ -442,6 +442,9 @@
 	display: flex;
 	gap: 8px;
 	align-items: center;
+    button {
+        width: 150px;
+    }
 }
 
 .btn.hidden {
