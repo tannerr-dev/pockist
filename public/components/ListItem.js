@@ -52,7 +52,7 @@ export class ListItem extends HTMLElement {
 		const dragHandleSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="18" x2="16" y2="18"/></svg>`;
 		this.className = `item-row list-item ${this.completed ? 'completed' : ''}`;
 		this.innerHTML = `
-			<input type="checkbox" class="item-checkbox" ${this.completed ? 'checked' : ''}>
+			<input type="checkbox" class="item-checkbox custom-checkbox" ${this.completed ? 'checked' : ''}>
 			<span class="item-text">${this._escapeHtml(this.text || '')}</span>
 			<span class="drag-hint item-drag-hint" aria-hidden="true">${dragHandleSvg}</span>
 			<button class="btn-icon-more item-more" aria-label="More actions" type="button">

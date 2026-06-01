@@ -311,7 +311,6 @@
 	height: 20px;
 	flex-shrink: 0;
 	cursor: pointer;
-	accent-color: var(--accent);
 }
 
 .item-text {

@@ -375,9 +375,54 @@ home-page{
 }
 
 .share-btn:hover {
-    background: var(--secondary);
-    color: var(--bg);
-    border-color: var(--secondary);
+	background: var(--secondary);
+	color: var(--bg);
+	border-color: var(--secondary);
+}
+
+/* ───────────────────────────────────────────────
+   Custom Checkbox
+   ─────────────────────────────────────────────── */
+
+.custom-checkbox {
+	appearance: none;
+	-webkit-appearance: none;
+	width: 20px;
+	height: 20px;
+	border: 2px solid var(--border-color);
+	border-radius: 5px;
+	background: transparent;
+	cursor: pointer;
+	position: relative;
+	transition: border-color 0.2s, background-color 0.2s;
+	flex-shrink: 0;
+}
+
+.custom-checkbox:checked {
+	background-color: var(--accent);
+	border-color: var(--accent);
+}
+
+.custom-checkbox:checked::after {
+	content: '';
+	position: absolute;
+	left: 5px;
+	top: 1px;
+	width: 5px;
+	height: 10px;
+	border: solid var(--bg);
+	border-width: 0 2px 2px 0;
+	transform: rotate(45deg);
+}
+
+.custom-checkbox:focus-visible {
+	outline: none;
+	box-shadow: 0 0 0 2px var(--accent);
+}
+
+.custom-checkbox:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
 }
 
 
