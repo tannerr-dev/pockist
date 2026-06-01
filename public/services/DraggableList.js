@@ -1,15 +1,16 @@
 /**
- * DraggableList - Touch/mouse drag-and-drop reordering with long-press activation.
+ * DraggableList - Touch/mouse drag-and-drop reordering with long-press activation on a handle.
  *
  * Usage:
  *   const dl = new DraggableList(container, {
  *     itemSelector: ':scope > *',
+ *     handleSelector: '.drag-hint',
  *     scrollContainer: scrollableAncestor,
  *     onReorder: (oldIndex, newIndex) => { ... }
  *   });
  *
  * Features:
- *   - Long-press (~350ms) anywhere on an item to start drag
+ *   - Long-press (~350ms) on the handle to start drag
  *   - Excludes interactive elements (buttons, inputs, links, contenteditable)
  *   - Suppresses the next click after a drag to prevent navigation/select
  *   - Slight "pop" animation on lift
@@ -24,7 +25,7 @@ export class DraggableList {
 		this.handleSelector = options.handleSelector || null;
 		this.onReorder = options.onReorder || (() => {});
 		this.scrollContainer = options.scrollContainer || container;
-		this.longPressDelay = options.longPressDelay || 350;
+		this.longPressDelay = options.longPressDelay || 100;
 		this.moveThreshold = options.moveThreshold || 10;
 
 		this._pendingDrag = null;
@@ -59,12 +60,7 @@ export class DraggableList {
 		if (this._isInteractive(e.target)) return;
 
 		const isHandle = this.handleSelector && e.target.closest(this.handleSelector);
-
-		if (isHandle) {
-			// Immediate drag via handle — no long-press timer
-			this._beginDrag(e, item);
-			return;
-		}
+		if (!isHandle) return;
 
 		const clientX = e.touches ? e.touches[0].clientX : e.clientX;
 		const clientY = e.touches ? e.touches[0].clientY : e.clientY;
