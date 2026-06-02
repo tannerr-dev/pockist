@@ -499,6 +499,10 @@
 	font-size: 14px;
 }
 
+.list-shortcut-btn {
+	color: var(--text-muted);
+}
+
 .list-widget-slots {
 	display: flex;
 	flex-direction: column;

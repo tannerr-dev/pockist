@@ -47,7 +47,6 @@ export class ListWidget extends ListBase {
 	}
 
 	_onAfterMove(itemId, direction, oldIndex, newIndex) {
-		this.#offset = this.#computeOffsetForIndex(newIndex);
 		this._renderSlots();
 	}
 
@@ -73,12 +72,6 @@ export class ListWidget extends ListBase {
 			const maxOffset = total - 8;
 			this.#offset = Math.max(0, Math.min(this.#offset, maxOffset));
 		}
-	}
-
-	#computeOffsetForIndex(index) {
-		const total = this._getLinkedItems().length || 0;
-		if (total <= 8) return 0;
-		return Math.max(0, Math.min(index - 3, total - 8));
 	}
 
 	#createNavButton(direction) {

@@ -78,6 +78,20 @@ export class ListBase extends HTMLElement {
 			});
 		}
 
+		const shortcutBtn = this.querySelector('#list-shortcut-btn');
+		if (shortcutBtn) {
+			shortcutBtn.addEventListener('click', () => {
+				if (this._currentListId) {
+					Router.go('/list/' + this._currentListId);
+				}
+			});
+		}
+
+		const moreBtn = this.querySelector('#list-more-btn');
+		if (moreBtn) {
+			moreBtn.addEventListener('click', () => this._showWidgetActions());
+		}
+
 		if (this.hasAttribute('list-id')) {
 			const selectorRow = this.querySelector('.list-selector-row');
 			if (selectorRow) selectorRow.style.display = 'none';
@@ -1044,6 +1058,61 @@ export class ListBase extends HTMLElement {
 
 	_getOrderedItems() {
 		return [...this._getLinkedItems()];
+	}
+
+	async _showWidgetActions() {
+		if (!this._currentListId) return;
+
+		const action = await DialogService.showActions([
+			{ label: 'Duplicate List', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>', action: 'duplicate' },
+			{ label: 'Merge into Another List', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>', action: 'merge' },
+			{ label: 'Archive', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>', action: 'archive', danger: true }
+		]);
+
+		if (!action) return;
+
+		try {
+			if (action === 'duplicate') {
+				const newListId = await DBManager.duplicateList(this._currentListId);
+				Router.go(`/list/${newListId}`);
+			} else if (action === 'merge') {
+				const allLists = await DBManager.getItems({ type: 'list', archived: false });
+				const otherLists = allLists.filter(l => l.id !== this._currentListId);
+				if (otherLists.length === 0) {
+					alert('No other lists to merge into.');
+					return;
+				}
+
+				const target = await DialogService.pickItem(
+					otherLists.map(l => ({ id: l.id, title: l.content || 'Unnamed List', subtitle: `${l.links?.length || 0} items` })),
+					{ title: 'Merge into which list?' }
+				);
+				if (!target) return;
+
+				const mode = await DialogService.showActions([
+					{ label: 'Smart Merge', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>', action: 'smart' },
+					{ label: 'Append All', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>', action: 'append' }
+				]);
+				if (!mode) return;
+
+				await DBManager.mergeLists(target.id, this._currentListId, mode);
+				Router.go(`/list/${target.id}`);
+			} else if (action === 'archive') {
+				const list = await DBManager.getItem(this._currentListId);
+				const confirmed = await DialogService.confirm(
+					`Archive "${list?.content || 'this list'}"?`,
+					'Archive'
+				);
+				if (!confirmed) return;
+
+				await DBManager.archiveItem(this._currentListId);
+				// After archiving, the widget will fall back to another list on next load
+				window.location.reload();
+			}
+		} catch (error) {
+			console.error('[ListBase] Widget action error:', error);
+			alert(error.message || 'Action failed');
+		}
 	}
 
 	_escapeHtml(text) {

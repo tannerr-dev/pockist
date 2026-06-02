@@ -385,11 +385,24 @@
         <div class="list-selector-row">
           <h2><a href="/list" class="list-heading-link fancy-link">Lists</a></h2>
           <div class="list-selector-controls">
+            <button id="list-shortcut-btn" class="btn btn-icon list-shortcut-btn" type="button" title="Open list">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="7 17 17 7"/>
+                <polyline points="7 7 17 7 17 17"/>
+              </svg>
+            </button>
             <button id="list-selector-btn" class="list-selector-btn" title="Select list">
               <span class="list-selector-name">Loading...</span>
               <span class="list-selector-arrow">▼</span>
             </button>
             <div id="list-actions" class="list-actions"></div>
+            <button id="list-more-btn" class="btn btn-outline btn-icon list-widget-more-btn" type="button" title="More actions">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="5" r="1"/>
+                <circle cx="12" cy="12" r="1"/>
+                <circle cx="12" cy="19" r="1"/>
+              </svg>
+            </button>
           </div>
         </div>
         <form class="list-input-row" id="list-input-form">
