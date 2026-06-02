@@ -24,8 +24,6 @@ export class ListBase extends HTMLElement {
 	_listsContainerEl = null;
 	_inputEl = null;
 	_addBtn = null;
-	_clearCompletedBtn = null;
-	_sortItemsBtn = null;
 	_listActionsEl = null;
 
 	// Abstract: template ID
@@ -66,8 +64,6 @@ export class ListBase extends HTMLElement {
 		this._listsContainerEl = this.querySelector("#lists-container");
 		this._inputEl = this.querySelector("#list-input");
 		this._addBtn = this.querySelector("#add-btn");
-		this._clearCompletedBtn = this.querySelector("#clear-completed");
-		this._sortItemsBtn = this.querySelector("#sort-items");
 		this._listActionsEl = this.querySelector("#list-actions");
 
 		const headingLink = this.querySelector(".list-heading-link");
@@ -149,8 +145,6 @@ export class ListBase extends HTMLElement {
 
 		this._setupAddListeners();
 
-		this._clearCompletedBtn?.addEventListener("click", () => this._clearCompleted());
-		this._sortItemsBtn?.addEventListener("click", () => this._sortItems());
 		this._listSelectorBtn?.addEventListener("click", () => this._showListSelectorDialog());
 
 		this._listsContainerEl?.addEventListener("list-toggle", (e) => {
@@ -1043,16 +1037,7 @@ export class ListBase extends HTMLElement {
 	}
 
 	_updateFooter() {
-		const items = this._getLinkedItems();
-
-		const hasCompleted = items.some(i => i.meta?.completed);
-		if (this._clearCompletedBtn) {
-			this._clearCompletedBtn.classList.toggle('hidden', !hasCompleted);
-		}
-
-		if (this._sortItemsBtn) {
-			this._sortItemsBtn.classList.toggle('hidden', !hasCompleted);
-		}
+		// Footer buttons removed; no-op for backward compat with callers
 	}
 
 	_getOrderedItems() {
@@ -1062,11 +1047,24 @@ export class ListBase extends HTMLElement {
 	async _showWidgetActions() {
 		if (!this._currentListId) return;
 
-		const action = await DialogService.showActions([
+		const items = this._getLinkedItems();
+		const hasCompleted = items.some(i => i.meta?.completed);
+
+		const actions = [
 			{ label: 'Duplicate List', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>', action: 'duplicate' },
-			{ label: 'Merge into Another List', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>', action: 'merge' },
-			{ label: 'Archive', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>', action: 'archive', danger: true }
-		]);
+			{ label: 'Merge into Another List', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>', action: 'merge' }
+		];
+
+		if (hasCompleted) {
+			actions.push(
+				{ label: 'Sort Complete', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21 16-4 4-4-4"/><path d="M17 20V4"/><path d="m3 8 4-4 4 4"/><path d="M7 4v16"/></svg>', action: 'sort-items' },
+				{ label: 'Archive Complete', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>', action: 'clear-completed' }
+			);
+		}
+
+		actions.push({ label: 'Archive', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>', action: 'archive', danger: true });
+
+		const action = await DialogService.showActions(actions);
 
 		if (!action) return;
 
@@ -1096,6 +1094,10 @@ export class ListBase extends HTMLElement {
 
 				await DBManager.mergeLists(target.id, this._currentListId, mode);
 				Router.go(`/list/${target.id}`);
+			} else if (action === 'sort-items') {
+				await this._sortItems();
+			} else if (action === 'clear-completed') {
+				await this._clearCompleted();
 			} else if (action === 'archive') {
 				const list = await DBManager.getItem(this._currentListId);
 				const confirmed = await DialogService.confirm(
