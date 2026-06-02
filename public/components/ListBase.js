@@ -1017,9 +1017,11 @@ export class ListBase extends HTMLElement {
 		}
 
 		if (this._listActionsEl) {
-			this._listActionsEl.innerHTML = `
-				<share-button type="list" data-id="${this._escapeHtml(this._currentListId || '')}" title="${this._escapeHtml(currentMeta?.content || 'Untitled List')}"></share-button>
-			`;
+			const shareBtn = this._listActionsEl.querySelector('share-button');
+			if (shareBtn) {
+				shareBtn.setAttribute('data-id', this._escapeHtml(this._currentListId || ''));
+				shareBtn.setAttribute('title', this._escapeHtml(currentMeta?.content || 'Untitled List'));
+			}
 		}
 
 		this._renderContent();
