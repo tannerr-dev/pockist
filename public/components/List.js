@@ -10,9 +10,15 @@ export class List extends ListBase {
 	}
 
 	_setupAddListeners() {
-		this._addBtn?.addEventListener("click", () => this._handleAdd());
+		this._addBtn?.addEventListener("click", () => {
+			this._handleAdd();
+			this._inputEl?.blur();
+		});
 		this._inputEl?.addEventListener("keydown", (e) => {
-			if (e.key === "Enter") this._handleAdd();
+			if (e.key === "Enter") {
+				e.preventDefault();
+				this._handleAdd();
+			}
 		});
 	}
 

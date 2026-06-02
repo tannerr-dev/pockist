@@ -32,7 +32,15 @@ export class ListWidget extends ListBase {
 		form?.addEventListener("submit", (e) => {
 			e.preventDefault();
 			this._handleAdd();
-			this._inputEl?.focus();
+			this._inputEl?.blur();
+		});
+
+		this._inputEl?.addEventListener("keydown", (e) => {
+			if (e.key === "Enter") {
+				e.preventDefault();
+				this._handleAdd();
+				// Keep focus for rapid entry
+			}
 		});
 	}
 
