@@ -28,9 +28,12 @@ export class NoteWidget extends NoteBase {
 	_setupEventListeners() {
 		const newNoteBtn = this.querySelector('.note-widget-new-btn');
 		newNoteBtn?.addEventListener('click', async () => {
-			const content = await DialogService.prompt('Start your new note:');
-			if (!content || !content.trim()) return;
-			await this._createNoteWithContent(content.trim());
+			let draftContent = '';
+			await DialogService.promptTextarea('Start your new note', '', (value) => {
+				draftContent = value;
+			});
+			if (!draftContent.trim()) return;
+			await this._createNoteWithContent(draftContent.trim());
 			this.#offset = 0;
 			this._renderContent();
 		});
