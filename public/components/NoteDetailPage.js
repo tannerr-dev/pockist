@@ -58,7 +58,6 @@ export class NoteDetailPage extends HTMLElement {
 
 		if (textarea) {
 			textarea.value = this._note.content || '';
-			this._autoResizeTextarea();
 		}
 
 		if (backBtn) {
@@ -87,7 +86,6 @@ export class NoteDetailPage extends HTMLElement {
 		if (!textarea) return;
 
 		textarea.addEventListener('input', () => {
-			this._autoResizeTextarea();
 			if (this._timeoutId) clearTimeout(this._timeoutId);
 			this._updateIndicator('Saving...');
 			this._timeoutId = setTimeout(() => this._save(), 1000);
@@ -100,13 +98,6 @@ export class NoteDetailPage extends HTMLElement {
 			}
 			this._save();
 		});
-	}
-
-	_autoResizeTextarea() {
-		const textarea = this.querySelector('#note-content');
-		if (!textarea) return;
-		textarea.style.height = 'auto';
-		textarea.style.height = textarea.scrollHeight + 'px';
 	}
 
 	async _save() {

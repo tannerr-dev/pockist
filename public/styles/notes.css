@@ -49,6 +49,13 @@
     height: 86px;
     box-sizing: border-box;
     overflow: hidden;
+    flex-shrink: 0;
+}
+
+/* Note index items are taller so content isn't cramped */
+.note-index-items .note-item {
+    height: auto;
+    min-height: 96px;
 }
 
 .note-item:last-child {
@@ -171,9 +178,8 @@
 
 /* Content Textarea */
 #note-content {
-    min-height: 300px;
-    height: auto;
-    max-height: 100svh;
+    flex: 1;
+    min-height: 0;
     width: 100%;
     box-sizing: border-box;
     border: none;
@@ -297,6 +303,9 @@
 
 .note-index-container {
     width: 100%;
+    display: flex;
+    flex-direction: column;
+    height: calc(100svh - 64px);
 }
 
 .note-index-header {
@@ -348,6 +357,9 @@
 .note-index-items {
     display: flex;
     flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
 }
 
 .note-index-empty {
@@ -373,6 +385,9 @@
     width: 100%;
     max-width: 600px;
     margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    height: calc(100svh - 64px);
 }
 
 .note-detail-container .share-btn {
