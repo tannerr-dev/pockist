@@ -864,7 +864,6 @@ export class ListBase extends HTMLElement {
 			dl = new DraggableList(listContainer, {
 				itemSelector: '.list-selector-item',
 				handleSelector: '.drag-hint',
-				scrollContainer: listContainer,
 				onReorder: async (oldIndex, newIndex) => {
 					await this._reorderList(oldIndex, newIndex);
 					if (dl) dl.destroy();

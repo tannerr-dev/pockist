@@ -109,7 +109,6 @@ export class ListIndexPage extends HTMLElement {
 			this.#draggableList = new DraggableList(grid, {
 				itemSelector: '.list-index-card',
 				handleSelector: '.drag-hint',
-				scrollContainer: this.querySelector('.lists-index-container') || grid,
 				onReorder: async (oldIndex, newIndex) => {
 					await this._reorderList(oldIndex, newIndex);
 				}
@@ -313,7 +312,6 @@ export class ListIndexPage extends HTMLElement {
 			this.#draggableList = new DraggableList(grid, {
 				itemSelector: '.list-index-card',
 				handleSelector: '.drag-hint',
-				scrollContainer: this.querySelector('.lists-index-container') || grid,
 				onReorder: async (oldIndex, newIndex) => {
 					await this._reorderList(oldIndex, newIndex);
 				}
