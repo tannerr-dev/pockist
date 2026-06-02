@@ -442,9 +442,13 @@
 	display: flex;
 	gap: 8px;
 	align-items: center;
-    button {
-        width: 150px;
-    }
+}
+
+.list-footer-actions .btn {
+	padding: 6px 12px;
+	font-size: 12px;
+	width: auto;
+	max-width: none;
 }
 
 .btn.hidden {
@@ -456,10 +460,6 @@
 	border-left-width: 0;
 	border-right-width: 0;
 	overflow: hidden;
-}
-
-.list-footer-actions .btn {
-	max-width: 200px;
 }
 
 /* ============================================================================
