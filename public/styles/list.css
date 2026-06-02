@@ -547,6 +547,14 @@
 
 .lists-index-container {
 	width: 100%;
+	display: flex;
+	flex-direction: column;
+	height: calc(100svh - 64px);
+}
+
+.lists-index-grid {
+	flex: 1;
+	min-height: 0;
 }
 
 .lists-index-header {
@@ -682,6 +690,27 @@
 
 .list-detail-container {
 	width: 100%;
+	display: flex;
+	flex-direction: column;
+	height: calc(100svh - 64px);
+}
+
+.list-detail-container pockist-list {
+	display: flex;
+	flex-direction: column;
+	flex: 1;
+	min-height: 0;
+}
+
+.list-detail-container .list-container {
+	flex: 1;
+	min-height: 0;
+}
+
+.list-detail-container .list-scroll-container {
+	max-height: none;
+	flex: 1;
+	min-height: 0;
 }
 
 .list-detail-header {
