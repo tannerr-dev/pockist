@@ -218,6 +218,7 @@ export class ListIndexPage extends HTMLElement {
 		const action = await DialogService.showActions([
 			{ label: 'Move to Top', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="4" x2="20" y2="4"/><polyline points="18 10 12 4 6 10"/></svg>', action: 'move-top' },
 			{ label: 'Move to Bottom', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="20" x2="20" y2="20"/><polyline points="6 14 12 20 18 14"/></svg>', action: 'move-bottom' },
+			{ label: 'Duplicate List', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>', action: 'duplicate' },
 			{ label: 'Merge into Another List', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>', action: 'merge' },
 			{ label: 'Archive', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>', action: 'archive', danger: true }
 		]);
@@ -229,6 +230,8 @@ export class ListIndexPage extends HTMLElement {
 				await this._moveListToTop(listId);
 			} else if (action === 'move-bottom' && !isLast) {
 				await this._moveListToBottom(listId);
+			} else if (action === 'duplicate') {
+				await this._doDuplicateList(listId);
 			} else if (action === 'merge') {
 				await this._doMergeList(listId);
 			} else if (action === 'archive') {
@@ -266,6 +269,20 @@ export class ListIndexPage extends HTMLElement {
 		this._render();
 		this.#reinitDraggableList();
 		Router.go(`/list/${target.id}`);
+	}
+
+	async _doDuplicateList(listId) {
+		try {
+			const newListId = await DBManager.duplicateList(listId);
+			this._lists = await DBManager.getItems({ type: 'list', archived: false });
+			this._lists.sort((a, b) => (a.meta?.order || 0) - (b.meta?.order || 0));
+			this._render();
+			this.#reinitDraggableList();
+			Router.go(`/list/${newListId}`);
+		} catch (error) {
+			console.error('[ListIndexPage] Error duplicating list:', error);
+			alert('Failed to duplicate list');
+		}
 	}
 
 	async _archiveList(listId) {

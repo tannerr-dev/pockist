@@ -1161,6 +1161,108 @@ export class DBManager {
         return note.id;
     }
 
+    static async duplicateItem(itemId) {
+        const item = await this.getItem(itemId);
+        if (!item) throw new Error('Item not found');
+
+        const copy = await this.createItem({
+            type: 'item',
+            content: item.content || '',
+            meta: { completed: item.meta?.completed || false }
+        });
+
+        return copy.id;
+    }
+
+    static async copyItemToList(itemId, toListId) {
+        const item = await this.getItem(itemId);
+        const toList = await this.getItem(toListId);
+        if (!item) throw new Error('Item not found');
+        if (!toList || toList.type !== 'list') throw new Error('Target list not found');
+
+        const copy = await this.createItem({
+            type: 'item',
+            content: item.content || '',
+            meta: { completed: item.meta?.completed || false }
+        });
+
+        const links = toList.links ? [...toList.links] : [];
+        links.unshift({ id: copy.id, order: 0 });
+        links.forEach((link, i) => { link.order = i; });
+        toList.links = links;
+        toList.meta = { ...toList.meta, updatedAt: new Date().toISOString() };
+        await this.saveItem(toList);
+
+        return copy.id;
+    }
+
+    static async duplicateList(listId) {
+        const list = await this.getItem(listId);
+        if (!list || list.type !== 'list') throw new Error('List not found');
+
+        const newList = await this.createItem({
+            type: 'list',
+            content: (list.content || 'Unnamed List') + ' (copy)',
+            meta: { isDefault: false }
+        });
+
+        const linkedItems = await this.getLinkedItems(listId);
+        const newLinks = [];
+        for (const item of linkedItems) {
+            const copy = await this.createItem({
+                type: 'item',
+                content: item.content || '',
+                meta: { completed: item.meta?.completed || false }
+            });
+            newLinks.push({ id: copy.id, order: newLinks.length });
+        }
+
+        newList.links = newLinks;
+        await this.saveItem(newList);
+
+        return newList.id;
+    }
+
+    static async duplicateNote(noteId) {
+        const note = await this.getItem(noteId);
+        if (!note || note.type !== 'note') throw new Error('Note not found');
+
+        const copy = await this.createItem({
+            type: 'note',
+            content: note.content || '',
+            meta: { completed: false }
+        });
+
+        return copy.id;
+    }
+
+    static async copyNoteToList(noteId, listId) {
+        const note = await this.getItem(noteId);
+        const list = await this.getItem(listId);
+        if (!note || note.type !== 'note') throw new Error('Note not found');
+        if (!list || list.type !== 'list') throw new Error('List not found');
+
+        const lines = (note.content || '').split('\n').map(l => l.trim()).filter(l => l);
+        const existingLinks = list.links ? [...list.links] : [];
+        const newLinks = [];
+
+        for (const line of lines) {
+            const item = await this.createItem({
+                type: 'item',
+                content: line,
+                meta: { completed: false }
+            });
+            newLinks.push({ id: item.id, order: 0 });
+        }
+
+        const links = [...newLinks, ...existingLinks];
+        links.forEach((link, i) => { link.order = i; });
+
+        list.links = links;
+        list.meta = { ...list.meta, updatedAt: new Date().toISOString() };
+        await this.saveItem(list);
+    }
+
     static #generateItemId(content, timestamp) {
         const date = timestamp ? new Date(timestamp) : new Date();
         const dateStr = date.getFullYear().toString() +

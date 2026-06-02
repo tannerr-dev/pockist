@@ -137,6 +137,8 @@ export class NoteDetailPage extends HTMLElement {
 	async _showActions() {
 		const action = await DialogService.showActions([
 			{ label: 'Share', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>', action: 'share' },
+			{ label: 'Duplicate Note', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>', action: 'duplicate' },
+			{ label: 'Copy to List', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>', action: 'copy-to-list' },
 			{ label: 'Convert to List', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>', action: 'convert' },
 			{ label: 'Move to List', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>', action: 'move-to-list' },
 			{ label: 'Merge with Note', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>', action: 'merge' },
@@ -147,21 +149,27 @@ export class NoteDetailPage extends HTMLElement {
 
 		try {
 			switch (action) {
-				case 'share':
-					await this._doShare();
-					break;
-				case 'convert':
-					await this._doConvert();
-					break;
-				case 'move-to-list':
-					await this._doMoveToList();
-					break;
-				case 'merge':
-					await this._doMerge();
-					break;
-				case 'archive':
-					await this._doArchive();
-					break;
+			case 'share':
+				await this._doShare();
+				break;
+			case 'duplicate':
+				await this._doDuplicate();
+				break;
+			case 'copy-to-list':
+				await this._doCopyToList();
+				break;
+			case 'convert':
+				await this._doConvert();
+				break;
+			case 'move-to-list':
+				await this._doMoveToList();
+				break;
+			case 'merge':
+				await this._doMerge();
+				break;
+			case 'archive':
+				await this._doArchive();
+				break;
 			}
 		} catch (error) {
 			console.error('Note detail action error:', error);
@@ -187,6 +195,29 @@ export class NoteDetailPage extends HTMLElement {
 				if (shareBtn.parentNode) shareBtn.parentNode.removeChild(shareBtn);
 			}, 100);
 		});
+	}
+
+	async _doDuplicate() {
+		const newNoteId = await DBManager.duplicateNote(this._noteId);
+		Router.go(`/note/${newNoteId}`);
+	}
+
+	async _doCopyToList() {
+		const lists = await DBManager.getItems({ type: 'list', archived: false });
+		if (lists.length === 0) {
+			alert('No lists available. Create a list first.');
+			return;
+		}
+
+		const title = this._extractTitle(this._note.content);
+
+		const target = await DialogService.pickItem(
+			lists.map(l => ({ id: l.id, title: l.content || 'Unnamed List', subtitle: `${l.links?.length || 0} items` })),
+			{ title: `Copy "${title}" to which list?` }
+		);
+		if (!target) return;
+
+		await DBManager.copyNoteToList(this._noteId, target.id);
 	}
 
 	async _doConvert() {

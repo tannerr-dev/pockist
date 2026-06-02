@@ -1,5 +1,6 @@
 import { Router } from "../services/Router.js";
 import { DBManager } from "../services/DBManager.js";
+import { DialogService } from "../services/DialogService.js";
 import './List.js';
 import './ShareButton.js';
 
@@ -54,9 +55,77 @@ export class ListDetailPage extends HTMLElement {
 				shareBtn.setAttribute('data-id', this._listId);
 				shareBtn.setAttribute('title', this._listName);
 			}
+
+			const moreBtn = this.querySelector('.list-detail-more-btn');
+			if (moreBtn) {
+				moreBtn.addEventListener('click', () => this._showActions());
+			}
 		} catch (error) {
 			console.error('[ListDetailPage] Error loading list:', error);
 		}
+	}
+
+	async _showActions() {
+		const action = await DialogService.showActions([
+			{ label: 'Duplicate List', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>', action: 'duplicate' },
+			{ label: 'Merge into Another List', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>', action: 'merge' },
+			{ label: 'Archive', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>', action: 'archive', danger: true }
+		]);
+
+		if (!action) return;
+
+		try {
+			if (action === 'duplicate') {
+				await this._doDuplicateList();
+			} else if (action === 'merge') {
+				await this._doMergeList();
+			} else if (action === 'archive') {
+				await this._doArchiveList();
+			}
+		} catch (error) {
+			console.error('[ListDetailPage] Action error:', error);
+			alert(error.message || 'Action failed');
+		}
+	}
+
+	async _doDuplicateList() {
+		const newListId = await DBManager.duplicateList(this._listId);
+		Router.go(`/list/${newListId}`);
+	}
+
+	async _doMergeList() {
+		const allLists = await DBManager.getItems({ type: 'list', archived: false });
+		const otherLists = allLists.filter(l => l.id !== this._listId);
+		if (otherLists.length === 0) {
+			alert('No other lists to merge into.');
+			return;
+		}
+
+		const target = await DialogService.pickItem(
+			otherLists.map(l => ({ id: l.id, title: l.content || 'Unnamed List', subtitle: `${l.links?.length || 0} items` })),
+			{ title: 'Merge into which list?' }
+		);
+		if (!target) return;
+
+		const mode = await DialogService.showActions([
+			{ label: 'Smart Merge', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>', action: 'smart' },
+			{ label: 'Append All', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>', action: 'append' }
+		]);
+		if (!mode) return;
+
+		await DBManager.mergeLists(target.id, this._listId, mode);
+		Router.go(`/list/${target.id}`);
+	}
+
+	async _doArchiveList() {
+		const confirmed = await DialogService.confirm(
+			`Archive "${this._listName}"?`,
+			"Archive"
+		);
+		if (!confirmed) return;
+
+		await DBManager.archiveItem(this._listId);
+		Router.go('/list');
 	}
 
 	_attachHeadingListeners(heading) {

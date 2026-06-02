@@ -389,6 +389,8 @@ export class ListBase extends HTMLElement {
 		const action = await DialogService.showActions([
 			{ label: 'Move to Top', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="4" x2="20" y2="4"/><polyline points="18 10 12 4 6 10"/></svg>', action: 'move-top' },
 			{ label: 'Move to Bottom', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="20" x2="20" y2="20"/><polyline points="6 14 12 20 18 14"/></svg>', action: 'move-bottom' },
+			{ label: 'Duplicate', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>', action: 'duplicate' },
+			{ label: 'Copy to List', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>', action: 'copy-to-list' },
 			{ label: 'Move to List', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>', action: 'move-to-list' },
 			{ label: 'Convert to Note', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>', action: 'convert-to-note' },
 			{ label: 'Edit', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>', action: 'edit' },
@@ -405,12 +407,18 @@ export class ListBase extends HTMLElement {
 				case 'move-bottom':
 					if (!isLast) await this._moveItemToBottom(itemId);
 					break;
-				case 'move-to-list':
-					await this._doMoveItemToList(itemId);
-					break;
-				case 'convert-to-note':
-					await this._doConvertItemToNote(itemId);
-					break;
+			case 'duplicate':
+				await this._doDuplicateItem(itemId);
+				break;
+			case 'copy-to-list':
+				await this._doCopyItemToList(itemId);
+				break;
+			case 'move-to-list':
+				await this._doMoveItemToList(itemId);
+				break;
+			case 'convert-to-note':
+				await this._doConvertItemToNote(itemId);
+				break;
 				case 'edit': {
 					const item = this._linkedItems.find(i => i.id === itemId);
 					if (item) {
@@ -430,6 +438,44 @@ export class ListBase extends HTMLElement {
 			console.error('Item action error:', error);
 			alert(error.message || 'Action failed');
 		}
+	}
+
+	async _doDuplicateItem(itemId) {
+		const newItemId = await DBManager.duplicateItem(itemId);
+
+		// Insert right after the original in the current list's links
+		const listItem = this._getCurrentListItem();
+		if (listItem) {
+			const links = listItem.links ? [...listItem.links] : [];
+			const index = links.findIndex(l => l.id === itemId);
+			const insertIndex = index >= 0 ? index + 1 : links.length;
+			links.splice(insertIndex, 0, { id: newItemId, order: 0 });
+			links.forEach((l, i) => { l.order = i; });
+			listItem.links = links;
+			listItem.meta = { ...listItem.meta, updatedAt: new Date().toISOString() };
+			await DBManager.saveItem(listItem);
+		}
+
+		this._linkedItems = await DBManager.getLinkedItems(this._currentListId);
+		this._renderContent();
+		this._updateFooter();
+	}
+
+	async _doCopyItemToList(itemId) {
+		const lists = await DBManager.getItems({ type: 'list', archived: false });
+		const otherLists = lists.filter(l => l.id !== this._currentListId);
+		if (otherLists.length === 0) {
+			alert('No other lists available.');
+			return;
+		}
+
+		const target = await DialogService.pickItem(
+			otherLists.map(l => ({ id: l.id, title: l.content || 'Unnamed List', subtitle: `${l.links?.length || 0} items` })),
+			{ title: 'Copy to which list?' }
+		);
+		if (!target) return;
+
+		await DBManager.copyItemToList(itemId, target.id);
 	}
 
 	async _doMoveItemToList(itemId) {
