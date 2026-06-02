@@ -8,6 +8,11 @@
 	background-color: var(--bg-light);
 	max-width: 400px;
 	width: 90%;
+	display: flex;
+	flex-direction: column;
+	max-height: 90vh;
+	max-height: 90dvh;
+	overflow-y: auto;
 }
 
 .dialog::backdrop {
@@ -98,9 +103,10 @@
 	border-bottom-color: var(--accent);
 }
 
-/* Allow textarea dialog to be slightly wider */
+/* Allow textarea dialog to be slightly wider and grow to fit content */
 .dialog--textarea {
 	max-width: 480px;
+	max-height: none;
 }
 
 /* Share Dialog specific overrides */
@@ -477,7 +483,8 @@
 /* Mobile adjustments */
 @media (max-width: 480px) {
 	.dialog {
-		margin: auto;
+		margin-top: 20px;
+		margin-bottom: auto;
 	}
 
 	.dialog-footer {

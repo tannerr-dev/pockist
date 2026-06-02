@@ -171,7 +171,9 @@
 
 /* Content Textarea */
 #note-content {
-    height: 500px;
+    min-height: 300px;
+    height: auto;
+    max-height: 100svh;
     width: 100%;
     box-sizing: border-box;
     border: none;
@@ -186,6 +188,7 @@
     scrollbar-gutter: stable both-edges;
     resize: none;
     margin-bottom: 0;
+    overflow-y: auto;
 }
 
 #note-content:focus {
@@ -197,10 +200,6 @@
     #notes-list,
     #note-editor {
         max-width: 100%;
-    }
-
-    #note-content {
-        height: 400px;
     }
 
     .editor-header {
