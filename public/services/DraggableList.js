@@ -1,21 +1,21 @@
- // * DraggableList - Touch/mouse drag-and-drop reordering with deferred scroll blocking.
- // *
- // * Usage:
- // *   const dl = new DraggableList(container, {
- // *     itemSelector: ':scope > *',
- // *     handleSelector: '.drag-hint',
- // *     onReorder: (oldIndex, newIndex) => { ... }
- // *   });
- // *
- // * Features:
- // *   - Touch: long-press (~150ms) on handle to start drag. Scroll is NOT blocked
- // *     during the hold — only after the timer fires and drag actually begins.
- // *   - Mouse: immediate drag on handle mousedown.
- // *   - Excludes interactive elements (buttons, inputs, links, contenteditable)
- // *   - Suppresses the next click after a drag to prevent navigation/select
- // *   - Slight "pop" animation on lift
- // *   - Drop indicator line between items
- // *   - Haptic feedback on lift/drop (if supported)
+// * DraggableList - Touch/mouse drag-and-drop reordering with deferred scroll blocking.
+// *
+// * Usage:
+// *   const dl = new DraggableList(container, {
+// *     itemSelector: ':scope > *',
+// *     handleSelector: '.drag-hint',
+// *     onReorder: (oldIndex, newIndex) => { ... }
+// *   });
+// *
+// * Features:
+// *   - Touch: long-press (~150ms) on handle to start drag. Scroll is NOT blocked
+// *     during the hold — only after the timer fires and drag actually begins.
+// *   - Mouse: immediate drag on handle mousedown.
+// *   - Excludes interactive elements (buttons, inputs, links, contenteditable)
+// *   - Suppresses the next click after a drag to prevent navigation/select
+// *   - Slight "pop" animation on lift
+// *   - Drop indicator line between items
+// *   - Haptic feedback on lift/drop (if supported)
 export class DraggableList {
 	constructor(container, options = {}) {
 		this.container = container;
@@ -28,7 +28,18 @@ export class DraggableList {
 		this._pendingDrag = null;
 		this._dragState = null;
 		this._dropIndicator = null;
+		this._popTimer = null;
 		this._suppressClick = false;
+
+		// Robust click suppression: capture on container so it survives re-renders
+		this._boundClickSuppressor = (e) => {
+			if (this._suppressClick) {
+				this._suppressClick = false;
+				e.stopPropagation();
+				e.preventDefault();
+			}
+		};
+		this.container.addEventListener('click', this._boundClickSuppressor, { capture: true });
 
 		// Touch: deferred hold-to-drag
 		this._boundHandleTouchStart = this._handleTouchStart.bind(this);
@@ -44,6 +55,7 @@ export class DraggableList {
 		this._endDrag();
 		this.container.removeEventListener('touchstart', this._boundHandleTouchStart);
 		this.container.removeEventListener('mousedown', this._boundHandleMouseDown);
+		this.container.removeEventListener('click', this._boundClickSuppressor, { capture: true });
 	}
 
 	_isHandle(el) {
@@ -62,6 +74,8 @@ export class DraggableList {
 	// Touch path: deferred hold-to-drag
 	// -----------------------------------------------------------
 	_handleTouchStart(e) {
+		if (this._pendingDrag || this._dragState) return;
+
 		const item = e.target.closest(this.itemSelector);
 		if (!item || !this.container.contains(item)) return;
 		if (this._isInteractive(e.target)) return;
@@ -72,13 +86,14 @@ export class DraggableList {
 
 		this._pendingDrag = {
 			item: itemRef,
+			touchId: touch.identifier,
 			startX: touch.clientX,
 			startY: touch.clientY,
 			timer: setTimeout(() => this._beginTouchDrag(itemRef), this.longPressDelay)
 		};
 
 		this._boundTouchMove = (e) => this._onTouchMoveDuringHold(e);
-		this._boundTouchEnd = () => this._cancelLongPress();
+		this._boundTouchEnd = (e) => this._onTouchEndDuringHold(e);
 
 		window.addEventListener('touchmove', this._boundTouchMove, { passive: true });
 		window.addEventListener('touchend', this._boundTouchEnd);
@@ -87,7 +102,8 @@ export class DraggableList {
 
 	_onTouchMoveDuringHold(e) {
 		if (!this._pendingDrag) return;
-		const touch = e.touches[0];
+		const touch = this._findTouch(e.touches, this._pendingDrag.touchId);
+		if (!touch) return;
 		const dx = touch.clientX - this._pendingDrag.startX;
 		const dy = touch.clientY - this._pendingDrag.startY;
 		if (Math.sqrt(dx * dx + dy * dy) > this.moveThreshold) {
@@ -95,13 +111,22 @@ export class DraggableList {
 		}
 	}
 
+	_onTouchEndDuringHold(e) {
+		if (!this._pendingDrag) return;
+		const touch = this._findTouch(e.changedTouches, this._pendingDrag.touchId);
+		if (!touch) return;
+		this._cancelLongPress();
+	}
+
 	_beginTouchDrag(item) {
 		const startY = this._pendingDrag ? this._pendingDrag.startY : 0;
+		const touchId = this._pendingDrag ? this._pendingDrag.touchId : null;
 		this._cancelLongPress();
 
 		this._dragState = {
 			item,
 			isTouch: true,
+			touchId,
 			startY: startY,
 			startIndex: this._getItemIndex(item),
 			currentY: startY
@@ -112,7 +137,7 @@ export class DraggableList {
 			if (this._dragState) item.classList.add('drag-pop');
 		});
 
-		setTimeout(() => {
+		this._popTimer = setTimeout(() => {
 			if (this._dragState) {
 				item.classList.remove('drag-pop');
 				item.style.transition = 'none';
@@ -128,25 +153,15 @@ export class DraggableList {
 		window.addEventListener('touchend', this._boundOnTouchDragEnd);
 		window.addEventListener('touchcancel', this._boundOnTouchDragEnd);
 
-		// Suppress the next click on the dragged item
-		this._suppressClick = false;
-		const clickSuppressor = (e) => {
-			if (this._suppressClick) {
-				e.stopPropagation();
-				e.preventDefault();
-				this._suppressClick = false;
-			}
-		};
-		item.addEventListener('click', clickSuppressor, { capture: true, once: true });
-
 		this._createDropIndicator();
 	}
 
 	_onTouchDragMove(e) {
 		if (!this._dragState) return;
+		const touch = this._findTouch(e.touches, this._dragState.touchId);
+		if (!touch) return;
 		e.preventDefault(); // Block scroll NOW that drag is active
 
-		const touch = e.touches[0];
 		this._dragState.currentY = touch.clientY;
 
 		const deltaY = touch.clientY - this._dragState.startY;
@@ -158,6 +173,8 @@ export class DraggableList {
 
 	_onTouchDragEnd(e) {
 		if (!this._dragState || !this._dragState.isTouch) return;
+		const touch = this._findTouch(e.changedTouches, this._dragState.touchId);
+		if (!touch) return;
 		this._finishDrag();
 	}
 
@@ -165,6 +182,8 @@ export class DraggableList {
 	// Mouse path: immediate drag
 	// -----------------------------------------------------------
 	_handleMouseDown(e) {
+		if (this._pendingDrag || this._dragState) return;
+
 		const item = e.target.closest(this.itemSelector);
 		if (!item || !this.container.contains(item)) return;
 		if (this._isInteractive(e.target)) return;
@@ -185,7 +204,7 @@ export class DraggableList {
 			if (this._dragState) item.classList.add('drag-pop');
 		});
 
-		setTimeout(() => {
+		this._popTimer = setTimeout(() => {
 			if (this._dragState) {
 				item.classList.remove('drag-pop');
 				item.style.transition = 'none';
@@ -200,16 +219,9 @@ export class DraggableList {
 		window.addEventListener('mousemove', this._boundOnMouseDragMove);
 		window.addEventListener('mouseup', this._boundOnMouseDragEnd);
 
-		// Suppress the next click on the dragged item
-		this._suppressClick = false;
-		const clickSuppressor = (e) => {
-			if (this._suppressClick) {
-				e.stopPropagation();
-				e.preventDefault();
-				this._suppressClick = false;
-			}
-		};
-		item.addEventListener('click', clickSuppressor, { capture: true, once: true });
+		// Prevent text selection while dragging
+		this._previousUserSelect = this.container.style.userSelect;
+		this.container.style.userSelect = 'none';
 
 		this._createDropIndicator();
 	}
@@ -246,6 +258,9 @@ export class DraggableList {
 	_finishDrag() {
 		if (!this._dragState) return;
 
+		clearTimeout(this._popTimer);
+		this._popTimer = null;
+
 		const insertBeforeIndex = this._computeInsertBeforeIndex(this._dragState.currentY);
 		const oldIndex = this._dragState.startIndex;
 
@@ -253,7 +268,7 @@ export class DraggableList {
 		if (newIndex > oldIndex) newIndex -= 1;
 
 		// Restore styles
-		this._dragState.item.classList.remove('dragging');
+		this._dragState.item.classList.remove('dragging', 'drag-pop');
 		this._dragState.item.style.transform = '';
 		this._dragState.item.style.transition = '';
 
@@ -270,6 +285,7 @@ export class DraggableList {
 		} else {
 			window.removeEventListener('mousemove', this._boundOnMouseDragMove);
 			window.removeEventListener('mouseup', this._boundOnMouseDragEnd);
+			this.container.style.userSelect = this._previousUserSelect || '';
 		}
 
 		this._suppressClick = true;
@@ -331,10 +347,18 @@ export class DraggableList {
 	}
 
 	_getItems() {
-		return Array.from(this.container.querySelectorAll(this.itemSelector));
+		return Array.from(this.container.querySelectorAll(this.itemSelector))
+			.filter(el => el !== this._dropIndicator);
 	}
 
 	_getItemIndex(item) {
 		return this._getItems().indexOf(item);
+	}
+
+	_findTouch(touchList, identifier) {
+		for (let i = 0; i < touchList.length; i++) {
+			if (touchList[i].identifier === identifier) return touchList[i];
+		}
+		return null;
 	}
 }
