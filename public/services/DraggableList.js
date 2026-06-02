@@ -96,14 +96,15 @@ export class DraggableList {
 	}
 
 	_beginTouchDrag(item) {
+		const startY = this._pendingDrag ? this._pendingDrag.startY : 0;
 		this._cancelLongPress();
 
 		this._dragState = {
 			item,
 			isTouch: true,
-			startY: this._pendingDrag ? this._pendingDrag.startY : 0,
+			startY: startY,
 			startIndex: this._getItemIndex(item),
-			currentY: this._pendingDrag ? this._pendingDrag.startY : 0
+			currentY: startY
 		};
 
 		item.classList.add('dragging');
