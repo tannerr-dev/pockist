@@ -135,6 +135,7 @@
 
 .list-selector-list {
 	overflow-y: auto;
+	overflow-x: hidden;
 	padding: 0;
 	flex: 1;
 	position: relative;

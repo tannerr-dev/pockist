@@ -120,6 +120,7 @@ export class ListBase extends HTMLElement {
 					meta: { isDefault: true, order: 0 }
 				});
 				this._listItems = await DBManager.getItems({ type: 'list', archived: false });
+				this._listItems.sort((a, b) => (a.meta?.order || 0) - (b.meta?.order || 0));
 				this._currentListId = newList.id;
 			} else if (!this._currentListId) {
 				const defaultList = this._listItems.find(item => item.meta?.isDefault);
@@ -145,7 +146,7 @@ export class ListBase extends HTMLElement {
 
 		this._setupAddListeners();
 
-		this._listSelectorBtn?.addEventListener("click", () => this._showListSelectorDialog());
+		this._listSelectorBtn?.addEventListener("click", async () => await this._showListSelectorDialog());
 
 		this._listsContainerEl?.addEventListener("list-toggle", (e) => {
 			this._toggleItem(e.detail.itemId, e.detail.completed);
@@ -535,6 +536,7 @@ export class ListBase extends HTMLElement {
 				meta: { isDefault: false, order: this._listItems.length }
 			});
 			this._listItems = await DBManager.getItems({ type: 'list', archived: false });
+			this._listItems.sort((a, b) => (a.meta?.order || 0) - (b.meta?.order || 0));
 			this._currentListId = newList.id;
 			await this._loadCurrentList();
 			this._render();
@@ -551,10 +553,10 @@ export class ListBase extends HTMLElement {
 				await DBManager.saveItem(list);
 			}
 			this._listItems = await DBManager.getItems({ type: 'list', archived: false });
+			this._listItems.sort((a, b) => (a.meta?.order || 0) - (b.meta?.order || 0));
 			if (this._currentListItem) {
 				this._currentListItem.meta = { ...this._currentListItem.meta, isDefault: (this._currentListItem.id === listId) };
 			}
-			this._render();
 		} catch (error) {
 			console.error(`[${this.constructor.name}] Error setting default list:`, error);
 		}
@@ -617,6 +619,7 @@ export class ListBase extends HTMLElement {
 
 		await DBManager.mergeLists(target.id, sourceId, mode);
 		this._listItems = await DBManager.getItems({ type: 'list', archived: false });
+		this._listItems.sort((a, b) => (a.meta?.order || 0) - (b.meta?.order || 0));
 
 		if (this._currentListId === sourceId) {
 			this._currentListId = target.id;
@@ -808,7 +811,9 @@ export class ListBase extends HTMLElement {
 	}
 
 	// List selector dialog
-	_showListSelectorDialog() {
+	async _showListSelectorDialog() {
+		this._listItems = await DBManager.getItems({ type: 'list', archived: false });
+		this._listItems.sort((a, b) => (a.meta?.order || 0) - (b.meta?.order || 0));
 		const lists = this._listItems;
 
 		const dialog = document.createElement('dialog');
@@ -864,7 +869,7 @@ export class ListBase extends HTMLElement {
 					dialog.close();
 					document.body.removeChild(dialog);
 					if (this._listItems.length > 0) {
-						this._showListSelectorDialog();
+						await this._showListSelectorDialog();
 					}
 				}
 			});
@@ -973,7 +978,7 @@ export class ListBase extends HTMLElement {
 				document.body.removeChild(dialog);
 				if (dl) dl.destroy();
 				if (this._listItems.length > 0) {
-					this._showListSelectorDialog();
+					await this._showListSelectorDialog();
 				}
 			});
 		});
@@ -985,7 +990,7 @@ export class ListBase extends HTMLElement {
 			if (dl) dl.destroy();
 			await this._handleCreateList();
 			if (this._listItems.length > 0) {
-				this._showListSelectorDialog();
+				await this._showListSelectorDialog();
 			}
 		});
 
@@ -997,7 +1002,7 @@ export class ListBase extends HTMLElement {
 			}
 		});
 
-		dialog.addEventListener('close', () => {
+		dialog.addEventListener('cancel', () => {
 			if (dl) dl.destroy();
 			if (dialog.parentNode) document.body.removeChild(dialog);
 		});
