@@ -29,12 +29,12 @@ export class DraggableList {
 		this._dragState = null;
 		this._dropIndicator = null;
 		this._popTimer = null;
-		this._suppressClick = false;
+		this._suppressClickUntil = 0;
 
 		// Robust click suppression: capture on container so it survives re-renders
 		this._boundClickSuppressor = (e) => {
-			if (this._suppressClick) {
-				this._suppressClick = false;
+			if (Date.now() < this._suppressClickUntil) {
+				this._suppressClickUntil = 0;
 				e.stopPropagation();
 				e.preventDefault();
 			}
@@ -119,8 +119,9 @@ export class DraggableList {
 	}
 
 	_beginTouchDrag(item) {
-		const startY = this._pendingDrag ? this._pendingDrag.startY : 0;
-		const touchId = this._pendingDrag ? this._pendingDrag.touchId : null;
+		if (!this._pendingDrag) return;
+		const startY = this._pendingDrag.startY;
+		const touchId = this._pendingDrag.touchId;
 		this._cancelLongPress();
 
 		this._dragState = {
@@ -182,6 +183,7 @@ export class DraggableList {
 	// Mouse path: immediate drag
 	// -----------------------------------------------------------
 	_handleMouseDown(e) {
+		if (e.button !== 0) return;
 		if (this._pendingDrag || this._dragState) return;
 
 		const item = e.target.closest(this.itemSelector);
@@ -288,7 +290,7 @@ export class DraggableList {
 			this.container.style.userSelect = this._previousUserSelect || '';
 		}
 
-		this._suppressClick = true;
+		this._suppressClickUntil = Date.now() + 300;
 		if (newIndex !== oldIndex) {
 			if (navigator.vibrate) navigator.vibrate(15);
 			this.onReorder(oldIndex, newIndex);

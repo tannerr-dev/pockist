@@ -1037,20 +1037,14 @@ export class DBManager {
         if (!note || note.type !== 'note') throw new Error('Note not found');
         if (!list || list.type !== 'list') throw new Error('List not found');
 
-        const lines = (note.content || '').split('\n').map(l => l.trim()).filter(l => l);
-        const existingLinks = list.links ? [...list.links] : [];
-        const newLinks = [];
+        const item = await this.createItem({
+            type: 'item',
+            content: note.content || '',
+            meta: { completed: false }
+        });
 
-        for (const line of lines) {
-            const item = await this.createItem({
-                type: 'item',
-                content: line,
-                meta: { completed: false }
-            });
-            newLinks.push({ id: item.id, order: 0 });
-        }
-
-        const links = [...newLinks, ...existingLinks];
+        const links = list.links ? [...list.links] : [];
+        links.unshift({ id: item.id, order: 0 });
         links.forEach((link, i) => { link.order = i; });
 
         list.links = links;
