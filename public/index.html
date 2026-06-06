@@ -16,6 +16,7 @@
     <link href="/styles/dialogs.css" rel="stylesheet">
     <link href="/styles/archive.css" rel="stylesheet">
     <link href="/styles/home-settings.css" rel="stylesheet">
+    <link href="/styles/about.css" rel="stylesheet">
 
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -156,23 +157,49 @@
     </template>
 
     <template id="about-page">
-        <section>
-            <h1>About</h1>
-            <p>
-                Welcome to my site.. or web app!
-            </p>
-            <p>
-                This entire app runs in the browser, does not send data anywhere... yet!
-            </p>
-            <p>
-                I value data privacy and wanted to bulid my own app to help my daily needs.
-            </p>
-            <p>
-                <a href="https://github.com/tannerr-dev/pockist">
-                    Check out the code!
-                </a>
-            </p>
+      <div class="about-container">
+        <section class="about-section section-divider">
+          <h1>About</h1>
+          <p>Welcome to my site.. or web app!</p>
+          <p>This entire app runs in the browser, does not send data anywhere... yet!</p>
+          <p>I value data privacy and wanted to bulid my own app to help my daily needs.</p>
+          <p><a href="https://github.com/tannerr-dev/pockist">Check out the code!</a></p>
         </section>
+
+        <section class="about-section section-divider">
+          <div class="section-label">How to use</div>
+          <div class="about-cards">
+            <div class="about-card">
+              <div class="about-card-title">Notes</div>
+              <p>Jot down ideas or quick thoughts. Everything saves automatically to your device.</p>
+            </div>
+            <div class="about-card">
+              <div class="about-card-title">Lists</div>
+              <p>Keep track of tasks or groceries. Tap items to check them off, no account needed.</p>
+            </div>
+            <div class="about-card">
+              <div class="about-card-title">Weather</div>
+              <p>Check current conditions and forecasts for any city. Uses your location or a quick search.</p>
+            </div>
+            <div class="about-card">
+              <div class="about-card-title">Archive</div>
+              <p>Stash old notes and lists you don't need right now but might want later.</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="about-section section-divider">
+          <div class="section-label">Privacy</div>
+          <p class="about-lead">Your data lives on <strong>your device</strong> only.</p>
+          <p>Pockist stores everything locally in your browser. No accounts, no tracking, no cloud unless you choose to share or export.</p>
+        </section>
+
+        <section class="about-section section-divider">
+          <div class="section-label">Install</div>
+          <p class="about-lead">Add Pockist to your home screen.</p>
+          <p>Since this is a progressive web app, you can install it like a native app. On mobile, hit "Add to Home Screen" in your browser menu. On desktop, look for the install icon in your address bar.</p>
+        </section>
+      </div>
     </template>
 
     <!-- Note Widget (homepage) -->
