@@ -1,7 +1,7 @@
 /**
  * NoteWidget - Paginated note widget for the homepage.
  *
- * Fixed-height 5-item viewport with Up / Down navigation buttons.
+ * Fixed-height 6-item viewport with Up / Down navigation buttons.
  * Extends NoteBase for shared loading, sorting, and action logic.
  */
 import { NoteBase } from './NoteBase.js';
@@ -60,7 +60,7 @@ export class NoteWidget extends NoteBase {
 		this.#clampOffset();
 		const clampedOffset = this.#offset;
 		const startIndex = clampedOffset;
-		const endIndex = Math.min(clampedOffset + 5, total);
+		const endIndex = Math.min(clampedOffset + 6, total);
 		const visibleNotes = this._notes.slice(startIndex, endIndex);
 
 		visibleNotes.forEach(note => {
@@ -86,10 +86,10 @@ export class NoteWidget extends NoteBase {
 
 	#clampOffset() {
 		const total = this._notes.length || 0;
-		if (total <= 5) {
+		if (total <= 6) {
 			this.#offset = 0;
 		} else {
-			const maxOffset = total - 5;
+			const maxOffset = total - 6;
 			this.#offset = Math.max(0, Math.min(this.#offset, maxOffset));
 		}
 	}
@@ -108,14 +108,14 @@ export class NoteWidget extends NoteBase {
 	#renderNav(total, offset) {
 		if (!this.#navContainer) return;
 
-		if (total <= 5) {
+		if (total <= 6) {
 			this.#navContainer.innerHTML = '';
 			this.#upBtn = null;
 			this.#downBtn = null;
 			return;
 		}
 
-		const maxOffset = total - 5;
+		const maxOffset = total - 6;
 
 		// Create once, update disabled state on subsequent renders
 		if (!this.#upBtn) {
