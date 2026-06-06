@@ -468,8 +468,23 @@
    TODO LIST WIDGET (homepage paginated version)
    ============================================================================ */
 
+/* Lists widget section on home page */
+.lists-widget-section {
+    padding-top: 20px;
+    width: 100%;
+    height: 500px;
+    /* max-width: 500px; */
+    /* margin: 1.5rem auto; */
+}
+
+.lists-header-link {
+    text-decoration: none;
+    color: var(--text);
+    display: block;
+    margin-bottom: 0.5rem;
+    font-size: 1.3rem;
+}
 .list-widget {
-	min-height: auto;
 	padding: 0;
     padding-top: 14px;
 }
@@ -509,7 +524,7 @@
 	display: flex;
 	flex-direction: column;
 	overflow: hidden;
-	max-height: 384px;
+	max-height: 288px;
 	position: relative;
 }
 

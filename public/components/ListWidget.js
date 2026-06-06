@@ -4,7 +4,7 @@ import { DraggableList } from '../services/DraggableList.js';
 /**
  * ListWidget - Paginated list for homepage widget.
  *
- * Fixed-height 8-item viewport with Up / Down buttons below the list.
+ * Fixed-height 6-item viewport with Up / Down buttons below the list.
  */
 export class ListWidget extends ListBase {
 	#offset = 0;
@@ -74,10 +74,10 @@ export class ListWidget extends ListBase {
 
 	#clampOffset() {
 		const total = this._getLinkedItems().length || 0;
-		if (total <= 8) {
+		if (total <= 6) {
 			this.#offset = 0;
 		} else {
-			const maxOffset = total - 8;
+			const maxOffset = total - 6;
 			this.#offset = Math.max(0, Math.min(this.#offset, maxOffset));
 		}
 	}
@@ -97,9 +97,9 @@ export class ListWidget extends ListBase {
 		if (!this.#navContainer) return;
 		this.#navContainer.innerHTML = '';
 
-		if (total <= 8) return;
+		if (total <= 6) return;
 
-		const maxOffset = total - 8;
+		const maxOffset = total - 6;
 
 		const upBtn = this.#createNavButton(-1);
 		upBtn.disabled = offset === 0;
@@ -142,7 +142,7 @@ export class ListWidget extends ListBase {
 		const clampedOffset = this.#offset;
 
 		const startIndex = clampedOffset;
-		const endIndex = Math.min(clampedOffset + 8, total);
+		const endIndex = Math.min(clampedOffset + 6, total);
 
 		const visibleItems = items.slice(startIndex, endIndex);
 
