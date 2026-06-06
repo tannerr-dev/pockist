@@ -9,6 +9,13 @@
 
 export const WIDGET_REGISTRY = [
     {
+        id: 'weather',
+        tag: 'weather-current',
+        name: 'Weather',
+        defaultEnabled: true,
+        props: { clickable: true, 'show-city': true },
+    },
+    {
         id: 'lists',
         tag: 'pockist-list-widget',
         name: 'Lists',
@@ -19,15 +26,8 @@ export const WIDGET_REGISTRY = [
         id: 'notes',
         tag: 'pockist-note-widget',
         name: 'Notes',
-        defaultEnabled: false,
+        defaultEnabled: true,
         props: {},
-    },
-    {
-        id: 'weather',
-        tag: 'weather-current',
-        name: 'Weather',
-        defaultEnabled: false,
-        props: { clickable: true, 'show-city': true },
     },
 ];
 
