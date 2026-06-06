@@ -1,6 +1,6 @@
 console.log("Service Worker loaded.");
 
-const CACHE_NAME = "pockist-v23";
+const CACHE_NAME = "pockist-v24";
 
 self.addEventListener("install", function (event) {
 	event.waitUntil(
