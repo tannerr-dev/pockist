@@ -1,7 +1,7 @@
 :root {
 	--hue: 360;
 	--secondary-hue: 280;
-	--mod: 1;
+	--mod: 0;
 
 	--color: hsl(var(--hue), calc(50% * var(--mod)), 50%);
 	--bg: hsl(var(--hue), calc(20% * var(--mod)), 8%);
