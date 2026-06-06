@@ -483,8 +483,7 @@
 /* Mobile adjustments */
 @media (max-width: 480px) {
 	.dialog {
-		margin-top: 20px;
-		margin-bottom: auto;
+		margin: auto;
 	}
 
 	.dialog-footer {
