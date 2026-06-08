@@ -87,7 +87,21 @@ export class List extends ListBase {
 		if (!currentItem) return;
 
 		const targetItem = items[newIndex];
-		if (!targetItem || targetItem === currentItem) return;
+		if (!targetItem || targetItem === currentItem) {
+			// newIndex may be out of bounds when there are archived items in the list
+			// (links.length includes archived items, but DOM items do not).
+			// Fall back to appending/prepending when the target is missing.
+			if (newIndex >= items.length && currentItem !== items[items.length - 1]) {
+				currentItem.parentNode.appendChild(currentItem);
+				this.#updateItemIndices();
+				this._updateFooter();
+			} else if (newIndex < 0 && currentItem !== items[0]) {
+				currentItem.parentNode.insertBefore(currentItem, items[0]);
+				this.#updateItemIndices();
+				this._updateFooter();
+			}
+			return;
+		}
 
 		const container = currentItem.parentNode;
 
