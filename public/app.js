@@ -6,6 +6,7 @@ import { ImportExportService } from "./services/ImportExportService.js";
 import './components/ShareView.js';
 import './components/HomeSettingsDrawer.js';
 import './components/MyNav.js';
+import './components/WelcomeSplash.js';
 
 // navigator.serviceWorker.addEventListener("message", (event) => {
 //     if (event.data && event.data.type === "CACHE_UPDATED") {
@@ -72,7 +73,15 @@ window.addEventListener("DOMContentLoaded", async () => {
     } catch (err) {
         console.error("[App] Router initialization failed:", err);
     }
-    
+
+    // Show welcome splash on first visit
+    if (!localStorage.getItem('pockist-welcome-shown')) {
+        const splash = document.createElement('welcome-splash');
+        document.body.appendChild(splash);
+    } else {
+        document.body.classList.remove('showing-welcome');
+    }
+
     // Register service worker
     // console.log('[App] Registering service worker...');
     navigator.serviceWorker.register("/sw.js").then(registration => {

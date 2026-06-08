@@ -59,6 +59,11 @@
 		<meta name="twitter:image" content="https://pockist.com/assets/preview.png">
 	</head>
 	<body>
+		<script>
+			if (!localStorage.getItem('pockist-welcome-shown')) {
+				document.body.classList.add('showing-welcome');
+			}
+		</script>
 		<my-nav></my-nav>
 		<home-settings-drawer></home-settings-drawer>
 		<main></main>
@@ -186,17 +191,17 @@
 		<template id="about-page">
 			<div class="about-container">
 				<section class="about-section section-divider">
-					<h1>About</h1>
+					<h1>Welcome to Pockist</h1>
                     <p>Welcome to my <s>website</s> progressive web app.</p>
 					<p>
 						<a href="https://github.com/tannerr-dev/pockist"
 						>Check out the code!</a>
-					</p>
+						</p>
                     <div class="about-caution">
                         <p><i>Alpha pre-release</i></p>
                         <p><b>Version: 0.1.25</b></p>
-                        <p>This app is in active development and uses the latest broswer APIs.</p>
-                        <p>Some browswer do not support these yet, best experienced on chrome based browsers. Chrome, Brave, Edge, etc.</p>
+                        <p>This app is in active development and uses the latest browser features.</p>
+                        <p>Some browsers do not support these yet, best experienced on chrome based browsers. Chrome, Brave, Edge, etc.</p>
                     </div>
 				</section>
 
@@ -254,6 +259,15 @@
 						</div>
 					</div>
 				</section>
+			</div>
+		</template>
+
+		<template id="welcome-splash">
+			<div class="welcome-splash-scroll"></div>
+			<div class="welcome-splash-bar">
+				<button class="btn btn-outline-secondary welcome-splash-dismiss" type="button">
+					Get Started
+				</button>
 			</div>
 		</template>
 
