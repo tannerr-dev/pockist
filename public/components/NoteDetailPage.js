@@ -274,10 +274,6 @@ export class NoteDetailPage extends HTMLElement {
 	}
 
 	async _doArchive() {
-		const title = this._extractTitle(this._note.content);
-		const confirmed = await DialogService.confirm(`Archive "${title}"?`, 'Archive');
-		if (!confirmed) return;
-
 		await DBManager.archiveItem(this._noteId);
 		Router.go('/note');
 	}

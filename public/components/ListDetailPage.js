@@ -137,12 +137,6 @@ export class ListDetailPage extends HTMLElement {
 	}
 
 	async _doArchiveList() {
-		const confirmed = await DialogService.confirm(
-			`Archive "${this._listName}"?`,
-			"Archive"
-		);
-		if (!confirmed) return;
-
 		await DBManager.archiveItem(this._listId);
 		Router.go('/list');
 	}

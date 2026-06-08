@@ -285,13 +285,6 @@ export class ListIndexPage extends HTMLElement {
 	}
 
 	async _archiveList(listId) {
-		const item = this._lists.find(l => l.id === listId);
-		const confirmed = await DialogService.confirm(
-			`Archive "${item?.content || 'this list'}"?`,
-			"Archive"
-		);
-		if (!confirmed) return;
-
 		try {
 			await DBManager.archiveItem(listId);
 			this._lists = this._lists.filter(l => l.id !== listId);

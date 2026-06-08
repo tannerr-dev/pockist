@@ -147,11 +147,6 @@ export class NoteIndexPage extends NoteBase {
 	}
 
 	async _doArchiveNote(noteId) {
-		const note = this._notes.find(n => n.id === noteId);
-		const title = note ? this._extractTitle(note.content) : 'this note';
-		const confirmed = await DialogService.confirm(`Archive "${title}"?`, 'Archive');
-		if (!confirmed) return;
-
 		await DBManager.archiveItem(noteId);
 		await this._reloadNotes();
 	}

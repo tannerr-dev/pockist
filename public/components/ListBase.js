@@ -275,9 +275,6 @@ export class ListBase extends HTMLElement {
 		const item = this._linkedItems.find(i => i.id === itemId);
 		if (!item) return;
 
-		const confirmed = await DialogService.confirm(`Archive "${item.content}"?`, "Archive");
-		if (!confirmed) return;
-
 		const listItem = this._getCurrentListItem();
 		if (!listItem) return;
 
@@ -325,13 +322,6 @@ export class ListBase extends HTMLElement {
 
 		const completedItems = this._linkedItems.filter(i => i.meta?.completed);
 		if (completedItems.length === 0) return;
-
-		const itemText = completedItems.length === 1 ? 'item' : 'items';
-		const confirmed = await DialogService.confirm(
-			`Archive ${completedItems.length} completed ${itemText}?`,
-			'Archive'
-		);
-		if (!confirmed) return;
 
 		const completedIds = completedItems.map(i => i.id);
 
@@ -563,10 +553,6 @@ export class ListBase extends HTMLElement {
 	}
 
 	async _archiveList(listId) {
-		const listMeta = this._listItems.find(item => item.id === listId);
-		const confirmed = await DialogService.confirm(`Archive "${listMeta?.content || 'this list'}"?`, "Archive");
-		if (!confirmed) return;
-
 		try {
 			await DBManager.archiveItem(listId);
 			this._listItems = this._listItems.filter(item => item.id !== listId);
@@ -1106,13 +1092,6 @@ export class ListBase extends HTMLElement {
 			} else if (action === 'clear-completed') {
 				await this._clearCompleted();
 			} else if (action === 'archive') {
-				const list = await DBManager.getItem(this._currentListId);
-				const confirmed = await DialogService.confirm(
-					`Archive "${list?.content || 'this list'}"?`,
-					'Archive'
-				);
-				if (!confirmed) return;
-
 				await DBManager.archiveItem(this._currentListId);
 				// After archiving, the widget will fall back to another list on next load
 				window.location.reload();
