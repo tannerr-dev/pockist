@@ -5,15 +5,18 @@ export const DialogService = {
 
 		const onResize = () => {
 			const keyboardHeight = window.innerHeight - vv.height;
+			const availableHeight = vv.height;
+			const marginTop = Math.max(10, (availableHeight - dialog.offsetHeight) / 2);
+
 			if (keyboardHeight > 100) {
-				dialog.style.marginTop = '10px';
+				dialog.style.marginTop = marginTop + 'px';
 				dialog.style.marginBottom = 'auto';
 				if (dialog.classList.contains('dialog--textarea')) {
-					dialog.style.maxHeight = (vv.height - 20) + 'px';
+					dialog.style.maxHeight = (availableHeight - 20) + 'px';
 				}
 			} else {
-				dialog.style.marginTop = '';
-				dialog.style.marginBottom = '';
+				dialog.style.marginTop = marginTop + 'px';
+				dialog.style.marginBottom = 'auto';
 				if (dialog.classList.contains('dialog--textarea')) {
 					dialog.style.maxHeight = '';
 				}
@@ -23,9 +26,14 @@ export const DialogService = {
 		vv.addEventListener('resize', onResize);
 		dialog.addEventListener('close', () => {
 			vv.removeEventListener('resize', onResize);
+			dialog.style.marginTop = '';
+			dialog.style.marginBottom = '';
+			if (dialog.classList.contains('dialog--textarea')) {
+				dialog.style.maxHeight = '';
+			}
 		}, { once: true });
 
-		onResize();
+		requestAnimationFrame(onResize);
 	},
 
 	confirm(message, confirmText = "Confirm") {
@@ -238,7 +246,10 @@ export const DialogService = {
 			});
 
 			dialog.showModal();
-			closeBtn.focus();
+			setTimeout(() => {
+				textarea.focus();
+				textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+			}, 0);
 			this._adjustDialogForKeyboard(dialog);
 		});
 	},

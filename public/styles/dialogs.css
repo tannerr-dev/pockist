@@ -13,6 +13,7 @@
 	max-height: 90vh;
 	max-height: 90dvh;
 	overflow-y: auto;
+	transition: margin-top 0.25s ease-out;
 }
 
 .dialog::backdrop {
