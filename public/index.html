@@ -1,516 +1,749 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <title>Pockist</title>
-    <link rel="manifest" href="/manifest.json">
-    <link rel="icon" href="./assets/logo_white.svg" />
-    <!-- Base Styles -->
-    <link href="/styles/reset.css" rel="stylesheet">
-    <link href="/styles/global.css" rel="stylesheet">
+	<head>
+		<title>Pockist</title>
+		<link rel="manifest" href="/manifest.json">
+		<link rel="icon" href="./assets/logo_white.svg" />
+		<!-- Base Styles -->
+		<link href="/styles/reset.css" rel="stylesheet">
+		<link href="/styles/global.css" rel="stylesheet">
 
-    <!-- Component Styles -->
-    <link href="/styles/nav.css" rel="stylesheet">
-    <link href="/styles/notes.css" rel="stylesheet">
-    <link href="/styles/weather-components.css" rel="stylesheet">
-    <link href="/styles/list.css" rel="stylesheet">
-    <link href="/styles/dialogs.css" rel="stylesheet">
-    <link href="/styles/archive.css" rel="stylesheet">
-    <link href="/styles/home-settings.css" rel="stylesheet">
-    <link href="/styles/about.css" rel="stylesheet">
+		<!-- Component Styles -->
+		<link href="/styles/nav.css" rel="stylesheet">
+		<link href="/styles/notes.css" rel="stylesheet">
+		<link href="/styles/weather-components.css" rel="stylesheet">
+		<link href="/styles/list.css" rel="stylesheet">
+		<link href="/styles/dialogs.css" rel="stylesheet">
+		<link href="/styles/archive.css" rel="stylesheet">
+		<link href="/styles/home-settings.css" rel="stylesheet">
+		<link href="/styles/about.css" rel="stylesheet">
 
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+		<link
+			rel="stylesheet"
+			href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+		/>
+		<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-    <!-- <meta http-equiv="refresh" content="10" /> -->
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <meta http-equiv="cache-control" content="no-cache" />
-    <meta name="darkreader-lock">
+		<!-- <meta http-equiv="refresh" content="10" /> -->
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<meta http-equiv="X-UA-Compatible" content="ie=edge">
+		<meta http-equiv="cache-control" content="no-cache" />
+		<meta name="darkreader-lock">
 
-    <!-- SEO Meta Tags -->
-    <meta
-      name="description"
-      content="Your simple pocket assistant progressive web app. Save notes locally, offline and install the web app to your home screen. More features coming soon..."
-    >
-    <!-- <meta name="theme-color" content="#6366f1"> -->
+		<!-- SEO Meta Tags -->
+		<meta
+			name="description"
+			content="Your simple pocket assistant progressive web app. Save notes locally, offline and install the web app to your home screen. More features coming soon..."
+		>
+		<!-- <meta name="theme-color" content="#6366f1"> -->
 
-    <!-- Open Graph / Facebook / LinkedIn / Discord -->
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://pockist.com">
-    <meta property="og:title" content="Pockist">
-    <meta
-      property="og:description"
-      content="Your simple pocket assistant progressive web app. Save notes locally, offline and install the web app to your home screen. More features coming soon..."
-    >
-    <meta property="og:image" content="https://pockist.com/assets/preview.png">
+		<!-- Open Graph / Facebook / LinkedIn / Discord -->
+		<meta property="og:type" content="website">
+		<meta property="og:url" content="https://pockist.com">
+		<meta property="og:title" content="Pockist">
+		<meta
+			property="og:description"
+			content="Your simple pocket assistant progressive web app. Save notes locally, offline and install the web app to your home screen. More features coming soon..."
+		>
+		<meta property="og:image" content="https://pockist.com/assets/preview.png">
 
-    <!-- Twitter / X / Bluesky -->
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:url" content="https://pockist.com">
-    <meta name="twitter:title" content="Pockist">
-    <meta
-      name="twitter:description"
-      content="Your simple pocket assistant progressive web app. Save notes locally, offline and install the web app to your home screen. More features coming soon..."
-    >
-    <meta name="twitter:image" content="https://pockist.com/assets/preview.png">
-  </head>
-  <body>
-    <my-nav></my-nav>
-    <home-settings-drawer></home-settings-drawer>
-    <main></main>
+		<!-- Twitter / X / Bluesky -->
+		<meta name="twitter:card" content="summary_large_image">
+		<meta name="twitter:url" content="https://pockist.com">
+		<meta name="twitter:title" content="Pockist">
+		<meta
+			name="twitter:description"
+			content="Your simple pocket assistant progressive web app. Save notes locally, offline and install the web app to your home screen. More features coming soon..."
+		>
+		<meta name="twitter:image" content="https://pockist.com/assets/preview.png">
+	</head>
+	<body>
+		<my-nav></my-nav>
+		<home-settings-drawer></home-settings-drawer>
+		<main></main>
 
-    <!-- TEMPLATES -->
-    <template id="my-nav">
-      <div id="home">
-        <a href="/">
-            <svg
-                id="home_icon"
-                width="40"
-                height="40"
-               viewBox="0 0 120 120"
-               version="1.1"
-               id="svg1"
-               xmlns="http://www.w3.org/2000/svg"
-               xmlns:svg="http://www.w3.org/2000/svg">
-              <defs
-                 id="defs1" />
-              <g
-                 id="layer1">
-                <path
-                   style="fill:var(--accent);stroke-width:0.269266"
-                   d="M 60.100637,20.339213 C 46.808174,31.54776 30.094533,39.369392 12.890269,46.705316 c 3.707818,23.878286 7.963004,19.477711 2.82793,47.738323 28.110429,0.0963 70.954443,0.14863 87.660011,-0.0052 C 98.872782,73.818933 101.53287,64.259438 106.0943,46.183412 83.023589,36.259651 73.517582,32.177005 60.100637,20.339213 Z"
-                   id="path2" />
-              </g>
-            </svg>
-        </a>
-      </div>
-      <div id="options" class="flex-row">
-        <div class="menu-wrapper">
-          <button class="menu" popovertarget="drawer">
-            <div class="bar1"></div>
-            <div class="bar2"></div>
-            <div class="bar3"></div>
-          </button>
-        </div>
-      </div>
-      <div id="drawer" popover>
-        <div id="optionals" class="flex-row drawer-optionals">
-          <svg
-            id="settings-switch"
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <circle cx="12" cy="12" r="3"></circle>
-            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-          </svg>
-          <div class="slidecontainer">
-            <input
-              class="slider"
-              id="color-slider"
-              type="range"
-              min="0"
-              max="360"
-              value="0"
-            >
-          </div>
-          <svg
-            id="theme-switch"
-            class="theme-switch"
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            class="lucide lucide-sun-moon"
-          >
-            <path d="M12 8a2.83 2.83 0 0 0 4 4 4 4 0 1 1-4-4"></path>
-            <path d="M12 2v2"></path>
-            <path d="M12 20v2"></path>
-            <path d="m4.9 4.9 1.4 1.4"></path>
-            <path d="m17.7 17.7 1.4 1.4"></path>
-            <path d="M2 12h2"></path>
-            <path d="M20 12h2"></path>
-            <path d="m6.3 17.7-1.4 1.4"></path>
-            <path d="m19.1 4.9-1.4 1.4"></path>
-          </svg>
-        </div>
-        <a href="/" class="drawer-btn" data-nav-link>Home</a>
-        <a href="/list" class="drawer-btn" data-nav-link>Lists</a>
-        <a href="/note" class="drawer-btn" data-nav-link>Notes</a>
-        <a href="/archive" class="drawer-btn" data-nav-link>Archive</a>
-        <a href="/weather" class="drawer-btn" data-nav-link>Weather</a>
-        <a href="/about" class="drawer-btn" data-nav-link>About</a>
-        <div class="drawer-divider"></div>
-        <button type="button" class="drawer-btn drawer-btn--export" id="drawer-export-btn">Export All</button>
-        <button type="button" class="drawer-btn drawer-btn--import" id="drawer-import-btn">Import Data</button>
-        <input type="file" id="drawer-import-input" accept=".json" style="display: none;">
-      </div>
-    </template>
+		<!-- TEMPLATES -->
+		<template id="my-nav">
+			<div id="home">
+				<a href="/">
+					<svg
+						id="home_icon"
+						width="40"
+						height="40"
+						viewBox="0 0 120 120"
+						version="1.1"
+						id="svg1"
+						xmlns="http://www.w3.org/2000/svg"
+						xmlns:svg="http://www.w3.org/2000/svg"
+					>
+						<defs
+							id="defs1"
+						/>
+						<g
+							id="layer1"
+						>
+							<path
+								style="fill: var(--accent); stroke-width: 0.269266"
+								d="M 60.100637,20.339213 C 46.808174,31.54776 30.094533,39.369392 12.890269,46.705316 c 3.707818,23.878286 7.963004,19.477711 2.82793,47.738323 28.110429,0.0963 70.954443,0.14863 87.660011,-0.0052 C 98.872782,73.818933 101.53287,64.259438 106.0943,46.183412 83.023589,36.259651 73.517582,32.177005 60.100637,20.339213 Z"
+								id="path2"
+							/>
+						</g>
+					</svg>
+				</a>
+			</div>
+			<div id="options" class="flex-row">
+				<div class="menu-wrapper">
+					<button class="menu" popovertarget="drawer">
+						<div class="bar1"></div>
+						<div class="bar2"></div>
+						<div class="bar3"></div>
+					</button>
+				</div>
+			</div>
+			<div id="drawer" popover>
+				<div id="optionals" class="flex-row drawer-optionals">
+					<svg
+						id="settings-switch"
+						xmlns="http://www.w3.org/2000/svg"
+						viewBox="0 0 24 24"
+						stroke-width="2"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+					>
+						<circle cx="12" cy="12" r="3"></circle>
+						<path
+							d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"
+						>
+						</path>
+					</svg>
+					<div class="slidecontainer">
+						<input
+							class="slider"
+							id="color-slider"
+							type="range"
+							min="0"
+							max="360"
+							value="0"
+						>
+					</div>
+					<svg
+						id="theme-switch"
+						class="theme-switch"
+						xmlns="http://www.w3.org/2000/svg"
+						viewBox="0 0 24 24"
+						stroke-width="2"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						class="lucide lucide-sun-moon"
+					>
+						<path d="M12 8a2.83 2.83 0 0 0 4 4 4 4 0 1 1-4-4"></path>
+						<path d="M12 2v2"></path>
+						<path d="M12 20v2"></path>
+						<path d="m4.9 4.9 1.4 1.4"></path>
+						<path d="m17.7 17.7 1.4 1.4"></path>
+						<path d="M2 12h2"></path>
+						<path d="M20 12h2"></path>
+						<path d="m6.3 17.7-1.4 1.4"></path>
+						<path d="m19.1 4.9-1.4 1.4"></path>
+					</svg>
+				</div>
+				<a href="/" class="drawer-btn" data-nav-link>Home</a>
+				<a href="/list" class="drawer-btn" data-nav-link>Lists</a>
+				<a href="/note" class="drawer-btn" data-nav-link>Notes</a>
+				<a href="/archive" class="drawer-btn" data-nav-link>Archive</a>
+				<a href="/weather" class="drawer-btn" data-nav-link>Weather</a>
+				<a href="/about" class="drawer-btn" data-nav-link>About</a>
+				<div class="drawer-divider"></div>
+				<button
+					type="button"
+					class="drawer-btn drawer-btn--export"
+					id="drawer-export-btn"
+				>
+					Export All
+				</button>
+				<button
+					type="button"
+					class="drawer-btn drawer-btn--import"
+					id="drawer-import-btn"
+				>
+					Import Data
+				</button>
+				<input
+					type="file"
+					id="drawer-import-input"
+					accept=".json"
+					style="display: none"
+				>
+			</div>
+		</template>
 
-    <template id="home-page">
-      <h1>Pockist</h1>
-      <section class="widgets-section" data-zone="main"></section>
-    </template>
+		<template id="home-page">
+			<h1>Pockist</h1>
+			<section class="widgets-section" data-zone="main"></section>
+		</template>
 
-    <template id="about-page">
-      <div class="about-container">
-        <section class="about-section section-divider">
-          <h1>About</h1>
-          <p>Welcome to my site.. or web app!</p>
-        <p><i>Alpha pre-release</i></p>
-                    <p><b>Version: 0.1.25</b></p>
-          <p><a href="https://github.com/tannerr-dev/pockist">Check out the code!</a></p>
-        </section>
-
-        <section class="about-section section-divider">
-          <div class="section-label">Privacy</div>
-          <p class="about-lead">Your data lives on <strong>your device</strong> only.</p>
-          <p>Pockist stores everything locally in your browser. No accounts, no tracking, no cloud unless you choose to share or export.</p>
-        </section>
-
-        <section class="about-section section-divider">
-          <div class="section-label">Install</div>
-          <p class="about-lead">Add Pockist to your home screen.</p>
-          <p>Since this is a progressive web app, you can install it like a native app. On mobile, hit "Add to Home Screen" in your browser menu. On desktop, look for the install icon in your address bar.</p>
-        </section>
-
-        <section class="about-section section-divider">
-          <div class="section-label">How to use</div>
-          <div class="about-cards">
-            <div class="about-card">
-              <div class="about-card-title">Notes</div>
-              <p>Jot down ideas or quick thoughts. Everything saves automatically to your device.</p>
-            </div>
-            <div class="about-card">
-              <div class="about-card-title">Lists</div>
-              <p>Keep track of tasks or groceries. Tap items to check them off, no account needed.</p>
-            </div>
-            <div class="about-card">
-              <div class="about-card-title">Weather</div>
-              <p>Check current conditions and forecasts for any city. Uses your location or a quick search.</p>
-            </div>
-            <div class="about-card">
-              <div class="about-card-title">Archive</div>
-              <p>Stash old notes and lists you don't need right now but might want later.</p>
-            </div>
-          </div>
-        </section>
-
-      </div>
-    </template>
-
-    <!-- Note Widget (homepage) -->
-    <template id="pockist-note-widget">
-      <div class="note-widget-container">
-        <div class="note-widget-header">
-          <h2><a href="/note" class="note-heading-link fancy-link">Notes</a></h2>
-          <button class="note-widget-new-btn btn btn-outline-secondary" type="button">+ New Note</button>
-        </div>
-        <div class="note-widget-items"></div>
-        <div class="note-widget-nav-container"></div>
-      </div>
-    </template>
-
-    <!-- Note Index Page (/note) -->
-    <template id="pockist-note-index">
-      <div class="note-index-container">
-        <div class="note-index-header">
-          <h1>Notes</h1>
-          <div class="note-index-controls">
-            <select class="note-index-sort">
-              <option value="updated-desc">Newest updated</option>
-              <option value="created-desc">Newest created</option>
-              <option value="created-asc">Oldest first</option>
-              <option value="title-asc">Title A–Z</option>
-            </select>
-            <button class="note-index-new-btn btn btn-outline-secondary" type="button">+ New Note</button>
-          </div>
-        </div>
-        <div class="note-index-count"></div>
-        <div class="note-index-items"></div>
-        <div class="note-index-empty" style="display: none;">
-          <p>No notes yet.</p>
-          <button class="note-index-empty-new-btn btn btn-outline-secondary" type="button">Create your first note</button>
-        </div>
-      </div>
-    </template>
-
-    <!-- Note Detail Page (/note/:noteId) -->
-    <template id="pockist-note-detail">
-      <div class="note-detail-container">
-        <div class="editor-header">
-          <div class="editor-actions">
-            <button id="back-btn" class="btn btn-outline btn-icon" type="button" title="Back to notes">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M19 12H5"/>
-                <path d="M12 19l-7-7 7-7"/>
-              </svg>
-            </button>
-            <div class="editor-actions-right">
-              <share-button id="editor-share-btn" type="note" data-id="" title=""></share-button>
-              <button id="editor-more-btn" class="btn btn-outline btn-icon" type="button" title="More actions">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <circle cx="12" cy="5" r="1"/>
-                  <circle cx="12" cy="12" r="1"/>
-                  <circle cx="12" cy="19" r="1"/>
-                </svg>
-              </button>
-            </div>
-          </div>
-        </div>
-        <textarea id="note-content" placeholder="Start typing your note..."></textarea>
-        <span id="save-indicator"></span>
-      </div>
-    </template>
-
-    <template id="offline-list">
-      <h1>Offline List</h1>
-      <ul id="list"></ul>
-    </template>
-
-    <template id="weather-page">
-        <div class="weather-page-content">
-            <weather-controls></weather-controls>
-            <weather-current show-city="true"></weather-current>
-            <weather-meta></weather-meta>
-            <weather-map></weather-map>
-            <weather-debug></weather-debug>
-        </div>
-    </template>
-
-    <template id="weather-current">
-        <div class="weather-current-inner">
-            <div class="weather-body">
-                <div class="weather-left">
-                    <div class="city-name skeleton-text">--</div>
-                    <div class="current-condition skeleton-text">--</div>
-                </div>
-                <div class="weather-center">
-                    <div class="current-temp skeleton-text">--°</div>
-                </div>
-                <div class="weather-right">
-                    <div class="weather-stats">
-                        <div class="stat-item">
-                            <span class="stat-label">Humidity</span>
-                            <span class="stat-value humidity skeleton-text">--%</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-label">Rain</span>
-                            <span class="stat-value precipitation skeleton-text">--mm</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-label">Wind</span>
-                            <span class="stat-value wind skeleton-text">--m/s</span>
-                        </div>
+		<template id="about-page">
+			<div class="about-container">
+				<section class="about-section section-divider">
+					<h1>About</h1>
+                    <p>Welcome to my <s>website</s> progressive web app.</p>
+					<p>
+						<a href="https://github.com/tannerr-dev/pockist"
+						>Check out the code!</a>
+					</p>
+                    <div class="about-caution">
+                        <p><i>Alpha pre-release</i></p>
+                        <p><b>Version: 0.1.25</b></p>
+                        <p>This app is in active development and uses the latest broswer APIs.</p>
+                        <p>Some browswer do not support these yet, best experienced on chrome based browsers. Chrome, Brave, Edge, etc.</p>
                     </div>
-                </div>
-            </div>
-        </div>
-    </template>
+				</section>
 
-    <template id="weather-meta">
-        <div class="weather-meta-inner">
-            <div class="section-divider">
-                <div class="meta-grid data-grid data-grid--2">
-                    <div class="meta-item data-row">
-                        <span class="meta-label data-row-label">Latitude</span>
-                        <span class="meta-value data-row-value skeleton-text" data-meta="latitude">--</span>
-                    </div>
-                    <div class="meta-item data-row">
-                        <span class="meta-label data-row-label">Longitude</span>
-                        <span class="meta-value data-row-value skeleton-text" data-meta="longitude">--</span>
-                    </div>
-                </div>
-            </div>
-            <div class="section-divider">
-                <div class="meta-grid data-grid data-grid--2">
-                    <div class="meta-item data-row">
-                        <span class="meta-label data-row-label">Timezone</span>
-                        <span class="meta-value data-row-value skeleton-text" data-meta="timezone">--</span>
-                    </div>
-                    <div class="meta-item data-row">
-                        <span class="meta-label data-row-label">Elevation</span>
-                        <span class="meta-value data-row-value skeleton-text" data-meta="elevation">--</span>
-                    </div>
-                </div>
-            </div>
-            <div class="section-divider">
-                <div class="meta-grid data-grid data-grid--2">
-                    <div class="meta-item data-row">
-                        <span class="meta-label data-row-label">UTC Offset</span>
-                        <span class="meta-value data-row-value skeleton-text" data-meta="utc-offset">--</span>
-                    </div>
-                    <div class="meta-item data-row">
-                        <span class="meta-label data-row-label">Gen Time</span>
-                        <span class="meta-value data-row-value skeleton-text" data-meta="gen-time">--</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </template>
+				<section class="about-section section-divider">
+					<div class="section-label">Privacy</div>
+					<p class="about-lead">
+						Your data lives on <strong>your device</strong> only.
+					</p>
+					<p>
+						Pockist stores everything locally in your browser. No accounts, no
+						tracking, no cloud unless you choose to share or export.
+					</p>
+				</section>
 
-    <template id="weather-map">
-        <div class="weather-map-inner">
-            <div class="section-label">Location</div>
-            <div id="map"></div>
-            <div class="map-attribution">
-                <p><small>Data from <a href="https://open-meteo.com/">Open-Meteo</a> | Maps by <a href="https://leafletjs.com/">Leaflet</a></small></p>
-                <p><small id="mapAttr"></small></p>
-            </div>
-        </div>
-    </template>
+				<section class="about-section section-divider">
+					<div class="section-label">Install</div>
+					<p class="about-lead">Add Pockist to your home screen.</p>
+					<p>
+						Since this is a progressive web app, you can install it like a
+						native app. On mobile, hit "Add to Home Screen" in your browser
+						menu. On desktop, look for the install icon in your address bar.
+					</p>
+				</section>
 
-    <template id="weather-debug">
-        <details class="debug-data">
-            <summary>Debug Data</summary>
-            <pre id="data"></pre>
-        </details>
-    </template>
+				<section class="about-section section-divider">
+					<div class="section-label">How to use</div>
+					<div class="about-cards">
+						<div class="about-card">
+							<div class="about-card-title">Notes</div>
+							<p>
+								Jot down ideas or quick thoughts. Everything saves automatically
+								to your device.
+							</p>
+						</div>
+						<div class="about-card">
+							<div class="about-card-title">Lists</div>
+							<p>
+								Keep track of tasks or groceries. Tap items to check them off,
+								no account needed.
+							</p>
+						</div>
+						<div class="about-card">
+							<div class="about-card-title">Weather</div>
+							<p>
+								Check current conditions and forecasts for any city. Uses your
+								location or a quick search.
+							</p>
+						</div>
+						<div class="about-card">
+							<div class="about-card-title">Archive</div>
+							<p>
+								Stash old notes and lists you don't need right now but might
+								want later.
+							</p>
+						</div>
+					</div>
+				</section>
+			</div>
+		</template>
 
-    <template id="weather-controls">
-        <div class="controls">
-            <input type="text" id="cityInput" placeholder="City Name, State. Saint Paul, MN">
-            <button type="button" class="fetch-btn">Fetch</button>
-            <button type="button" id="unitBtn">°C</button>
-        </div>
-        <div id="error" class="error-message"></div>
-    </template>
+		<!-- Note Widget (homepage) -->
+		<template id="pockist-note-widget">
+			<div class="note-widget-container">
+				<div class="note-widget-header">
+					<h2>
+						<a href="/note" class="note-heading-link fancy-link">Notes</a>
+					</h2>
+					<button
+						class="note-widget-new-btn btn btn-outline-secondary"
+						type="button"
+					>
+						+ New Note
+					</button>
+				</div>
+				<div class="note-widget-items"></div>
+				<div class="note-widget-nav-container"></div>
+			</div>
+		</template>
 
-    <template id="pockist-list">
-      <div class="list-container">
-        <div class="list-selector-row">
-          <h2><a href="/list" class="list-heading-link fancy-link">Lists</a></h2>
-          <div class="list-selector-controls">
-            <button id="list-selector-btn" class="list-selector-btn" title="Select list">
-              <span class="list-selector-name">Loading...</span>
-              <span class="list-selector-arrow">▼</span>
-            </button>
-            <div id="list-actions" class="list-actions">
-              <share-button type="list"></share-button>
-            </div>
-          </div>
-        </div>
-        <div class="list-input-row">
-          <input type="text" id="list-input" placeholder="Add a new item..." autocomplete="off">
-          <button id="add-btn" class="btn btn-outline" type="button">Add</button>
-        </div>
-        <div class="list-scroll-container">
-          <div id="lists-container"></div>
-        </div>
-      </div>
-    </template>
+		<!-- Note Index Page (/note) -->
+		<template id="pockist-note-index">
+			<div class="note-index-container">
+				<div class="note-index-header">
+					<h1>Notes</h1>
+					<div class="note-index-controls">
+						<select class="note-index-sort">
+							<option value="updated-desc">Newest updated</option>
+							<option value="created-desc">Newest created</option>
+							<option value="created-asc">Oldest first</option>
+							<option value="title-asc">Title A–Z</option>
+						</select>
+						<button
+							class="note-index-new-btn btn btn-outline-secondary"
+							type="button"
+						>
+							+ New Note
+						</button>
+					</div>
+				</div>
+				<div class="note-index-count"></div>
+				<div class="note-index-items"></div>
+				<div class="note-index-empty" style="display: none">
+					<p>No notes yet.</p>
+					<button
+						class="note-index-empty-new-btn btn btn-outline-secondary"
+						type="button"
+					>
+						Create your first note
+					</button>
+				</div>
+			</div>
+		</template>
 
-    <template id="pockist-list-widget">
-      <div class="list-container list-widget">
-        <div class="list-selector-row">
-          <h2><a href="/list" class="list-heading-link fancy-link">Lists</a></h2>
-          <div class="list-selector-controls">
-            <button id="list-shortcut-btn" class="btn btn-icon list-shortcut-btn" type="button" title="Open list">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="7 17 17 7"/>
-                <polyline points="7 7 17 7 17 17"/>
-              </svg>
-            </button>
-            <button id="list-selector-btn" class="list-selector-btn" title="Select list">
-              <span class="list-selector-name">Loading...</span>
-              <span class="list-selector-arrow">▼</span>
-            </button>
-            <div id="list-actions" class="list-actions">
-              <share-button type="list"></share-button>
-            </div>
-            <button id="list-more-btn" class="btn btn-outline btn-icon list-widget-more-btn" type="button" title="More actions">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="5" r="1"/>
-                <circle cx="12" cy="12" r="1"/>
-                <circle cx="12" cy="19" r="1"/>
-              </svg>
-            </button>
-          </div>
-        </div>
-        <form class="list-input-row" id="list-input-form">
-          <input type="text" id="list-input" placeholder="Add a new item..." autocomplete="off">
-          <button id="add-btn" class="btn btn-outline" type="submit">Add</button>
-        </form>
-        <div id="lists-container" class="list-widget-slots"></div>
-        <div class="list-widget-nav-container"></div>
-      </div>
-    </template>
+		<!-- Note Detail Page (/note/:noteId) -->
+		<template id="pockist-note-detail">
+			<div class="note-detail-container">
+				<div class="editor-header">
+					<div class="editor-actions">
+						<button
+							id="back-btn"
+							class="btn btn-outline btn-icon"
+							type="button"
+							title="Back to notes"
+						>
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								width="20"
+								height="20"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="2"
+								stroke-linecap="round"
+								stroke-linejoin="round"
+							>
+								<path d="M19 12H5" />
+								<path d="M12 19l-7-7 7-7" />
+							</svg>
+						</button>
+						<div class="editor-actions-right">
+							<share-button
+								id="editor-share-btn"
+								type="note"
+								data-id=""
+								title=""
+							></share-button>
+							<button
+								id="editor-more-btn"
+								class="btn btn-outline btn-icon"
+								type="button"
+								title="More actions"
+							>
+								<svg
+									xmlns="http://www.w3.org/2000/svg"
+									width="20"
+									height="20"
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="currentColor"
+									stroke-width="2"
+									stroke-linecap="round"
+									stroke-linejoin="round"
+								>
+									<circle cx="12" cy="5" r="1" />
+									<circle cx="12" cy="12" r="1" />
+									<circle cx="12" cy="19" r="1" />
+								</svg>
+							</button>
+						</div>
+					</div>
+				</div>
+				<textarea
+					id="note-content"
+					placeholder="Start typing your note..."
+				></textarea>
+				<span id="save-indicator"></span>
+			</div>
+		</template>
 
-    <template id="pockist-list-page">
-      <h1>Lists</h1>
-      <pockist-list></pockist-list>
-    </template>
+		<template id="offline-list">
+			<h1>Offline List</h1>
+			<ul id="list"></ul>
+		</template>
 
-    <template id="pockist-list-index">
-      <div class="lists-index-container">
-        <div class="lists-index-header">
-          <h1>Lists</h1>
-          <button class="lists-index-new-btn btn btn-outline-secondary" type="button">+ New List</button>
-        </div>
-        <div class="lists-index-grid"></div>
-        <div class="lists-index-empty" style="display: none;">
-          <p>No lists yet.</p>
-          <button class="lists-index-new-btn-empty btn btn-outline-secondary" type="button">Create your first list</button>
-        </div>
-      </div>
-    </template>
+		<template id="weather-page">
+			<div class="weather-page-content">
+				<weather-controls></weather-controls>
+				<weather-current show-city="true"></weather-current>
+				<weather-meta></weather-meta>
+				<weather-map></weather-map>
+				<weather-debug></weather-debug>
+			</div>
+		</template>
 
-    <template id="pockist-list-detail">
-      <div class="list-detail-container">
-        <div class="list-detail-header">
-          <button class="list-detail-back btn btn-outline btn-icon" type="button" title="Back">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M19 12H5"/>
-              <path d="M12 19l-7-7 7-7"/>
-            </svg>
-          </button>
-          <h2 class="list-detail-heading" contenteditable="true"></h2>
-          <share-button type="list" class="list-detail-share-btn"></share-button>
-          <button class="list-detail-more-btn btn btn-outline btn-icon" type="button" title="More actions">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="5" r="1"/>
-              <circle cx="12" cy="12" r="1"/>
-              <circle cx="12" cy="19" r="1"/>
-            </svg>
-          </button>
-        </div>
-        <pockist-list></pockist-list>
-      </div>
-    </template>
+		<template id="weather-current">
+			<div class="weather-current-inner">
+				<div class="weather-body">
+					<div class="weather-left">
+						<div class="city-name skeleton-text">--</div>
+						<div class="current-condition skeleton-text">--</div>
+					</div>
+					<div class="weather-center">
+						<div class="current-temp skeleton-text">--°</div>
+					</div>
+					<div class="weather-right">
+						<div class="weather-stats">
+							<div class="stat-item">
+								<span class="stat-label">Humidity</span>
+								<span class="stat-value humidity skeleton-text">--%</span>
+							</div>
+							<div class="stat-item">
+								<span class="stat-label">Rain</span>
+								<span class="stat-value precipitation skeleton-text">--mm</span>
+							</div>
+							<div class="stat-item">
+								<span class="stat-label">Wind</span>
+								<span class="stat-value wind skeleton-text">--m/s</span>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</template>
 
-    <template id="home-settings-drawer">
-      <button class="settings-back" type="button">&larr; Back</button>
-      <span class="drawer-section-title">Homepage Settings</span>
-      <div class="settings-widgets-list"></div>
-      <div class="drawer-divider"></div>
-      <button class="drawer-btn drawer-btn--import" type="button">Reset to Defaults</button>
-    </template>
+		<template id="weather-meta">
+			<div class="weather-meta-inner">
+				<div class="section-divider">
+					<div class="meta-grid data-grid data-grid--2">
+						<div class="meta-item data-row">
+							<span class="meta-label data-row-label">Latitude</span>
+							<span
+								class="meta-value data-row-value skeleton-text"
+								data-meta="latitude"
+							>--</span>
+						</div>
+						<div class="meta-item data-row">
+							<span class="meta-label data-row-label">Longitude</span>
+							<span
+								class="meta-value data-row-value skeleton-text"
+								data-meta="longitude"
+							>--</span>
+						</div>
+					</div>
+				</div>
+				<div class="section-divider">
+					<div class="meta-grid data-grid data-grid--2">
+						<div class="meta-item data-row">
+							<span class="meta-label data-row-label">Timezone</span>
+							<span
+								class="meta-value data-row-value skeleton-text"
+								data-meta="timezone"
+							>--</span>
+						</div>
+						<div class="meta-item data-row">
+							<span class="meta-label data-row-label">Elevation</span>
+							<span
+								class="meta-value data-row-value skeleton-text"
+								data-meta="elevation"
+							>--</span>
+						</div>
+					</div>
+				</div>
+				<div class="section-divider">
+					<div class="meta-grid data-grid data-grid--2">
+						<div class="meta-item data-row">
+							<span class="meta-label data-row-label">UTC Offset</span>
+							<span
+								class="meta-value data-row-value skeleton-text"
+								data-meta="utc-offset"
+							>--</span>
+						</div>
+						<div class="meta-item data-row">
+							<span class="meta-label data-row-label">Gen Time</span>
+							<span
+								class="meta-value data-row-value skeleton-text"
+								data-meta="gen-time"
+							>--</span>
+						</div>
+					</div>
+				</div>
+			</div>
+		</template>
 
-    <template id="pockist-archive">
-      <div class="archive-container">
-        <h1>Archive</h1>
-        <div class="archive-empty" style="display: none;">
-          <p>Nothing archived yet.</p>
-        </div>
-        <div class="archive-section archive-section--notes">
-          <h2 class="archive-section-heading">Notes</h2>
-          <div class="archive-list"></div>
-        </div>
-        <div class="archive-section archive-section--lists">
-          <h2 class="archive-section-heading">Lists</h2>
-          <div class="archive-list"></div>
-        </div>
-        <div class="archive-section archive-section--items">
-          <h2 class="archive-section-heading">List Items</h2>
-          <div class="archive-list"></div>
-        </div>
-      </div>
-    </template>
+		<template id="weather-map">
+			<div class="weather-map-inner">
+				<div class="section-label">Location</div>
+				<div id="map"></div>
+				<div class="map-attribution">
+					<p>
+						<small>Data from <a href="https://open-meteo.com/">Open-Meteo</a> |
+							Maps by <a href="https://leafletjs.com/">Leaflet</a></small>
+					</p>
+					<p><small id="mapAttr"></small></p>
+				</div>
+			</div>
+		</template>
 
-    <script src="/app.js" type="module"></script>
-  </body>
+		<template id="weather-debug">
+			<details class="debug-data">
+				<summary>Debug Data</summary>
+				<pre id="data"></pre>
+			</details>
+		</template>
+
+		<template id="weather-controls">
+			<div class="controls">
+				<input
+					type="text"
+					id="cityInput"
+					placeholder="City Name, State. Saint Paul, MN"
+				>
+				<button type="button" class="fetch-btn">Fetch</button>
+				<button type="button" id="unitBtn">°C</button>
+			</div>
+			<div id="error" class="error-message"></div>
+		</template>
+
+		<template id="pockist-list">
+			<div class="list-container">
+				<div class="list-selector-row">
+					<h2>
+						<a href="/list" class="list-heading-link fancy-link">Lists</a>
+					</h2>
+					<div class="list-selector-controls">
+						<button
+							id="list-selector-btn"
+							class="list-selector-btn"
+							title="Select list"
+						>
+							<span class="list-selector-name">Loading...</span>
+							<span class="list-selector-arrow">▼</span>
+						</button>
+						<div id="list-actions" class="list-actions">
+							<share-button type="list"></share-button>
+						</div>
+					</div>
+				</div>
+				<div class="list-input-row">
+					<input
+						type="text"
+						id="list-input"
+						placeholder="Add a new item..."
+						autocomplete="off"
+					>
+					<button id="add-btn" class="btn btn-outline" type="button">
+						Add
+					</button>
+				</div>
+				<div class="list-scroll-container">
+					<div id="lists-container"></div>
+				</div>
+			</div>
+		</template>
+
+		<template id="pockist-list-widget">
+			<div class="list-container list-widget">
+				<div class="list-selector-row">
+					<h2>
+						<a href="/list" class="list-heading-link fancy-link">Lists</a>
+					</h2>
+					<div class="list-selector-controls">
+						<button
+							id="list-shortcut-btn"
+							class="btn btn-icon list-shortcut-btn"
+							type="button"
+							title="Open list"
+						>
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								width="20"
+								height="20"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="2"
+								stroke-linecap="round"
+								stroke-linejoin="round"
+							>
+								<polyline points="7 17 17 7" />
+								<polyline points="7 7 17 7 17 17" />
+							</svg>
+						</button>
+						<button
+							id="list-selector-btn"
+							class="list-selector-btn"
+							title="Select list"
+						>
+							<span class="list-selector-name">Loading...</span>
+							<span class="list-selector-arrow">▼</span>
+						</button>
+						<div id="list-actions" class="list-actions">
+							<share-button type="list"></share-button>
+						</div>
+						<button
+							id="list-more-btn"
+							class="btn btn-outline btn-icon list-widget-more-btn"
+							type="button"
+							title="More actions"
+						>
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								width="20"
+								height="20"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="2"
+								stroke-linecap="round"
+								stroke-linejoin="round"
+							>
+								<circle cx="12" cy="5" r="1" />
+								<circle cx="12" cy="12" r="1" />
+								<circle cx="12" cy="19" r="1" />
+							</svg>
+						</button>
+					</div>
+				</div>
+				<form class="list-input-row" id="list-input-form">
+					<input
+						type="text"
+						id="list-input"
+						placeholder="Add a new item..."
+						autocomplete="off"
+					>
+					<button id="add-btn" class="btn btn-outline" type="submit">
+						Add
+					</button>
+				</form>
+				<div id="lists-container" class="list-widget-slots"></div>
+				<div class="list-widget-nav-container"></div>
+			</div>
+		</template>
+
+		<template id="pockist-list-page">
+			<h1>Lists</h1>
+			<pockist-list></pockist-list>
+		</template>
+
+		<template id="pockist-list-index">
+			<div class="lists-index-container">
+				<div class="lists-index-header">
+					<h1>Lists</h1>
+					<button
+						class="lists-index-new-btn btn btn-outline-secondary"
+						type="button"
+					>
+						+ New List
+					</button>
+				</div>
+				<div class="lists-index-grid"></div>
+				<div class="lists-index-empty" style="display: none">
+					<p>No lists yet.</p>
+					<button
+						class="lists-index-new-btn-empty btn btn-outline-secondary"
+						type="button"
+					>
+						Create your first list
+					</button>
+				</div>
+			</div>
+		</template>
+
+		<template id="pockist-list-detail">
+			<div class="list-detail-container">
+				<div class="list-detail-header">
+					<button
+						class="list-detail-back btn btn-outline btn-icon"
+						type="button"
+						title="Back"
+					>
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							width="20"
+							height="20"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+							stroke-linecap="round"
+							stroke-linejoin="round"
+						>
+							<path d="M19 12H5" />
+							<path d="M12 19l-7-7 7-7" />
+						</svg>
+					</button>
+					<h2 class="list-detail-heading" contenteditable="true"></h2>
+					<share-button
+						type="list"
+						class="list-detail-share-btn"
+					></share-button>
+					<button
+						class="list-detail-more-btn btn btn-outline btn-icon"
+						type="button"
+						title="More actions"
+					>
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							width="20"
+							height="20"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+							stroke-linecap="round"
+							stroke-linejoin="round"
+						>
+							<circle cx="12" cy="5" r="1" />
+							<circle cx="12" cy="12" r="1" />
+							<circle cx="12" cy="19" r="1" />
+						</svg>
+					</button>
+				</div>
+				<pockist-list></pockist-list>
+			</div>
+		</template>
+
+		<template id="home-settings-drawer">
+			<button class="settings-back" type="button">&larr; Back</button>
+			<span class="drawer-section-title">Homepage Settings</span>
+			<div class="settings-widgets-list"></div>
+			<div class="drawer-divider"></div>
+			<button class="drawer-btn drawer-btn--import" type="button">
+				Reset to Defaults
+			</button>
+		</template>
+
+		<template id="pockist-archive">
+			<div class="archive-container">
+				<h1>Archive</h1>
+				<div class="archive-empty" style="display: none">
+					<p>Nothing archived yet.</p>
+				</div>
+				<div class="archive-section archive-section--notes">
+					<h2 class="archive-section-heading">Notes</h2>
+					<div class="archive-list"></div>
+				</div>
+				<div class="archive-section archive-section--lists">
+					<h2 class="archive-section-heading">Lists</h2>
+					<div class="archive-list"></div>
+				</div>
+				<div class="archive-section archive-section--items">
+					<h2 class="archive-section-heading">List Items</h2>
+					<div class="archive-list"></div>
+				</div>
+			</div>
+		</template>
+
+		<script src="/app.js" type="module"></script>
+	</body>
 </html>
