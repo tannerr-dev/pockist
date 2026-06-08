@@ -26,6 +26,7 @@
 
 	--success: hsl(var(--secondary-hue), calc(50% * var(--mod)), 45%);
 	--success-hover: hsl(var(--secondary-hue), calc(50% * var(--mod)), 55%);
+	--warning: hsl(45, calc(80% * 1), 50%);
 }
 [data-theme="light"] {
 	--bg: hsl(var(--hue), calc(20% * var(--mod)), 88%);
@@ -353,6 +354,25 @@ home-page{
 
 .btn-icon {
     padding: 10px;
+}
+
+.about-caution {
+    background-color: color-mix(in srgb, var(--warning) 12%, var(--bg));
+    border: 1px solid color-mix(in srgb, var(--warning) 40%, var(--border-color));
+    border-left: 4px solid var(--warning);
+    color: var(--text);
+    padding: 16px;
+    border-radius: 8px;
+    margin: 16px 0;
+}
+
+.about-caution p {
+    margin: 0 0 8px 0;
+    line-height: 1.5;
+}
+
+.about-caution p:last-child {
+    margin-bottom: 0;
 }
 
 .share-btn {
