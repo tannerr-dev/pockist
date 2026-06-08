@@ -738,7 +738,6 @@
 	margin-bottom: 16px;
 	padding: 16px 0;
 	border-bottom: 1px solid var(--border-color);
-	flex-wrap: wrap;
 }
 
 .list-detail-heading {
@@ -746,6 +745,8 @@
 	font-size: 20px;
 	color: var(--text);
 	word-break: break-word;
+	flex: 1;
+	min-width: 0;
 	padding: 4px 8px;
 	margin: -4px -8px;
 	border-radius: 4px;
