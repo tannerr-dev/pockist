@@ -79,10 +79,36 @@
     margin-top: 2px;
 }
 
+.archive-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 16px;
+}
+
+.archive-delete-all-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+}
+
+.archive-row-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
 .archive-restore-btn {
     flex-shrink: 0;
     font-size: 13px;
     padding: 6px 14px;
+}
+
+.archive-delete-btn {
+    flex-shrink: 0;
+    font-size: 13px;
+    padding: 6px 10px;
 }
 
 @media (max-width: 640px) {
