@@ -121,6 +121,11 @@
   height: 20px;
 }
 
+.legend-icon--fill svg {
+  width: 24px;
+  height: 24px;
+}
+
 .legend-label {
   font-size: 12px;
   color: var(--text-muted);
