@@ -4,12 +4,12 @@
   "description": "Your personal pocket assistant for everyday tasks",
   "icons": [
     {
-      "src": "assets/logo.png",
+      "src": "assets/logo_white.png",
       "type": "image/png",
       "sizes": "192x192"
     },
     {
-      "src": "assets/logo.png",
+      "src": "assets/logo_white.png",
       "type": "image/png",
       "sizes": "512x512",
       "purpose": "maskable"
