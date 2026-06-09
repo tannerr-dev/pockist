@@ -1,6 +1,6 @@
 console.log("Service Worker loaded.");
 
-const CACHE_NAME = "27";
+const CACHE_NAME = "28";
 
 self.addEventListener("install", function (event) {
 	event.waitUntil(
