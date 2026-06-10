@@ -216,3 +216,55 @@ body.showing-welcome home-settings-drawer,
 body.showing-welcome main {
   display: none !important;
 }
+
+/* ───────────────────────────────────────────────
+   Changelog
+   ─────────────────────────────────────────────── */
+
+.changelog-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.changelog-entry {
+  background: var(--bg-2);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.changelog-date {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.changelog-entry ul {
+  margin: 0;
+  padding-left: 18px;
+  list-style: disc;
+}
+
+.changelog-entry li {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+  line-height: 1.5;
+}
+
+.changelog-entry li:last-child {
+  margin-bottom: 0;
+}
+
+.changelog-entry code {
+  font-family: monospace;
+  font-size: 12px;
+  background: var(--bg-3);
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: var(--text);
+}
