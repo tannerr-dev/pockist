@@ -255,4 +255,34 @@ When importing a full backup:
 
 ---
 
+## Full-Text Search
+
+Pockist supports searching across all notes, lists, and list items from any page.
+
+### Features
+
+- **Universal Scope**: Search matches note content, list names, and individual list item text
+- **Multi-term Matching**: Splits query on whitespace; all terms must match (AND logic)
+- **Archived Items**: Archived notes and items appear in search results with an "Archived" badge
+- **Text Highlighting**: Matching terms are highlighted in the search results
+- **Keyboard Shortcut**: Press `/` on desktop to instantly focus the search input
+- **Parent Navigation**: Clicking a list item result navigates to its parent list and scrolls to / highlights the item
+
+### How It Works
+
+1. **Trigger**: Click the search icon in the top nav, or press `/`
+2. **Search Overlay**: A popover panel appears with a live search input
+3. **Debounced Results**: Search runs 200ms after you stop typing
+4. **Grouped Results**: Results are grouped by type — Notes, Lists, List Items — each with a count
+5. **Navigation**: Click any result to jump directly to it
+
+### Implementation
+
+- **Frontend only**: Search runs entirely in the browser via IndexedDB
+- `DBManager.searchItems(query)` — fetches all items, builds a **reverse parent lookup Map** once per search (itemId → list), then filters by matching terms
+- `SearchPopover` component — overlay UI with debounced search, highlighting, and result grouping
+- `ListBase._checkScrollToItem()` — after navigating to a list from a search result, scrolls to the target item and plays a brief pulse highlight animation
+
+---
+
 

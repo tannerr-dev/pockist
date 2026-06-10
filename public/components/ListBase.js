@@ -1017,6 +1017,32 @@ export class ListBase extends HTMLElement {
 		}
 
 		this._renderContent();
+		this._checkScrollToItem();
+	}
+
+	_checkScrollToItem() {
+		try {
+			const targetId = sessionStorage.getItem('scrollToItem');
+			if (!targetId) return;
+			sessionStorage.removeItem('scrollToItem');
+
+			// Only proceed if this list contains the target item
+			const hasItem = this._linkedItems.some(i => i.id === targetId);
+			if (!hasItem) return;
+
+			requestAnimationFrame(() => {
+				const el = this._listsContainerEl.querySelector(`list-item[item-id="${targetId}"]`);
+				if (!el) return;
+
+				el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+				el.classList.add('search-highlight');
+				setTimeout(() => {
+					el.classList.remove('search-highlight');
+				}, 1500);
+			});
+		} catch (e) {
+			console.error('[ListBase] Scroll-to-item error:', e);
+		}
 	}
 
 	_createItemElement(item, index, total) {

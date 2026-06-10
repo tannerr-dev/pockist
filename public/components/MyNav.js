@@ -156,6 +156,14 @@ export class MyNav extends HTMLElement {
                 }
             });
         }
+
+        const searchBtn = document.getElementById('nav-search-btn');
+        if (searchBtn) {
+            searchBtn.addEventListener('click', () => {
+                const popover = document.querySelector('search-popover');
+                if (popover) popover.open();
+            });
+        }
     }
 }
 

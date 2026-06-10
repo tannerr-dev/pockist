@@ -65,6 +65,7 @@
 			}
 		</script>
 		<my-nav></my-nav>
+		<search-popover></search-popover>
 		<home-settings-drawer></home-settings-drawer>
 		<main></main>
 
@@ -98,6 +99,9 @@
 				</a>
 			</div>
 			<div id="options" class="flex-row">
+				<button class="nav-search-btn" type="button" title="Search (/)" id="nav-search-btn">
+					<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
+				</button>
 				<div class="menu-wrapper">
 					<button class="menu" popovertarget="drawer">
 						<div class="bar1"></div>
@@ -423,6 +427,15 @@
 				<section class="about-section section-divider">
 					<div class="section-label">Changelog</div>
 					<div class="changelog-list">
+						<div class="changelog-entry">
+							<div class="changelog-date">2026-06-10</div>
+							<ul>
+								<li>Full-text search across notes, lists, and list items</li>
+								<li>Search icon in nav bar with <code>/</code> keyboard shortcut on desktop</li>
+								<li>Results grouped by type with archived badges and text highlighting</li>
+								<li>Clicking a list item result navigates to its parent list and scrolls to it</li>
+							</ul>
+						</div>
 						<div class="changelog-entry">
 							<div class="changelog-date">2026-06-09</div>
 							<ul>

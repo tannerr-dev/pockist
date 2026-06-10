@@ -6,6 +6,7 @@ import { ImportExportService } from "./services/ImportExportService.js";
 import './components/ShareView.js';
 import './components/HomeSettingsDrawer.js';
 import './components/MyNav.js';
+import './components/SearchPopover.js';
 import './components/WelcomeSplash.js';
 
 // navigator.serviceWorker.addEventListener("message", (event) => {

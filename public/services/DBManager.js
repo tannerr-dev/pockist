@@ -130,6 +130,52 @@ export class DBManager {
         });
     }
 
+    static async searchItems(query) {
+        await this.init();
+        const allItems = await this.getAllItems();
+        const terms = query.toLowerCase().trim().split(/\s+/).filter(t => t.length > 0);
+        if (terms.length === 0) return [];
+
+        // Build reverse lookup once: itemId -> { listId, listName }
+        const parentMap = new Map();
+        for (const item of allItems) {
+            if (item.type !== 'list') continue;
+            for (const ref of item.items || []) {
+                if (!parentMap.has(ref.id)) {
+                    parentMap.set(ref.id, { id: item.id, name: item.content || 'Unnamed List' });
+                }
+            }
+        }
+
+        const results = [];
+        for (const item of allItems) {
+            const content = (item.content || '').toLowerCase();
+            const matches = terms.every(term => content.includes(term));
+            if (!matches) continue;
+
+            let parentId = null;
+            let parentName = null;
+            if (item.type === 'item') {
+                const parent = parentMap.get(item.id);
+                if (parent) {
+                    parentId = parent.id;
+                    parentName = parent.name;
+                }
+            }
+
+            results.push({
+                id: item.id,
+                type: item.type,
+                content: item.content || '',
+                meta: item.meta || {},
+                parentId,
+                parentName
+            });
+        }
+
+        return results;
+    }
+
     static async getListItems(listId) {
         const list = await this.getItem(listId);
         if (!list || !Array.isArray(list.items)) return [];
