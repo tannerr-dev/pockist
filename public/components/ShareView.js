@@ -150,9 +150,9 @@ export class ShareView extends HTMLElement {
                 .filter(i => i.type === 'item')
                 .sort((a, b) => {
                     const listItem = this.shareData.data.items.find(li => li.type === 'list');
-                    const links = listItem?.links || [];
-                    const orderA = links.find(l => l.id === a.id)?.order || 0;
-                    const orderB = links.find(l => l.id === b.id)?.order || 0;
+                    const items = listItem?.items || [];
+                    const orderA = items.find(l => l.id === a.id)?.order || 0;
+                    const orderB = items.find(l => l.id === b.id)?.order || 0;
                     return orderA - orderB;
                 })
                 .map(item => ({
@@ -324,6 +324,7 @@ export class ShareView extends HTMLElement {
                     type: 'note',
                     content: ((note.title ? note.title + '\n' : '') + (note.content || '')).trim(),
                     links: [],
+                    items: [],
                     meta: {
                         createdAt: note.createdAt || new Date().toISOString(),
                         updatedAt: note.updatedAt || new Date().toISOString()
@@ -347,6 +348,7 @@ export class ShareView extends HTMLElement {
                     type: 'item',
                     content: String(todo.text || ''),
                     links: [],
+                    items: [],
                     meta: {
                         createdAt: new Date(todo.createdAt || Date.now()).toISOString(),
                         updatedAt: new Date().toISOString(),
@@ -358,7 +360,8 @@ export class ShareView extends HTMLElement {
                     id: String(list.id),
                     type: 'list',
                     content: String(list.name || ''),
-                    links: linkedItems.map((li, i) => ({ id: li.id, order: i })),
+                    links: [],
+                    items: linkedItems.map((li, i) => ({ id: li.id, order: i })),
                     meta: {
                         createdAt: new Date(list.createdAt || Date.now()).toISOString(),
                         updatedAt: new Date(list.updatedAt || Date.now()).toISOString(),

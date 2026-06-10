@@ -80,8 +80,8 @@ export class ImportExportService {
 
         // For lists, include all linked items so the export is self-contained
         let items = [item];
-        if (item.type === 'list' && Array.isArray(item.links) && item.links.length > 0) {
-            const linked = await DBManager.getLinkedItems(item.id);
+        if (item.type === 'list' && Array.isArray(item.items) && item.items.length > 0) {
+            const linked = await DBManager.getListItems(item.id);
             items = [item, ...linked];
         }
 
@@ -152,7 +152,7 @@ export class ImportExportService {
      * @private
      */
     static async #listToMarkdown(item) {
-        const linkedItems = await DBManager.getLinkedItems(item.id);
+        const linkedItems = await DBManager.getListItems(item.id);
         return this.#listToMarkdownFromData(item, linkedItems);
     }
 
@@ -341,10 +341,10 @@ export class ImportExportService {
                 if (idMap.has(item.id)) {
                     itemToSave.id = idMap.get(item.id);
                 }
-                if (Array.isArray(itemToSave.links)) {
-                    itemToSave.links = itemToSave.links.map(link => ({
-                        ...link,
-                        id: idMap.has(link.id) ? idMap.get(link.id) : link.id
+                if (Array.isArray(itemToSave.items)) {
+                    itemToSave.items = itemToSave.items.map(itemRef => ({
+                        ...itemRef,
+                        id: idMap.has(itemRef.id) ? idMap.get(itemRef.id) : itemRef.id
                     }));
                 }
                 await DBManager.saveItem(itemToSave);
@@ -371,10 +371,10 @@ export class ImportExportService {
                 }
             } else if (target.type === 'list') {
                 const importedLinked = items.filter(i => i.type === 'item');
-                const existingLinks = target.links || [];
-                const newLinks = [...existingLinks];
-                let maxOrder = existingLinks.length > 0
-                    ? Math.max(...existingLinks.map(l => l.order || 0))
+                const existingItems = target.items || [];
+                const newItems = [...existingItems];
+                let maxOrder = existingItems.length > 0
+                    ? Math.max(...existingItems.map(l => l.order || 0))
                     : -1;
 
                 for (const linkedItem of importedLinked) {
@@ -384,11 +384,11 @@ export class ImportExportService {
                         itemToSave.id = `${linkedItem.id}-imported-${Date.now()}`;
                     }
                     await DBManager.saveItem(itemToSave);
-                    newLinks.push({ id: itemToSave.id, order: ++maxOrder });
+                    newItems.push({ id: itemToSave.id, order: ++maxOrder });
                     itemsImported++;
                 }
 
-                target.links = newLinks;
+                target.items = newItems;
                 target.meta = { ...target.meta, updatedAt: new Date().toISOString() };
                 await DBManager.saveItem(target);
                 listsImported++;
@@ -401,15 +401,15 @@ export class ImportExportService {
             if (!target || target.type !== 'list') throw new Error('Target list not found');
 
             const importedLinked = items.filter(i => i.type === 'item');
-            const existingLinkedItems = await DBManager.getLinkedItems(targetId);
+            const existingLinkedItems = await DBManager.getListItems(targetId);
             const existingTexts = new Set(
                 existingLinkedItems.map(i => (i.content || '').trim().toLowerCase())
             );
 
-            const existingLinks = target.links || [];
-            const newLinks = [...existingLinks];
-            let maxOrder = existingLinks.length > 0
-                ? Math.max(...existingLinks.map(l => l.order || 0))
+            const existingItems = target.items || [];
+            const newItems = [...existingItems];
+            let maxOrder = existingItems.length > 0
+                ? Math.max(...existingItems.map(l => l.order || 0))
                 : -1;
 
             for (const linkedItem of importedLinked) {
@@ -425,11 +425,11 @@ export class ImportExportService {
                     itemToSave.id = `${linkedItem.id}-imported-${Date.now()}`;
                 }
                 await DBManager.saveItem(itemToSave);
-                newLinks.push({ id: itemToSave.id, order: ++maxOrder });
+                newItems.push({ id: itemToSave.id, order: ++maxOrder });
                 itemsImported++;
             }
 
-            target.links = newLinks;
+            target.items = newItems;
             target.meta = { ...target.meta, updatedAt: new Date().toISOString() };
             await DBManager.saveItem(target);
             listsImported++;
@@ -470,6 +470,7 @@ export class ImportExportService {
                 type: 'note',
                 content,
                 links: [],
+                items: [],
                 meta: {
                     createdAt: note.createdAt || new Date().toISOString(),
                     updatedAt: note.updatedAt || new Date().toISOString(),
@@ -482,7 +483,7 @@ export class ImportExportService {
         for (const list of lists) {
             if (!list || !list.id) continue;
 
-            const links = [];
+            const listItems = [];
             const linkedItems = [];
 
             if (Array.isArray(list.todos)) {
@@ -495,6 +496,7 @@ export class ImportExportService {
                         type: 'item',
                         content: String(todo.text || ''),
                         links: [],
+                        items: [],
                         meta: {
                             createdAt: new Date(todo.createdAt || Date.now()).toISOString(),
                             updatedAt: new Date().toISOString(),
@@ -503,7 +505,7 @@ export class ImportExportService {
                         }
                     });
 
-                    links.push({ id: todoId, order: i });
+                    listItems.push({ id: todoId, order: i });
                 }
             }
 
@@ -511,7 +513,8 @@ export class ImportExportService {
                 id: String(list.id),
                 type: 'list',
                 content: String(list.name || ''),
-                links,
+                links: [],
+                items: listItems,
                 meta: {
                     createdAt: new Date(list.createdAt || Date.now()).toISOString(),
                     updatedAt: new Date(list.updatedAt || Date.now()).toISOString(),

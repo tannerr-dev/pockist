@@ -123,7 +123,7 @@ export class ArchivePage extends HTMLElement {
 		try {
 			const allLists = await DBManager.getItems({ type: 'list', archived: false });
 			for (const list of allLists) {
-				if (list.links?.some(l => l.id === itemId)) {
+				if (list.items?.some(l => l.id === itemId)) {
 					return `in "${list.content || 'Unnamed List'}"`;
 				}
 			}
@@ -190,7 +190,7 @@ export class ArchivePage extends HTMLElement {
 
 			if (item.type === 'list') {
 				// Delete linked items first, then the list
-				const linkedItems = await DBManager.getLinkedItems(itemId);
+				const linkedItems = await DBManager.getListItems(itemId);
 				for (const linked of linkedItems) {
 					await DBManager.hardDeleteItem(linked.id);
 				}
@@ -199,9 +199,9 @@ export class ArchivePage extends HTMLElement {
 				// Remove from any parent lists first
 				const allLists = await DBManager.getItems({ type: 'list' });
 				for (const list of allLists) {
-					if (list.links?.some(l => l.id === itemId)) {
-						list.links = list.links.filter(l => l.id !== itemId);
-						list.links.forEach((l, i) => { l.order = i; });
+					if (list.items?.some(l => l.id === itemId)) {
+						list.items = list.items.filter(l => l.id !== itemId);
+						list.items.forEach((l, i) => { l.order = i; });
 						list.meta = { ...list.meta, updatedAt: new Date().toISOString() };
 						await DBManager.saveItem(list);
 					}
@@ -238,7 +238,7 @@ export class ArchivePage extends HTMLElement {
 			for (const item of this._archivedItems) {
 				if (item.type === 'list') {
 					// Delete linked items first, then the list
-					const linkedItems = await DBManager.getLinkedItems(item.id);
+					const linkedItems = await DBManager.getListItems(item.id);
 					for (const linked of linkedItems) {
 						await DBManager.hardDeleteItem(linked.id);
 					}
@@ -246,10 +246,10 @@ export class ArchivePage extends HTMLElement {
 				} else if (item.type === 'item') {
 					// Queue parent list cleanup
 					for (const list of allLists) {
-						if (list.links?.some(l => l.id === item.id)) {
-							const workingList = listsToSave.get(list.id) || { ...list, links: [...list.links] };
-							workingList.links = workingList.links.filter(l => l.id !== item.id);
-							workingList.links.forEach((l, i) => { l.order = i; });
+						if (list.items?.some(l => l.id === item.id)) {
+							const workingList = listsToSave.get(list.id) || { ...list, items: [...list.items] };
+							workingList.items = workingList.items.filter(l => l.id !== item.id);
+							workingList.items.forEach((l, i) => { l.order = i; });
 							workingList.meta = { ...workingList.meta, updatedAt: new Date().toISOString() };
 							listsToSave.set(list.id, workingList);
 						}

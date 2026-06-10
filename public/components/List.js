@@ -89,7 +89,7 @@ export class List extends ListBase {
 		const targetItem = items[newIndex];
 		if (!targetItem || targetItem === currentItem) {
 			// newIndex may be out of bounds when there are archived items in the list
-			// (links.length includes archived items, but DOM items do not).
+			// (items.length includes archived items, but DOM items do not).
 			// Fall back to appending/prepending when the target is missing.
 			if (newIndex >= items.length && currentItem !== items[items.length - 1]) {
 				currentItem.parentNode.appendChild(currentItem);

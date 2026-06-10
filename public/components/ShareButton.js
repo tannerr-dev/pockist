@@ -66,7 +66,7 @@ export class ShareButton extends HTMLElement {
                 if (!item) {
                     throw new Error('List not found');
                 }
-                const linked = await DBManager.getLinkedItems(this.itemId);
+                const linked = await DBManager.getListItems(this.itemId);
                 shareData = {
                     items: [item, ...linked]
                 };

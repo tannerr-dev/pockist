@@ -61,6 +61,16 @@ window.addEventListener("DOMContentLoaded", async () => {
         // Continue anyway
     }
 
+    try {
+        // console.log('[App] Step 5: Running migrateToItemsArray (v9 -> v10)...');
+        const itemsArrayResult = await DBManager.migrateToItemsArray();
+        // console.log('[App] migrateToItemsArray result:', itemsArrayResult);
+    } catch (err) {
+        console.error("[App] migrateToItemsArray failed:", err);
+        console.error("[App] Error stack:", err.stack);
+        // Continue anyway
+    }
+
     // console.log('[App] All migrations completed');
 
 

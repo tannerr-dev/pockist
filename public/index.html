@@ -200,7 +200,7 @@
 					</p>
                     <div class="about-caution">
                         <p><i>Alpha pre-release</i></p>
-                        <p><b>Version: 0.1.26</b></p>
+                        <p><b>Version: 0.1.27</b></p>
                         <p>This app is in active development and uses the latest browser features. Some browsers do not support these yet.</p>
                         <p>Best experienced in <a target="_blank" href="https://en.wikipedia.org/wiki/Chromium_(web_browser)">chromium</a> based browsers.</p>
                         <p>Use: Chrome, Brave, DuckDuckGo, Edge, etc.</p>
@@ -417,6 +417,27 @@
 							the content. Links automatically expire after 24 hours. You can
 							delete a share early if you still have the original deletion token.
 						</p>
+					</div>
+				</section>
+
+				<section class="about-section section-divider">
+					<div class="section-label">Changelog</div>
+					<div class="changelog-list">
+						<div class="changelog-entry">
+							<div class="changelog-date">2026-06-09</div>
+							<ul>
+								<li>Database v10: unified items store with separate <code>links</code> and <code>items</code> arrays</li>
+								<li>List items moved from <code>links</code> to dedicated <code>items</code> array for child references</li>
+								<li>Fixed ID generation collision bug — now uses date + random suffix</li>
+								<li>Removed legacy <code>notes</code> and <code>lists</code> IndexedDB stores</li>
+							</ul>
+						</div>
+						<div class="changelog-entry">
+							<div class="changelog-date">2026-05-30</div>
+							<ul>
+								<li>Database v9: unified items store (notes + lists merged into single items table)</li>
+							</ul>
+						</div>
 					</div>
 				</section>
 

@@ -109,7 +109,7 @@ export class NoteIndexPage extends NoteBase {
 		const title = this._extractTitle(note.content);
 
 		const target = await DialogService.pickItem(
-			lists.map(l => ({ id: l.id, title: this._extractTitle(l.content), subtitle: `${l.links?.length || 0} items` })),
+			lists.map(l => ({ id: l.id, title: this._extractTitle(l.content), subtitle: `${l.items?.length || 0} items` })),
 			{ title: 'Move to which list?' }
 		);
 		if (!target) return;
