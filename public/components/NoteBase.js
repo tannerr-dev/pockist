@@ -115,11 +115,6 @@ export class NoteBase extends HTMLElement {
 		return `${timestamp}-${slug || 'note'}`;
 	}
 
-	_escapeHtml(text) {
-		const div = document.createElement('div');
-		div.textContent = text;
-		return div.innerHTML;
-	}
 
 	// ------------------------------------------------------------------
 	// CRUD helpers

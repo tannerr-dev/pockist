@@ -6,6 +6,7 @@
  */
 import { DBManager } from '../services/DBManager.js';
 import { DialogService } from '../services/DialogService.js';
+import * as Utils from '../services/Utils.js';
 
 export class ArchivePage extends HTMLElement {
 	_archivedItems = [];
@@ -102,8 +103,8 @@ export class ArchivePage extends HTMLElement {
 
 			row.innerHTML = `
 				<div class="archive-row-info">
-					<div class="archive-row-title">${this._escapeHtml(itemTitle)}</div>
-					${parentInfo ? `<div class="archive-row-parent">${this._escapeHtml(parentInfo)}</div>` : ''}
+					<div class="archive-row-title">${Utils.escapeHtml(itemTitle)}</div>
+					${parentInfo ? `<div class="archive-row-parent">${Utils.escapeHtml(parentInfo)}</div>` : ''}
 					<div class="archive-row-date">${this._formatDate(item.meta?.updatedAt || item.meta?.createdAt)}</div>
 				</div>
 				<div class="archive-row-actions">
@@ -270,12 +271,6 @@ export class ArchivePage extends HTMLElement {
 			console.error('[ArchivePage] Delete all error:', error);
 			alert('Failed to delete all items');
 		}
-	}
-
-	_escapeHtml(text) {
-		const div = document.createElement('div');
-		div.textContent = text;
-		return div.innerHTML;
 	}
 }
 

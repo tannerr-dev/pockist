@@ -1,3 +1,5 @@
+import * as Utils from '../services/Utils.js';
+
 export const DialogService = {
 	_adjustDialogForKeyboard(dialog) {
 		const vv = window.visualViewport;
@@ -44,10 +46,10 @@ export const DialogService = {
 
 			dialog.innerHTML = `
 				<div class="dialog-content">
-					<p class="app-dialog-message">${this.escapeHtml(message)}</p>
+					<p class="app-dialog-message">${Utils.escapeHtml(message)}</p>
 					<div class="dialog-footer">
 						<button class="btn btn-ghost" type="button">Cancel</button>
-						<button class="btn btn-outline" type="button">${this.escapeHtml(confirmText)}</button>
+						<button class="btn btn-outline" type="button">${Utils.escapeHtml(confirmText)}</button>
 					</div>
 				</div>
 			`;
@@ -102,8 +104,8 @@ export const DialogService = {
 
 			dialog.innerHTML = `
 				<div class="dialog-content">
-					<p class="app-dialog-message">${this.escapeHtml(message)}</p>
-					<input type="text" class="app-dialog-input" value="${this.escapeHtml(defaultValue)}" />
+					<p class="app-dialog-message">${Utils.escapeHtml(message)}</p>
+					<input type="text" class="app-dialog-input" value="${Utils.escapeHtml(defaultValue)}" />
 					<div class="dialog-footer">
 						<button class="btn btn-ghost" type="button">Cancel</button>
 						<button class="btn btn-outline" type="button">OK</button>
@@ -175,8 +177,8 @@ export const DialogService = {
 
 			dialog.innerHTML = `
 				<div class="dialog-content">
-					<p class="app-dialog-message">${this.escapeHtml(message)}</p>
-					<textarea class="app-dialog-textarea" rows="5" style="resize: none;">${this.escapeHtml(defaultValue)}</textarea>
+					<p class="app-dialog-message">${Utils.escapeHtml(message)}</p>
+					<textarea class="app-dialog-textarea" rows="5" style="resize: none;">${Utils.escapeHtml(defaultValue)}</textarea>
 					<div class="dialog-footer">
 						<button class="btn btn-ghost" type="button">Close</button>
 					</div>
@@ -265,9 +267,9 @@ export const DialogService = {
 			dialog.className = "dialog dialog--actions";
 
 			const rows = actions.map((a) => `
-				<button class="dialog-action-row ${a.danger ? 'dialog-action-row--danger' : ''}" data-action="${this.escapeHtml(a.action)}" type="button">
+				<button class="dialog-action-row ${a.danger ? 'dialog-action-row--danger' : ''}" data-action="${Utils.escapeHtml(a.action)}" type="button">
 					${a.icon ? `<span class="dialog-action-icon">${a.icon}</span>` : ''}
-					<span class="dialog-action-label">${this.escapeHtml(a.label)}</span>
+					<span class="dialog-action-label">${Utils.escapeHtml(a.label)}</span>
 				</button>
 			`).join('');
 
@@ -328,17 +330,17 @@ export const DialogService = {
 			const dialog = document.createElement("dialog");
 			dialog.className = "dialog dialog--picker";
 
-			const titleHtml = options.title ? `<h3>${this.escapeHtml(options.title)}</h3>` : '';
+			const titleHtml = options.title ? `<h3>${Utils.escapeHtml(options.title)}</h3>` : '';
 			const emptyText = options.emptyText || 'No items available';
 
 			let listHtml;
 			if (items.length === 0) {
-				listHtml = `<div class="dialog-picker-empty">${this.escapeHtml(emptyText)}</div>`;
+				listHtml = `<div class="dialog-picker-empty">${Utils.escapeHtml(emptyText)}</div>`;
 			} else {
 				listHtml = items.map(item => `
-					<button class="dialog-picker-item" data-id="${this.escapeHtml(item.id)}" type="button">
-						<div class="dialog-picker-item-title">${this.escapeHtml(item.title || item.id)}</div>
-						${item.subtitle ? `<div class="dialog-picker-item-subtitle">${this.escapeHtml(item.subtitle)}</div>` : ''}
+					<button class="dialog-picker-item" data-id="${Utils.escapeHtml(item.id)}" type="button">
+						<div class="dialog-picker-item-title">${Utils.escapeHtml(item.title || item.id)}</div>
+						${item.subtitle ? `<div class="dialog-picker-item-subtitle">${Utils.escapeHtml(item.subtitle)}</div>` : ''}
 					</button>
 				`).join('');
 			}
@@ -391,10 +393,4 @@ export const DialogService = {
 			this._adjustDialogForKeyboard(dialog);
 		});
 	},
-
-	escapeHtml(text) {
-		const div = document.createElement("div");
-		div.textContent = text;
-		return div.innerHTML;
-	}
 };

@@ -2,6 +2,7 @@ import { Router } from "../services/Router.js";
 import { DBManager } from "../services/DBManager.js";
 import { DialogService } from "../services/DialogService.js";
 import { DraggableList } from "../services/DraggableList.js";
+import * as Utils from '../services/Utils.js';
 
 export class ListIndexPage extends HTMLElement {
 	_lists = [];
@@ -60,7 +61,7 @@ export class ListIndexPage extends HTMLElement {
 			return `
 				<div class="list-index-card" data-list-id="${item.id}">
 					<div class="list-index-card-content">
-						<div class="list-index-card-name" data-list-id="${item.id}">${this._escapeHtml(item.content || 'Unnamed List')}</div>
+						<div class="list-index-card-name" data-list-id="${item.id}">${Utils.escapeHtml(item.content || 'Unnamed List')}</div>
 						<div class="list-index-card-meta">${total} item${total !== 1 ? 's' : ''}</div>
 					</div>
 					<span class="drag-hint list-index-drag-hint" aria-hidden="true">${dragHandleSvg}</span>
@@ -310,12 +311,6 @@ export class ListIndexPage extends HTMLElement {
 				}
 			});
 		}
-	}
-
-	_escapeHtml(text) {
-		const div = document.createElement("div");
-		div.textContent = text;
-		return div.innerHTML;
 	}
 }
 

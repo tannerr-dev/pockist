@@ -3,6 +3,7 @@ import { DBManager } from "../services/DBManager.js";
 import { DialogService } from "../services/DialogService.js";
 import './List.js';
 import './ShareButton.js';
+import * as Utils from '../services/Utils.js';
 
 export class ListDetailPage extends HTMLElement {
 	_timeoutId = null;
@@ -41,7 +42,7 @@ export class ListDetailPage extends HTMLElement {
 
 			const heading = this.querySelector('.list-detail-heading');
 			if (heading) {
-				heading.textContent = this._escapeHtml(this._listName);
+				heading.textContent = Utils.escapeHtml(this._listName);
 				this._attachHeadingListeners(heading);
 			}
 
@@ -179,7 +180,7 @@ export class ListDetailPage extends HTMLElement {
 		const newName = heading.textContent.trim();
 		if (!newName || newName === this._listName) {
 			if (!newName) {
-				heading.textContent = this._escapeHtml(this._listName);
+				heading.textContent = Utils.escapeHtml(this._listName);
 			}
 			return;
 		}
@@ -193,14 +194,8 @@ export class ListDetailPage extends HTMLElement {
 			this._originalName = newName;
 		} catch (error) {
 			console.error('[ListDetailPage] Error renaming list:', error);
-			heading.textContent = this._escapeHtml(this._listName);
+			heading.textContent = Utils.escapeHtml(this._listName);
 		}
-	}
-
-	_escapeHtml(text) {
-		const div = document.createElement("div");
-		div.textContent = text;
-		return div.innerHTML;
 	}
 }
 

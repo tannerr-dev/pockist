@@ -3,6 +3,7 @@ import { DBManager } from "../services/DBManager.js";
 import { DialogService } from "../services/DialogService.js";
 import { DraggableList } from "../services/DraggableList.js";
 import { ListItem } from "./ListItem.js";
+import * as Utils from '../services/Utils.js';
 
 /**
  * ListBase - Abstract base class for list components.
@@ -813,7 +814,7 @@ export class ListBase extends HTMLElement {
 			return `
 				<div class="list-selector-item ${isSelected ? 'selected' : ''}" data-list-id="${item.id}">
 					<div class="list-selector-item-info">
-						<span class="list-selector-item-name" contenteditable="false" data-list-id="${item.id}">${this._escapeHtml(item.content || 'Unnamed List')}</span>
+						<span class="list-selector-item-name" contenteditable="false" data-list-id="${item.id}">${Utils.escapeHtml(item.content || 'Unnamed List')}</span>
 					</div>
 					<span class="drag-hint list-selector-drag-hint" aria-hidden="true">${dragHandleSvg}</span>
 					<div class="list-selector-item-actions">
@@ -1010,8 +1011,8 @@ export class ListBase extends HTMLElement {
 		if (this._listActionsEl) {
 			const shareBtn = this._listActionsEl.querySelector('share-button');
 			if (shareBtn) {
-				shareBtn.setAttribute('data-id', this._escapeHtml(this._currentListId || ''));
-				shareBtn.setAttribute('title', this._escapeHtml(currentMeta?.content || 'Untitled List'));
+				shareBtn.setAttribute('data-id', Utils.escapeHtml(this._currentListId || ''));
+				shareBtn.setAttribute('title', Utils.escapeHtml(currentMeta?.content || 'Untitled List'));
 			}
 		}
 
@@ -1100,11 +1101,5 @@ export class ListBase extends HTMLElement {
 			console.error('[ListBase] Widget action error:', error);
 			alert(error.message || 'Action failed');
 		}
-	}
-
-	_escapeHtml(text) {
-		const div = document.createElement("div");
-		div.textContent = text;
-		return div.innerHTML;
 	}
 }

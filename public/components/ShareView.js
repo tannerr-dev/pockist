@@ -1,6 +1,7 @@
 import { Router } from '../services/Router.js';
 import { ShareService } from '../services/ShareService.js';
 import { DialogService } from '../services/DialogService.js';
+import * as Utils from '../services/Utils.js';
 
 /**
  * ShareView - Web component for viewing shared content
@@ -82,7 +83,7 @@ export class ShareView extends HTMLElement {
                 </div>
 
                 <div class="share-content">
-                    <h1>${this.escapeHtml(this.shareData.title)}</h1>
+                    <h1>${Utils.escapeHtml(this.shareData.title)}</h1>
                     
                     ${isNote ? this.renderNoteContent() : ''}
                     ${isList ? this.renderListContent() : ''}
@@ -129,7 +130,7 @@ export class ShareView extends HTMLElement {
 
         if (!note) return '<p>No note content</p>';
 
-        const formattedContent = this.escapeHtml(content).replace(/\n/g, '<br>');
+        const formattedContent = Utils.escapeHtml(content).replace(/\n/g, '<br>');
 
         return `
             <div class="share-note-content">
@@ -167,12 +168,12 @@ export class ShareView extends HTMLElement {
 
         return `
             <div class="share-list-content">
-                <h3>${this.escapeHtml(listName)}</h3>
+                <h3>${Utils.escapeHtml(listName)}</h3>
                 <ul class="share-todos">
                     ${todos.map(todo => `
                         <li class="item-row ${todo.completed ? 'completed' : ''}">
                             <span class="share-todo-checkbox">${todo.completed ? '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>' : '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/></svg>'}</span>
-                            <span class="item-text">${this.escapeHtml(todo.text || '')}</span>
+                            <span class="item-text">${Utils.escapeHtml(todo.text || '')}</span>
                         </li>
                     `).join('')}
                 </ul>
@@ -381,8 +382,8 @@ export class ShareView extends HTMLElement {
             dialog.className = 'dialog';
             dialog.innerHTML = `
                 <div class="dialog-content">
-                    <h3>Download ${this.escapeHtml(typeLabel)}</h3>
-                    <p class="share-title">"${this.escapeHtml(this.shareData.title)}"</p>
+                    <h3>Download ${Utils.escapeHtml(typeLabel)}</h3>
+                    <p class="share-title">"${Utils.escapeHtml(this.shareData.title)}"</p>
                     <div class="share-options">
                         <button class="share-option-btn download-format-btn" data-format="json" type="button">
                             <span class="share-option-icon"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg></span>
@@ -462,12 +463,6 @@ export class ShareView extends HTMLElement {
         }
 
         return parts.join('\n') || '• No data';
-    }
-
-    escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
     }
 
     formatDate(isoString) {

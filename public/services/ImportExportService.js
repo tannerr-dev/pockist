@@ -30,6 +30,7 @@
 
 import { DBManager } from './DBManager.js';
 import { DialogService } from './DialogService.js';
+import * as Utils from '../services/Utils.js';
 
 const EXPORT_VERSION = '2.0';
 const LEGACY_VERSION = '1.0';
@@ -625,8 +626,8 @@ export class ImportExportService {
             dialog.className = 'dialog';
             dialog.innerHTML = `
                 <div class="dialog-content">
-                    <h3>${this.#escapeHtml(title)}</h3>
-                    <p class="share-title">${this.#escapeHtml(subtitle)}</p>
+                    <h3>${Utils.escapeHtml(title)}</h3>
+                    <p class="share-title">${Utils.escapeHtml(subtitle)}</p>
                     <div class="share-options">
                         ${optionsHtml}
                     </div>
@@ -717,8 +718,8 @@ export class ImportExportService {
             }
 
             const itemListHtml = items.map(item => `
-                <button class="share-option-btn share-merge-item" type="button" data-id="${this.#escapeHtml(item.id)}">
-                    <span class="share-option-label">${this.#escapeHtml(item.name || item.title || 'Untitled')}</span>
+                <button class="share-option-btn share-merge-item" type="button" data-id="${Utils.escapeHtml(item.id)}">
+                    <span class="share-option-label">${Utils.escapeHtml(item.name || item.title || 'Untitled')}</span>
                 </button>
             `).join('');
 
@@ -868,9 +869,9 @@ export class ImportExportService {
             dialog.innerHTML = `
                 <div class="dialog-content">
                     <h3>Import Markdown ${typeLabel}</h3>
-                    <p class="share-title">"${this.#escapeHtml(parsed.title)}"</p>
+                    <p class="share-title">"${Utils.escapeHtml(parsed.title)}"</p>
                     <div class="share-info">
-                        <span class="share-expiry">${this.#escapeHtml(detailText)}</span>
+                        <span class="share-expiry">${Utils.escapeHtml(detailText)}</span>
                     </div>
                     <div class="share-options">
                         <button class="share-option-btn share-option-create" type="button">
@@ -969,8 +970,8 @@ export class ImportExportService {
             const itemListHtml = items.map((item, index) => {
                 const name = type === 'list' ? item.name : (item.title || 'Untitled');
                 return `
-                    <button class="share-option-btn share-merge-item" type="button" data-id="${this.#escapeHtml(item.id)}">
-                        <span class="share-option-label">${this.#escapeHtml(name)}</span>
+                    <button class="share-option-btn share-merge-item" type="button" data-id="${Utils.escapeHtml(item.id)}">
+                        <span class="share-option-label">${Utils.escapeHtml(name)}</span>
                     </button>
                 `;
             }).join('');
@@ -1242,15 +1243,5 @@ export class ImportExportService {
             console.warn('[ImportExportService] Could not check for duplicate:', error);
             return null;
         }
-    }
-
-    /**
-     * Escape HTML for safe insertion into dialog content
-     * @private
-     */
-    static #escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
     }
 }

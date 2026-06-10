@@ -1,3 +1,7 @@
+import * as Utils from '../services/Utils.js';
+// import '../services/js'
+
+
 /**
  * NoteItem - Leaf component for a single note row.
  *
@@ -31,9 +35,9 @@ export class NoteItem extends HTMLElement {
 		const contentWrapper = document.createElement('div');
 		contentWrapper.className = 'note-item-content';
 		contentWrapper.innerHTML = `
-			<div class="note-item-title">${this._escapeHtml(title)}</div>
-			<div class="note-item-preview">${this._escapeHtml(preview)}</div>
-			<div class="note-item-date">${this._escapeHtml(date)}</div>
+			<div class="note-item-title">${Utils.escapeHtml(title)}</div>
+			<div class="note-item-preview">${Utils.escapeHtml(preview)}</div>
+			<div class="note-item-date">${Utils.escapeHtml(date)}</div>
 		`;
 
 		const moreBtn = document.createElement('button');
@@ -63,12 +67,6 @@ export class NoteItem extends HTMLElement {
 
 		this.appendChild(contentWrapper);
 		this.appendChild(actionsDiv);
-	}
-
-	_escapeHtml(text) {
-		const div = document.createElement('div');
-		div.textContent = text;
-		return div.innerHTML;
 	}
 }
 
