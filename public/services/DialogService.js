@@ -256,12 +256,12 @@ export const DialogService = {
 		});
 	},
 
-	/**
-	 * Show a vertical action sheet dialog
-	 * @param {Array<{label: string, icon?: string, action: string, danger?: boolean}>} actions
-	 * @returns {Promise<string|null>} The selected action key or null
-	 */
 	showActions(actions) {
+        /**
+         * Show a vertical action sheet dialog
+         * @param {Array<{label: string, icon?: string, action: string, danger?: boolean}>} actions
+         * @returns {Promise<string|null>} The selected action key or null
+         */
 		return new Promise((resolve) => {
 			const dialog = document.createElement("dialog");
 			dialog.className = "dialog dialog--actions";
@@ -317,15 +317,15 @@ export const DialogService = {
 		});
 	},
 
-	/**
-	 * Show a scrollable item picker dialog
-	 * @param {Array<{id: string, title?: string, subtitle?: string}>} items
-	 * @param {Object} options
-	 * @param {string} [options.title]
-	 * @param {string} [options.emptyText]
-	 * @returns {Promise<Object|null>} Selected item or null
-	 */
 	pickItem(items, options = {}) {
+        /**
+         * Show a scrollable item picker dialog
+         * @param {Array<{id: string, title?: string, subtitle?: string}>} items
+         * @param {Object} options
+         * @param {string} [options.title]
+         * @param {string} [options.emptyText]
+         * @returns {Promise<Object|null>} Selected item or null
+         */
 		return new Promise((resolve) => {
 			const dialog = document.createElement("dialog");
 			dialog.className = "dialog dialog--picker";
