@@ -361,17 +361,11 @@ In the current code, `cleanup()` is always called after `dialog.close()`, so thi
 
 ### `escapeHtml(text)`
 
+**Importing Utils**
+
 ```javascript
-escapeHtml(text) {
-  const div = document.createElement("div");
-  div.textContent = text;
-  return div.innerHTML;
-}
+import * as Utils from '../services/Utils.js';
 ```
-
-**How it works:** Creates a detached `<div>`, sets `textContent` (which auto-escapes HTML entities), then reads back `innerHTML` (which returns the escaped string).
-
-**What it escapes:** `<`, `>`, `&`, `"`, `'`
 
 **Where it's used:**
 - `message` parameters
@@ -380,6 +374,10 @@ escapeHtml(text) {
 - `label`, `action` in `showActions`
 - `title`, `subtitle`, `id` in `pickItem`
 - `emptyText` in `pickItem`
+
+```javascript
+Utils.escapeHtml(text)
+```
 
 ### What's NOT Escaped
 
