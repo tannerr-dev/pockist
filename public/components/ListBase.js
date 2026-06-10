@@ -2,7 +2,7 @@ import { Router } from "../services/Router.js";
 import { DBManager } from "../services/DBManager.js";
 import { DialogService } from "../services/DialogService.js";
 import { DraggableList } from "../services/DraggableList.js";
-import { ListItem } from "./ListItem.js";
+import { ListItem } from "./ListItem.js"; //registers the custom component
 import * as Utils from '../services/Utils.js';
 
 /**
@@ -37,7 +37,7 @@ export class ListBase extends HTMLElement {
 		throw new Error("_setupAddListeners() must be implemented by subclass");
 	}
 
-	// Hooks
+	// Hooks, used in subclasses
 	_onAfterAdd(item, listItem) {}
 	_onAfterToggle(itemId, newState, li) {}
 	_onAfterEdit(itemId) {}
