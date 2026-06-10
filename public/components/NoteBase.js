@@ -265,7 +265,7 @@ export class NoteBase extends HTMLElement {
 		const title = this._extractTitle(note.content);
 
 		const target = await DialogService.pickItem(
-			lists.map(l => ({ id: l.id, title: l.content || 'Unnamed List', subtitle: `${l.links?.length || 0} items` })),
+			lists.map(l => ({ id: l.id, title: l.content || 'Unnamed List', subtitle: `${l.items?.length || 0} items` })),
 			{ title: `Copy "${title}" to which list?` }
 		);
 		if (!target) return;
@@ -295,7 +295,7 @@ export class NoteBase extends HTMLElement {
 		const title = this._extractTitle(note.content);
 
 		const target = await DialogService.pickItem(
-			lists.map(l => ({ id: l.id, title: this._extractTitle(l.content), subtitle: `${l.links?.length || 0} items` })),
+			lists.map(l => ({ id: l.id, title: this._extractTitle(l.content), subtitle: `${l.items?.length || 0} items` })),
 			{ title: 'Move to which list?' }
 		);
 		if (!target) return;

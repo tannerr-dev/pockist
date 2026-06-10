@@ -8,8 +8,8 @@ import * as Utils from '../services/Utils.js';
 /**
  * ListBase - Abstract base class for list components.
  *
- * Works directly with the unified items store (v9 schema).
- * Lists are items with type='list', linked items are resolved via links[] array.
+ * Works directly with the unified items store (v10 schema).
+ * Lists are items with type='list', child items are resolved via items[] array.
  */
 export class ListBase extends HTMLElement {
 	// Shared state
@@ -167,7 +167,7 @@ export class ListBase extends HTMLElement {
 		if (!this._currentListId) return;
 		try {
 			this._currentListItem = await DBManager.getItem(this._currentListId);
-			this._linkedItems = await DBManager.getLinkedItems(this._currentListId);
+			this._linkedItems = await DBManager.getListItems(this._currentListId);
 			await DBManager.updateLastAccessed(this._currentListId);
 		} catch (error) {
 			console.error(`[${this.constructor.name}] Error loading current list:`, error);
@@ -202,20 +202,20 @@ export class ListBase extends HTMLElement {
 			meta: { completed: false }
 		});
 
-		const links = listItem.links || [];
-		links.unshift({ id: newItem.id, order: 0 });
-		links.forEach((link, i) => { link.order = i; });
-		listItem.links = links;
+		const items = listItem.items || [];
+		items.unshift({ id: newItem.id, order: 0 });
+		items.forEach((itemRef, i) => { itemRef.order = i; });
+		listItem.items = items;
 
 		this._inputEl.value = "";
 
 		try {
 			await DBManager.saveItem(listItem);
-			this._linkedItems = await DBManager.getLinkedItems(listItem.id);
+			this._linkedItems = await DBManager.getListItems(listItem.id);
 			this._onAfterAdd(newItem, listItem);
 		} catch (error) {
 			console.error(`[${this.constructor.name}] Error saving list:`, error);
-			listItem.links.pop();
+			listItem.items.pop();
 			this._renderContent();
 		}
 	}
@@ -281,7 +281,7 @@ export class ListBase extends HTMLElement {
 
 		try {
 			await DBManager.archiveItem(itemId);
-			this._linkedItems = await DBManager.getLinkedItems(listItem.id);
+			this._linkedItems = await DBManager.getListItems(listItem.id);
 			this._onAfterDelete(itemId);
 		} catch (error) {
 			console.error(`[${this.constructor.name}] Error archiving item:`, error);
@@ -294,22 +294,22 @@ export class ListBase extends HTMLElement {
 		const listItem = this._getCurrentListItem();
 		if (!listItem) return;
 
-		const links = listItem.links || [];
-		const linkIndex = links.findIndex(l => l.id === itemId);
-		if (linkIndex === -1) return;
+		const items = listItem.items || [];
+		const itemIndex = items.findIndex(l => l.id === itemId);
+		if (itemIndex === -1) return;
 
-		const newIndex = linkIndex + direction;
-		if (newIndex < 0 || newIndex >= links.length) return;
+		const newIndex = itemIndex + direction;
+		if (newIndex < 0 || newIndex >= items.length) return;
 
-		const tempOrder = links[linkIndex].order;
-		links[linkIndex].order = links[newIndex].order;
-		links[newIndex].order = tempOrder;
-		links.sort((a, b) => a.order - b.order);
+		const tempOrder = items[itemIndex].order;
+		items[itemIndex].order = items[newIndex].order;
+		items[newIndex].order = tempOrder;
+		items.sort((a, b) => a.order - b.order);
 
 		try {
 			await DBManager.saveItem(listItem);
-			this._linkedItems = await DBManager.getLinkedItems(listItem.id);
-			this._onAfterMove(itemId, direction, linkIndex, newIndex);
+			this._linkedItems = await DBManager.getListItems(listItem.id);
+			this._onAfterMove(itemId, direction, itemIndex, newIndex);
 		} catch (error) {
 			console.error(`[${this.constructor.name}] Error saving after move:`, error);
 			await this._loadCurrentList();
@@ -326,9 +326,9 @@ export class ListBase extends HTMLElement {
 
 		const completedIds = completedItems.map(i => i.id);
 
-		listItem.links = (listItem.links || []).filter(l => !completedIds.includes(l.id));
-		listItem.links.forEach((link, idx) => {
-			link.order = idx;
+		listItem.items = (listItem.items || []).filter(l => !completedIds.includes(l.id));
+		listItem.items.forEach((itemRef, idx) => {
+			itemRef.order = idx;
 		});
 
 		try {
@@ -336,7 +336,7 @@ export class ListBase extends HTMLElement {
 			for (const id of completedIds) {
 				await DBManager.archiveItem(id);
 			}
-			this._linkedItems = await DBManager.getLinkedItems(listItem.id);
+			this._linkedItems = await DBManager.getListItems(listItem.id);
 			this._onAfterClear(completedIds);
 		} catch (error) {
 			console.error(`[${this.constructor.name}] Error saving after clear:`, error);
@@ -349,12 +349,12 @@ export class ListBase extends HTMLElement {
 		const listItem = this._getCurrentListItem();
 		if (!listItem) return;
 
-		const links = listItem.links || [];
-		const items = await DBManager.getLinkedItems(listItem.id);
+		const items = listItem.items || [];
+		const linkedItems = await DBManager.getListItems(listItem.id);
 
-		links.sort((a, b) => {
-			const itemA = items.find(i => i.id === a.id);
-			const itemB = items.find(i => i.id === b.id);
+		items.sort((a, b) => {
+			const itemA = linkedItems.find(i => i.id === a.id);
+			const itemB = linkedItems.find(i => i.id === b.id);
 			const completedA = itemA?.meta?.completed || false;
 			const completedB = itemB?.meta?.completed || false;
 			if (completedA !== completedB) {
@@ -363,14 +363,14 @@ export class ListBase extends HTMLElement {
 			return 0;
 		});
 
-		links.forEach((link, idx) => {
-			link.order = idx;
+		items.forEach((itemRef, idx) => {
+			itemRef.order = idx;
 		});
-		listItem.links = links;
+		listItem.items = items;
 
 		try {
 			await DBManager.saveItem(listItem);
-			this._linkedItems = await DBManager.getLinkedItems(listItem.id);
+			this._linkedItems = await DBManager.getListItems(listItem.id);
 			this._onAfterSort();
 		} catch (error) {
 			console.error(`[${this.constructor.name}] Error saving after sort:`, error);
@@ -381,10 +381,10 @@ export class ListBase extends HTMLElement {
 
 	async _showItemActions(itemId) {
 		const listItem = this._getCurrentListItem();
-		const links = listItem ? [...(listItem.links || [])].sort((a, b) => (a.order || 0) - (b.order || 0)) : [];
-		const linkIndex = links.findIndex(l => l.id === itemId);
-		const isFirst = linkIndex === 0;
-		const isLast = linkIndex === links.length - 1;
+		const items = listItem ? [...(listItem.items || [])].sort((a, b) => (a.order || 0) - (b.order || 0)) : [];
+		const itemIndex = items.findIndex(l => l.id === itemId);
+		const isFirst = itemIndex === 0;
+		const isLast = itemIndex === items.length - 1;
 
 		const action = await DialogService.showActions([
 			{ label: 'Move to Top', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="4" x2="20" y2="4"/><polyline points="18 10 12 4 6 10"/></svg>', action: 'move-top' },
@@ -443,20 +443,20 @@ export class ListBase extends HTMLElement {
 	async _doDuplicateItem(itemId) {
 		const newItemId = await DBManager.duplicateItem(itemId);
 
-		// Insert right after the original in the current list's links
+		// Insert right after the original in the current list's items
 		const listItem = this._getCurrentListItem();
 		if (listItem) {
-			const links = listItem.links ? [...listItem.links] : [];
-			const index = links.findIndex(l => l.id === itemId);
-			const insertIndex = index >= 0 ? index + 1 : links.length;
-			links.splice(insertIndex, 0, { id: newItemId, order: 0 });
-			links.forEach((l, i) => { l.order = i; });
-			listItem.links = links;
+			const items = listItem.items ? [...listItem.items] : [];
+			const index = items.findIndex(l => l.id === itemId);
+			const insertIndex = index >= 0 ? index + 1 : items.length;
+			items.splice(insertIndex, 0, { id: newItemId, order: 0 });
+			items.forEach((l, i) => { l.order = i; });
+			listItem.items = items;
 			listItem.meta = { ...listItem.meta, updatedAt: new Date().toISOString() };
 			await DBManager.saveItem(listItem);
 		}
 
-		this._linkedItems = await DBManager.getLinkedItems(this._currentListId);
+		this._linkedItems = await DBManager.getListItems(this._currentListId);
 		this._renderContent();
 		this._updateFooter();
 	}
@@ -470,7 +470,7 @@ export class ListBase extends HTMLElement {
 		}
 
 		const target = await DialogService.pickItem(
-			otherLists.map(l => ({ id: l.id, title: l.content || 'Unnamed List', subtitle: `${l.links?.length || 0} items` })),
+			otherLists.map(l => ({ id: l.id, title: l.content || 'Unnamed List', subtitle: `${l.items?.length || 0} items` })),
 			{ title: 'Copy to which list?' }
 		);
 		if (!target) return;
@@ -488,13 +488,13 @@ export class ListBase extends HTMLElement {
 
 		const item = this._linkedItems.find(i => i.id === itemId);
 		const target = await DialogService.pickItem(
-			otherLists.map(l => ({ id: l.id, title: l.content || 'Unnamed List', subtitle: `${l.links?.length || 0} items` })),
+			otherLists.map(l => ({ id: l.id, title: l.content || 'Unnamed List', subtitle: `${l.items?.length || 0} items` })),
 			{ title: 'Move to which list?' }
 		);
 		if (!target) return;
 
 		await DBManager.moveItemToList(itemId, this._currentListId, target.id);
-		this._linkedItems = await DBManager.getLinkedItems(this._currentListId);
+		this._linkedItems = await DBManager.getListItems(this._currentListId);
 		this._renderContent();
 		this._updateFooter();
 	}
@@ -506,7 +506,7 @@ export class ListBase extends HTMLElement {
 		if (!confirmed) return;
 
 		const noteId = await DBManager.convertItemToNote(itemId, this._currentListId);
-		this._linkedItems = await DBManager.getLinkedItems(this._currentListId);
+		this._linkedItems = await DBManager.getListItems(this._currentListId);
 		this._renderContent();
 		this._updateFooter();
 		Router.go('/note');
@@ -593,7 +593,7 @@ export class ListBase extends HTMLElement {
 
 		const source = this._listItems.find(l => l.id === sourceId);
 		const target = await DialogService.pickItem(
-			otherLists.map(l => ({ id: l.id, title: l.content || 'Unnamed List', subtitle: `${l.links?.length || 0} items` })),
+			otherLists.map(l => ({ id: l.id, title: l.content || 'Unnamed List', subtitle: `${l.items?.length || 0} items` })),
 			{ title: 'Merge into which list?' }
 		);
 		if (!target) return;
@@ -662,17 +662,17 @@ export class ListBase extends HTMLElement {
 		const listItem = this._getCurrentListItem();
 		if (!listItem) return;
 
-		const links = listItem.links || [];
-		if (oldIndex === newIndex || oldIndex < 0 || oldIndex >= links.length || newIndex < 0 || newIndex >= links.length) return;
+		const items = listItem.items || [];
+		if (oldIndex === newIndex || oldIndex < 0 || oldIndex >= items.length || newIndex < 0 || newIndex >= items.length) return;
 
-		const [moved] = links.splice(oldIndex, 1);
-		links.splice(newIndex, 0, moved);
-		links.forEach((link, idx) => { link.order = idx; });
-		listItem.links = links;
+		const [moved] = items.splice(oldIndex, 1);
+		items.splice(newIndex, 0, moved);
+		items.forEach((itemRef, idx) => { itemRef.order = idx; });
+		listItem.items = items;
 
 		try {
 			await DBManager.saveItem(listItem);
-			this._linkedItems = await DBManager.getLinkedItems(listItem.id);
+			this._linkedItems = await DBManager.getListItems(listItem.id);
 			this._onAfterMove(moved.id, newIndex > oldIndex ? 1 : -1, oldIndex, newIndex);
 		} catch (error) {
 			console.error(`[${this.constructor.name}] Error saving after item reorder:`, error);
@@ -685,19 +685,19 @@ export class ListBase extends HTMLElement {
 		const listItem = this._getCurrentListItem();
 		if (!listItem) return;
 
-		const links = listItem.links || [];
-		const linkIndex = links.findIndex(l => l.id === itemId);
-		if (linkIndex <= 0) return;
+		const items = listItem.items || [];
+		const itemIndex = items.findIndex(l => l.id === itemId);
+		if (itemIndex <= 0) return;
 
-		const [moved] = links.splice(linkIndex, 1);
-		links.unshift(moved);
-		links.forEach((link, idx) => { link.order = idx; });
-		listItem.links = links;
+		const [moved] = items.splice(itemIndex, 1);
+		items.unshift(moved);
+		items.forEach((itemRef, idx) => { itemRef.order = idx; });
+		listItem.items = items;
 
 		try {
 			await DBManager.saveItem(listItem);
-			this._linkedItems = await DBManager.getLinkedItems(listItem.id);
-			this._onAfterMove(itemId, -1, linkIndex, 0);
+			this._linkedItems = await DBManager.getListItems(listItem.id);
+			this._onAfterMove(itemId, -1, itemIndex, 0);
 		} catch (error) {
 			console.error(`[${this.constructor.name}] Error saving after move to top:`, error);
 			await this._loadCurrentList();
@@ -709,19 +709,19 @@ export class ListBase extends HTMLElement {
 		const listItem = this._getCurrentListItem();
 		if (!listItem) return;
 
-		const links = listItem.links || [];
-		const linkIndex = links.findIndex(l => l.id === itemId);
-		if (linkIndex === -1 || linkIndex === links.length - 1) return;
+		const items = listItem.items || [];
+		const itemIndex = items.findIndex(l => l.id === itemId);
+		if (itemIndex === -1 || itemIndex === items.length - 1) return;
 
-		const [moved] = links.splice(linkIndex, 1);
-		links.push(moved);
-		links.forEach((link, idx) => { link.order = idx; });
-		listItem.links = links;
+		const [moved] = items.splice(itemIndex, 1);
+		items.push(moved);
+		items.forEach((itemRef, idx) => { itemRef.order = idx; });
+		listItem.items = items;
 
 		try {
 			await DBManager.saveItem(listItem);
-			this._linkedItems = await DBManager.getLinkedItems(listItem.id);
-			this._onAfterMove(itemId, 1, linkIndex, links.length - 1);
+			this._linkedItems = await DBManager.getListItems(listItem.id);
+			this._onAfterMove(itemId, 1, itemIndex, items.length - 1);
 		} catch (error) {
 			console.error(`[${this.constructor.name}] Error saving after move to bottom:`, error);
 			await this._loadCurrentList();
@@ -1075,7 +1075,7 @@ export class ListBase extends HTMLElement {
 				}
 
 				const target = await DialogService.pickItem(
-					otherLists.map(l => ({ id: l.id, title: l.content || 'Unnamed List', subtitle: `${l.links?.length || 0} items` })),
+					otherLists.map(l => ({ id: l.id, title: l.content || 'Unnamed List', subtitle: `${l.items?.length || 0} items` })),
 					{ title: 'Merge into which list?' }
 				);
 				if (!target) return;

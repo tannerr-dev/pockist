@@ -67,7 +67,7 @@ export class ListDetailPage extends HTMLElement {
 	}
 
 	async _showActions() {
-		const items = await DBManager.getLinkedItems(this._listId);
+		const items = await DBManager.getListItems(this._listId);
 		const hasCompleted = items.some(i => i.meta?.completed);
 
 		const actions = [
@@ -122,7 +122,7 @@ export class ListDetailPage extends HTMLElement {
 		}
 
 		const target = await DialogService.pickItem(
-			otherLists.map(l => ({ id: l.id, title: l.content || 'Unnamed List', subtitle: `${l.links?.length || 0} items` })),
+			otherLists.map(l => ({ id: l.id, title: l.content || 'Unnamed List', subtitle: `${l.items?.length || 0} items` })),
 			{ title: 'Merge into which list?' }
 		);
 		if (!target) return;

@@ -1,13 +1,15 @@
 /**
  * DBManager - Centralized IndexedDB manager for Pockist applications
  *
- * Unified v9 schema: everything is an 'item' in a single object store.
+ * Unified v10 schema: everything is an 'item' in a single object store.
+ * Lists track child items via 'items' array.
+ * 'links' array is reserved for general item relationships (notes, lists, etc.).
  * Views (notes, lists, archive) are just queries on the items store.
  */
 
 const DB_CONFIG = {
     NAME: 'pockist-db',
-    VERSION: 9,
+    VERSION: 10,
     STORES: {
         ITEMS: 'items',
         NOTES: 'notes',
@@ -128,23 +130,23 @@ export class DBManager {
         });
     }
 
-    static async getLinkedItems(listId) {
+    static async getListItems(listId) {
         const list = await this.getItem(listId);
-        if (!list || !Array.isArray(list.links)) return [];
+        if (!list || !Array.isArray(list.items)) return [];
 
-        const links = [...list.links].sort((a, b) => (a.order || 0) - (b.order || 0));
-        const items = [];
-        for (const link of links) {
-            const item = await this.getItem(link.id);
-            if (item) items.push(item);
+        const items = [...list.items].sort((a, b) => (a.order || 0) - (b.order || 0));
+        const results = [];
+        for (const item of items) {
+            const result = await this.getItem(item.id);
+            if (result) results.push(result);
         }
-        return items;
+        return results;
     }
 
-    static async updateLinkOrder(listId, newLinks) {
+    static async updateItemOrder(listId, newItems) {
         const list = await this.getItem(listId);
         if (!list) throw new Error('List not found');
-        list.links = newLinks;
+        list.items = newItems;
         await this.saveItem(list);
     }
 
@@ -156,6 +158,7 @@ export class DBManager {
             type: data.type || 'item',
             content: data.content || '',
             links: data.links || [],
+            items: data.items || [],
             meta: {
                 createdAt: data.createdAt || now,
                 updatedAt: now,
@@ -199,6 +202,7 @@ export class DBManager {
                     type: 'note',
                     content: String(content || ''),
                     links: [],
+                    items: [],
                     meta: {
                         createdAt: new Date().toISOString(),
                         updatedAt: new Date().toISOString(),
@@ -253,6 +257,7 @@ export class DBManager {
                 type: 'list',
                 content: list.name || '',
                 links: [],
+                items: [],
                 meta: {
                     createdAt: list.createdAt || now,
                     updatedAt: now,
@@ -264,17 +269,17 @@ export class DBManager {
             };
         }
 
-        // Sync embedded todos into linked items
+        // Sync embedded todos into list items
         if (Array.isArray(list.todos)) {
-            const existingLinks = item.links || [];
-            const newLinks = [];
+            const existingItems = item.items || [];
+            const newItems = [];
 
             for (let i = 0; i < list.todos.length; i++) {
                 const todo = list.todos[i];
-                const existingLink = existingLinks.find(l => l.id === todo.id);
+                const existingItem = existingItems.find(l => l.id === todo.id);
                 let todoItem;
 
-                if (existingLink) {
+                if (existingItem) {
                     todoItem = await this.getItem(todo.id);
                 }
 
@@ -284,6 +289,7 @@ export class DBManager {
                         type: 'item',
                         content: todo.text || '',
                         links: [],
+                        items: [],
                         meta: {
                             createdAt: new Date(todo.createdAt || Date.now()).toISOString(),
                             updatedAt: new Date().toISOString(),
@@ -297,18 +303,18 @@ export class DBManager {
                 }
 
                 await this.saveItem(todoItem);
-                newLinks.push({ id: todoItem.id, order: i });
+                newItems.push({ id: todoItem.id, order: i });
             }
 
-            // Remove orphaned linked items
-            const newLinkIds = new Set(newLinks.map(l => l.id));
-            for (const oldLink of existingLinks) {
-                if (!newLinkIds.has(oldLink.id)) {
-                    await this.hardDeleteItem(oldLink.id);
+            // Remove orphaned items
+            const newItemIds = new Set(newItems.map(l => l.id));
+            for (const oldItem of existingItems) {
+                if (!newItemIds.has(oldItem.id)) {
+                    await this.hardDeleteItem(oldItem.id);
                 }
             }
 
-            item.links = newLinks;
+            item.items = newItems;
         }
 
         item.content = list.name || item.content;
@@ -326,9 +332,9 @@ export class DBManager {
         const item = await this.getItem(listId);
         if (!item) return;
 
-        if (item.links) {
-            for (const link of item.links) {
-                await this.deleteItem(link.id);
+        if (item.items) {
+            for (const itemRef of item.items) {
+                await this.deleteItem(itemRef.id);
             }
         }
         await this.deleteItem(listId);
@@ -345,7 +351,7 @@ export class DBManager {
             createdAt: item.meta.createdAt || Date.now(),
             updatedAt: item.meta.updatedAt || item.meta.createdAt || Date.now(),
             lastAccessed: item.meta.updatedAt || item.meta.createdAt || Date.now(),
-            todoCount: item.links ? item.links.length : 0
+            todoCount: item.items ? item.items.length : 0
         })).sort((a, b) => a.order - b.order);
     }
 
@@ -805,7 +811,7 @@ export class DBManager {
                     const existing = await this.getItem(list.id);
                     if (existing) continue;
 
-                    const links = [];
+                    const items = [];
                     if (Array.isArray(list.todos)) {
                         for (let i = 0; i < list.todos.length; i++) {
                             const todo = list.todos[i];
@@ -815,6 +821,7 @@ export class DBManager {
                                 type: 'item',
                                 content: String(todo.text || ''),
                                 links: [],
+                                items: [],
                                 meta: {
                                     createdAt: new Date(todo.createdAt || Date.now()).toISOString(),
                                     updatedAt: new Date(todo.createdAt || Date.now()).toISOString(),
@@ -822,7 +829,7 @@ export class DBManager {
                                     completed: todo.completed || false
                                 }
                             });
-                            links.push({ id: todoId, order: i });
+                            items.push({ id: todoId, order: i });
                         }
                     }
 
@@ -830,7 +837,8 @@ export class DBManager {
                         id: String(list.id),
                         type: 'list',
                         content: String(list.name || ''),
-                        links,
+                        links: [],
+                        items,
                         meta: {
                             createdAt: new Date(list.createdAt || Date.now()).toISOString(),
                             updatedAt: new Date(list.updatedAt || Date.now()).toISOString(),
@@ -847,6 +855,43 @@ export class DBManager {
             return true;
         } catch (error) {
             console.error('[DBManager] Items migration failed:', error);
+            throw error;
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // V10 MIGRATION (links -> items for list children)
+    // -------------------------------------------------------------------------
+
+    static async migrateToItemsArray() {
+        if (localStorage.getItem('itemsArrayMigrationComplete') === 'true') {
+            console.log('[DBManager] migrateToItemsArray: already complete, skipping');
+            return false;
+        }
+
+        console.log('[DBManager] migrateToItemsArray: starting migration...');
+
+        try {
+            await this.init();
+            const lists = await this.getItems({ type: 'list' });
+            console.log(`[DBManager] migrateToItemsArray: found ${lists.length} lists to check`);
+
+            let migratedCount = 0;
+            for (const list of lists) {
+                if (Array.isArray(list.links) && list.links.length > 0 && (!list.items || list.items.length === 0)) {
+                    console.log(`[DBManager] migrateToItemsArray: migrating list "${list.content || list.id}" - ${list.links.length} links -> items`);
+                    list.items = [...list.links];
+                    list.links = [];
+                    await this.saveItem(list);
+                    migratedCount++;
+                }
+            }
+
+            localStorage.setItem('itemsArrayMigrationComplete', 'true');
+            console.log(`[DBManager] migrateToItemsArray: complete! Migrated ${migratedCount} lists.`);
+            return true;
+        } catch (error) {
+            console.error('[DBManager] Items array migration failed:', error);
             throw error;
         }
     }
@@ -911,7 +956,7 @@ export class DBManager {
                     itemsStore.createIndex('idx_updated', 'meta.updatedAt', { unique: false });
                 }
 
-                // v7: split monolithic lists array
+                // v7: split monolithic lists array (must run BEFORE v10 deletes the stores)
                 if (event.oldVersion < 7 && db.objectStoreNames.contains(DB_CONFIG.STORES.LISTS)) {
                     const transaction = event.target.transaction;
                     const store = transaction.objectStore(DB_CONFIG.STORES.LISTS);
@@ -970,6 +1015,107 @@ export class DBManager {
                         }
                     };
                 }
+
+                // v10: delete old notes/lists stores after migration
+                if (event.oldVersion < 10) {
+                    const itemsMigrationComplete = localStorage.getItem('itemsMigrationComplete') === 'true';
+                    if (itemsMigrationComplete) {
+                        if (db.objectStoreNames.contains(DB_CONFIG.STORES.NOTES)) {
+                            db.deleteObjectStore(DB_CONFIG.STORES.NOTES);
+                        }
+                        if (db.objectStoreNames.contains(DB_CONFIG.STORES.LISTS)) {
+                            db.deleteObjectStore(DB_CONFIG.STORES.LISTS);
+                        }
+                    } else {
+                        // For users skipping v9 (v8 -> v10), inline-migrate data
+                        // Notes migration
+                        if (db.objectStoreNames.contains(DB_CONFIG.STORES.NOTES)) {
+                            const transaction = event.target.transaction;
+                            const notesStore = transaction.objectStore(DB_CONFIG.STORES.NOTES);
+                            const notesReq = notesStore.getAll();
+                            notesReq.onsuccess = () => {
+                                const notes = notesReq.result || [];
+                                const itemsStore = transaction.objectStore(DB_CONFIG.STORES.ITEMS);
+                                for (const note of notes) {
+                                    let content = note.content || '';
+                                    if (note.title) {
+                                        content = note.title + '\n' + content;
+                                    }
+                                    itemsStore.put({
+                                        id: String(note.id),
+                                        type: 'note',
+                                        content: String(content),
+                                        links: [],
+                                        items: [],
+                                        meta: {
+                                            createdAt: note.createdAt || new Date().toISOString(),
+                                            updatedAt: note.updatedAt || new Date().toISOString(),
+                                            archived: false,
+                                            completed: false
+                                        }
+                                    });
+                                }
+                                db.deleteObjectStore(DB_CONFIG.STORES.NOTES);
+                            };
+                        }
+                        // Lists migration
+                        if (db.objectStoreNames.contains(DB_CONFIG.STORES.LISTS)) {
+                            const transaction = event.target.transaction;
+                            const listsStore = transaction.objectStore(DB_CONFIG.STORES.LISTS);
+                            const keysReq = listsStore.getAllKeys();
+                            keysReq.onsuccess = () => {
+                                const keys = (keysReq.result || []).filter(k => k !== 'list-metadata');
+                                const itemsStore = transaction.objectStore(DB_CONFIG.STORES.ITEMS);
+                                for (const key of keys) {
+                                    const listReq = listsStore.get(key);
+                                    listReq.onsuccess = () => {
+                                        const list = listReq.result;
+                                        if (!list || !list.id) return;
+                                        const items = [];
+                                        if (Array.isArray(list.todos)) {
+                                            for (let i = 0; i < list.todos.length; i++) {
+                                                const todo = list.todos[i];
+                                                const todoId = String(todo.id || `todo-${Date.now()}-${i}-${Math.random().toString(36).substr(2, 5)}`);
+                                                itemsStore.put({
+                                                    id: todoId,
+                                                    type: 'item',
+                                                    content: String(todo.text || ''),
+                                                    links: [],
+                                                    items: [],
+                                                    meta: {
+                                                        createdAt: new Date(todo.createdAt || Date.now()).toISOString(),
+                                                        updatedAt: new Date().toISOString(),
+                                                        archived: false,
+                                                        completed: todo.completed || false
+                                                    }
+                                                });
+                                                items.push({ id: todoId, order: i });
+                                            }
+                                        }
+                                        itemsStore.put({
+                                            id: String(list.id),
+                                            type: 'list',
+                                            content: String(list.name || ''),
+                                            links: [],
+                                            items,
+                                            meta: {
+                                                createdAt: new Date(list.createdAt || Date.now()).toISOString(),
+                                                updatedAt: new Date(list.updatedAt || Date.now()).toISOString(),
+                                                archived: false,
+                                                completed: false,
+                                                isDefault: list.isDefault || false,
+                                                order: typeof list.order === 'number' ? list.order : 0
+                                            }
+                                        });
+                                    };
+                                }
+                                db.deleteObjectStore(DB_CONFIG.STORES.LISTS);
+                            };
+                        }
+                        localStorage.setItem('itemsMigrationComplete', 'true');
+                        localStorage.setItem('itemsArrayMigrationComplete', 'true');
+                    }
+                }
             };
 
             request.onsuccess = (event) => {
@@ -1013,16 +1159,16 @@ export class DBManager {
             meta: { isDefault: false }
         });
 
-        const links = [];
+        const items = [];
         for (let i = 0; i < lines.length; i++) {
             const item = await this.createItem({
                 type: 'item',
                 content: lines[i],
                 meta: { completed: false }
             });
-            links.push({ id: item.id, order: i });
+            items.push({ id: item.id, order: i });
         }
-        newList.links = links;
+        newList.items = items;
         await this.saveItem(newList);
 
         note.meta = { ...note.meta, archived: true, updatedAt: new Date().toISOString() };
@@ -1043,11 +1189,11 @@ export class DBManager {
             meta: { completed: false }
         });
 
-        const links = list.links ? [...list.links] : [];
-        links.unshift({ id: item.id, order: 0 });
-        links.forEach((link, i) => { link.order = i; });
+        const items = list.items ? [...list.items] : [];
+        items.unshift({ id: item.id, order: 0 });
+        items.forEach((itemRef, i) => { itemRef.order = i; });
 
-        list.links = links;
+        list.items = items;
         list.meta = { ...list.meta, updatedAt: new Date().toISOString() };
         await this.saveItem(list);
 
@@ -1061,15 +1207,15 @@ export class DBManager {
         if (!target || target.type !== 'list') throw new Error('Target list not found');
         if (!source || source.type !== 'list') throw new Error('Source list not found');
 
-        const sourceLinked = await this.getLinkedItems(sourceId);
-        const targetLinked = await this.getLinkedItems(targetId);
+        const sourceLinked = await this.getListItems(sourceId);
+        const targetLinked = await this.getListItems(targetId);
 
         const existingTexts = new Set(
             targetLinked.map(i => (i.content || '').trim().toLowerCase())
         );
 
-        const existingLinks = target.links ? [...target.links] : [];
-        const newLinks = [];
+        const existingItems = target.items ? [...target.items] : [];
+        const newItems = [];
         let added = 0;
         let skipped = 0;
 
@@ -1079,14 +1225,14 @@ export class DBManager {
                 skipped++;
                 continue;
             }
-            newLinks.push({ id: item.id, order: 0 });
+            newItems.push({ id: item.id, order: 0 });
             existingTexts.add(text);
             added++;
         }
 
-        const links = [...newLinks, ...existingLinks];
-        links.forEach((link, i) => { link.order = i; });
-        target.links = links;
+        const items = [...newItems, ...existingItems];
+        items.forEach((itemRef, i) => { itemRef.order = i; });
+        target.items = items;
         target.meta = { ...target.meta, updatedAt: new Date().toISOString() };
         await this.saveItem(target);
 
@@ -1119,16 +1265,16 @@ export class DBManager {
         if (!toList || toList.type !== 'list') throw new Error('Target list not found');
 
         // Remove from source
-        fromList.links = (fromList.links || []).filter(l => l.id !== itemId);
-        fromList.links.forEach((l, i) => { l.order = i; });
+        fromList.items = (fromList.items || []).filter(l => l.id !== itemId);
+        fromList.items.forEach((l, i) => { l.order = i; });
         fromList.meta = { ...fromList.meta, updatedAt: new Date().toISOString() };
         await this.saveItem(fromList);
 
         // Add to target (prepend)
-        const toLinks = toList.links ? [...toList.links] : [];
-        toLinks.unshift({ id: itemId, order: 0 });
-        toLinks.forEach((link, i) => { link.order = i; });
-        toList.links = toLinks;
+        const toItems = toList.items ? [...toList.items] : [];
+        toItems.unshift({ id: itemId, order: 0 });
+        toItems.forEach((itemRef, i) => { itemRef.order = i; });
+        toList.items = toItems;
         toList.meta = { ...toList.meta, updatedAt: new Date().toISOString() };
         await this.saveItem(toList);
     }
@@ -1146,8 +1292,8 @@ export class DBManager {
         });
 
         // Remove from source list and delete the item itself
-        fromList.links = (fromList.links || []).filter(l => l.id !== itemId);
-        fromList.links.forEach((l, i) => { l.order = i; });
+        fromList.items = (fromList.items || []).filter(l => l.id !== itemId);
+        fromList.items.forEach((l, i) => { l.order = i; });
         fromList.meta = { ...fromList.meta, updatedAt: new Date().toISOString() };
         await this.saveItem(fromList);
         await this.hardDeleteItem(itemId);
@@ -1180,10 +1326,10 @@ export class DBManager {
             meta: { completed: item.meta?.completed || false }
         });
 
-        const links = toList.links ? [...toList.links] : [];
-        links.unshift({ id: copy.id, order: 0 });
-        links.forEach((link, i) => { link.order = i; });
-        toList.links = links;
+        const items = toList.items ? [...toList.items] : [];
+        items.unshift({ id: copy.id, order: 0 });
+        items.forEach((itemRef, i) => { itemRef.order = i; });
+        toList.items = items;
         toList.meta = { ...toList.meta, updatedAt: new Date().toISOString() };
         await this.saveItem(toList);
 
@@ -1200,18 +1346,18 @@ export class DBManager {
             meta: { isDefault: false }
         });
 
-        const linkedItems = await this.getLinkedItems(listId);
-        const newLinks = [];
+        const linkedItems = await this.getListItems(listId);
+        const newItems = [];
         for (const item of linkedItems) {
             const copy = await this.createItem({
                 type: 'item',
                 content: item.content || '',
                 meta: { completed: item.meta?.completed || false }
             });
-            newLinks.push({ id: copy.id, order: newLinks.length });
+            newItems.push({ id: copy.id, order: newItems.length });
         }
 
-        newList.links = newLinks;
+        newList.items = newItems;
         await this.saveItem(newList);
 
         return newList.id;
@@ -1242,11 +1388,11 @@ export class DBManager {
             meta: { completed: false }
         });
 
-        const links = list.links ? [...list.links] : [];
-        links.unshift({ id: item.id, order: 0 });
-        links.forEach((link, i) => { link.order = i; });
+        const items = list.items ? [...list.items] : [];
+        items.unshift({ id: item.id, order: 0 });
+        items.forEach((itemRef, i) => { itemRef.order = i; });
 
-        list.links = links;
+        list.items = items;
         list.meta = { ...list.meta, updatedAt: new Date().toISOString() };
         await this.saveItem(list);
     }
@@ -1287,6 +1433,7 @@ export class DBManager {
             type: 'note',
             content: String(content),
             links: [],
+            items: [],
             meta: {
                 createdAt: note.createdAt || now,
                 updatedAt: note.updatedAt || now,
@@ -1310,7 +1457,7 @@ export class DBManager {
     }
 
     static async #itemToLegacyList(item) {
-        const linkedItems = await this.getLinkedItems(item.id);
+        const linkedItems = await this.getListItems(item.id);
         const todos = linkedItems.map((todoItem, index) => ({
             id: todoItem.id,
             text: todoItem.content || '',

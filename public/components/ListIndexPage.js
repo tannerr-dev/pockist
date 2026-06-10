@@ -57,7 +57,7 @@ export class ListIndexPage extends HTMLElement {
 		const dragHandleSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="18" x2="16" y2="18"/></svg>`;
 
 		container.innerHTML = this._lists.map((item) => {
-			const total = item.links ? item.links.length : 0;
+			const total = item.items ? item.items.length : 0;
 			return `
 				<div class="list-index-card" data-list-id="${item.id}">
 					<div class="list-index-card-content">
@@ -252,7 +252,7 @@ export class ListIndexPage extends HTMLElement {
 
 		const source = this._lists.find(l => l.id === sourceId);
 		const target = await DialogService.pickItem(
-			otherLists.map(l => ({ id: l.id, title: l.content || 'Unnamed List', subtitle: `${l.links?.length || 0} items` })),
+			otherLists.map(l => ({ id: l.id, title: l.content || 'Unnamed List', subtitle: `${l.items?.length || 0} items` })),
 			{ title: 'Merge into which list?' }
 		);
 		if (!target) return;
