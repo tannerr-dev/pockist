@@ -1406,14 +1406,9 @@ export class DBManager {
             String(date.getMinutes()).padStart(2, '0') +
             String(date.getSeconds()).padStart(2, '0');
 
-        const text = content || 'untitled';
-        const slug = text
-            .slice(0, 20)
-            .toLowerCase()
-            .replace(/[^a-z0-9]+/g, '-')
-            .replace(/^-+|-+$/g, '');
+        const random = Math.random().toString(36).substring(2, 7);
 
-        return `${dateStr}-${slug || 'note'}`;
+        return `${dateStr}-${random}`;
     }
 
     static #extractTitle(content) {
