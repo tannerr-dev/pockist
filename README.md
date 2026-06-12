@@ -1,3 +1,9 @@
+# new home
+https://codeberg.org/tannerr/pockist
+
+---
+
+
 # pockist
 #personalproject
 
